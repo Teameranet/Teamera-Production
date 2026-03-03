@@ -1,0 +1,72 @@
+.custom-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-input {
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px;
+  font-size: 16px;
+  line-height: 24px;
+  color: #1A1A1A;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-input.has-icon {
+  padding-left: 48px;
+}
+
+.custom-input::placeholder {
+  color: #9CA3AF;
+}
+
+.custom-input:focus {
+  outline: none;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  background: #FFFFFF;
+}
+
+.custom-input:disabled {
+  background: #FFFFFF;
+  border-color: #E5E7EB;
+  color: #ffffff;
+  cursor: not-allowed;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  pointer-events: none;
+}
+
+.input-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.custom-input-wrapper.has-error .custom-input {
+  border-color: #EF4444;
+  background: #FFFFFF;
+}
+
+.custom-input-wrapper.has-error .input-icon {
+  color: #EF4444;
+}
+
+.input-error {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #EF4444;
+} 
