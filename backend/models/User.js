@@ -54,17 +54,9 @@ const userSchema = new mongoose.Schema({
     level: {
       type: String,
       enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'],
-      default: 'INTERMEDIATE'
-    },
-    years: {
-      type: Number,
-      default: 1
+      default: 'BEGINNER'
     }
   }],
-  experience: {
-    type: String,
-    default: ''
-  },
   location: {
     type: String,
     default: ''

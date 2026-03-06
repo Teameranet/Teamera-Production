@@ -16,14 +16,12 @@ function Profile() {
 
   // Function to map experience to skill level
   const mapExperienceToSkillLevel = (experience) => {
-    if (!experience) return 'INTERMEDIATE';
-    
     switch(experience) {
       case '0-1': return 'BEGINNER';
       case '2-3': return 'INTERMEDIATE';
       case '4-6': return 'ADVANCED';
       case '7+': return 'EXPERT';
-      default: return 'INTERMEDIATE';
+      default: return 'BEGINNER';
     }
   };
 
@@ -245,20 +243,7 @@ function Profile() {
     };
 
     const initializeFormData = (userData) => {
-      const skillLevel = mapExperienceToSkillLevel(userData.experience);
-      
-      // Map years from experience string
-      const mapExperienceToYears = (experience) => {
-        switch(experience) {
-          case '0-1': return 1;
-          case '2-3': return 2;
-          case '4-6': return 5;
-          case '7+': return 8;
-          default: return 1;
-        }
-      };
-      
-      const skillYears = mapExperienceToYears(userData.experience);
+      const skillLevel = 'BEGINNER';
       
       // Handle skills - convert strings to objects if needed
       let formattedSkills = [];
@@ -266,10 +251,10 @@ function Profile() {
         formattedSkills = userData.skills.map(skill => {
           if (typeof skill === 'string') {
             // Convert string to object format
-            return { name: skill, level: skillLevel, years: skillYears };
+            return { name: skill, level: skillLevel };
           } else if (typeof skill === 'object' && skill.name) {
-            // Already in object format
-            return skill;
+            // Already in object format (remove years if present)
+            return { name: skill.name, level: skill.level || skillLevel };
           }
           return null;
         }).filter(Boolean);
@@ -419,7 +404,7 @@ function Profile() {
   // function: handleCancel, no API needed
   const handleCancel = () => {
     // Reset formData to the current user object, but ensure all required fields exist
-    const skillLevel = mapExperienceToSkillLevel(user?.experience);
+    const skillLevel = 'BEGINNER';
     
     setFormData({
       name: user?.name ?? '',
@@ -432,8 +417,8 @@ function Profile() {
       skills: Array.isArray(user?.skills)
         ? user.skills.map(skill =>
             typeof skill === 'object'
-              ? { ...skill }
-              : { name: skill, level: skillLevel, years: 1 }
+              ? { name: skill.name, level: skill.level || skillLevel }
+              : { name: skill, level: skillLevel }
           )
         : [],
       experience: Array.isArray(user?.experience)
@@ -722,80 +707,87 @@ function Profile() {
             <div className="experience-section">
               <h3>Experience</h3>
               <div className="experience-list">
-                {Array.isArray(formData.experience) && formData.experience.length > 0 ? (
-                  formData.experience.map((exp, index) => (
-                    <div key={exp.id || index} className="experience-item">
-                      {isEditing ? (
-                        <div className="edit-form">
-                          <div className="form-row">
+                {(() => {
+                  // When editing and no items exist, show empty state with add button
+                  // When editing and items exist, show all items in edit mode
+                  // When not editing, filter out empty items
+                  const displayExperience = isEditing 
+                    ? formData.experience 
+                    : formData.experience.filter(exp => exp.title || exp.company || exp.period || exp.description);
+                  
+                  return Array.isArray(displayExperience) && displayExperience.length > 0 ? (
+                    displayExperience.map((exp, index) => (
+                      <div key={exp.id || index} className="experience-item">
+                        {isEditing ? (
+                          <div className="edit-form">
+                            <div className="form-row">
+                              <input
+                                type="text"
+                                className="edit-input"
+                                value={exp.title}
+                                onChange={(e) => handleExperienceChange(index, 'title', e.target.value)}
+                                placeholder="Job Title"
+                              />
+                              <button className="remove-btn" onClick={() => removeExperience(index)}>
+                                <X size={16} />
+                              </button>
+                            </div>
                             <input
                               type="text"
                               className="edit-input"
-                              value={exp.title}
-                              onChange={(e) => handleExperienceChange(index, 'title', e.target.value)}
-                              placeholder="Job Title"
+                              value={exp.company}
+                              onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
+                              placeholder="Company Name"
                             />
-                            <button className="remove-btn" onClick={() => removeExperience(index)}>
-                              <X size={16} />
-                            </button>
+                            <input
+                              type="text"
+                              className="edit-input"
+                              value={exp.period}
+                              onChange={(e) => handleExperienceChange(index, 'period', e.target.value)}
+                              placeholder="Period (e.g., 2020 - Present)"
+                            />
+                            <textarea
+                              className="form-textarea"
+                              value={exp.description}
+                              onChange={(e) => handleExperienceChange(index, 'description', e.target.value)}
+                              placeholder="Description of your role and achievements"
+                              rows={3}
+                            />
+                            <input
+                              type="text"
+                              className="edit-input"
+                              value={exp.technologies.join(', ')}
+                              onChange={(e) => handleExperienceChange(index, 'technologies', e.target.value.split(',').map(t => t.trim()))}
+                              placeholder="Technologies (comma-separated)"
+                            />
                           </div>
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={exp.company}
-                            onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
-                            placeholder="Company Name"
-                          />
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={exp.period}
-                            onChange={(e) => handleExperienceChange(index, 'period', e.target.value)}
-                            placeholder="Period (e.g., 2020 - Present)"
-                          />
-                          <textarea
-                            className="form-textarea"
-                            value={exp.description}
-                            onChange={(e) => handleExperienceChange(index, 'description', e.target.value)}
-                            placeholder="Description of your role and achievements"
-                            rows={3}
-                          />
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={exp.technologies.join(', ')}
-                            onChange={(e) => handleExperienceChange(index, 'technologies', e.target.value.split(',').map(t => t.trim()))}
-                            placeholder="Technologies (comma-separated)"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="experience-header">
-                            <h4>{exp.title}</h4>
-                            <span className="period">{exp.period}</span>
-                          </div>
-                          <p className="company">{exp.company}</p>
-                          <p className="experience-description">{exp.description}</p>
-                          <div className="experience-technologies">
-                            {exp.technologies.map((tech, techIndex) => (
-                              <span key={techIndex} className="tech-tag">{tech}</span>
-                            ))}
-                          </div>
-                        </>
-                      )}
+                        ) : (
+                          <>
+                            <div className="experience-header">
+                              <h4>{exp.title}</h4>
+                              <span className="period">{exp.period}</span>
+                            </div>
+                            <p className="company">{exp.company}</p>
+                            <p className="experience-description">{exp.description}</p>
+                            <div className="experience-technologies">
+                              {exp.technologies.map((tech, techIndex) => (
+                                <span key={techIndex} className="tech-tag">{tech}</span>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))
+                  ) : isEditing ? (
+                    <div className="empty-section-prompt">
+                      <p>Click "Add Experience" below to add your professional background</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="empty-section-prompt">
-                    <p>Add your Experience details to showcase your professional background</p>
-                    <button className="add-btn experience-add-btn" onClick={() => {
-                      setIsEditing(true);
-                      addExperience();
-                    }}>
-                      <Plus size={16} /> Add Experience
-                    </button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="empty-section-prompt">
+                      <p>Add your Experience details to showcase your professional background</p>
+                    </div>
+                  );
+                })()}
                 {isEditing && (
                   <button className="add-btn experience-add-btn" onClick={addExperience}>
                     <Plus size={16} /> Add Experience
@@ -808,68 +800,75 @@ function Profile() {
             <div className="education-section">
               <h3>Education</h3>
               <div className="education-list">
-                {Array.isArray(formData.education) && formData.education.length > 0 ? (
-                  formData.education.map((edu, index) => (
-                    <div key={index} className="education-item">
-                      {isEditing ? (
-                        <div className="edit-form">
-                          <div className="form-row">
+                {(() => {
+                  // When editing and no items exist, show empty state with add button
+                  // When editing and items exist, show all items in edit mode
+                  // When not editing, filter out empty items
+                  const displayEducation = isEditing 
+                    ? formData.education 
+                    : formData.education.filter(edu => edu.degree || edu.institution || edu.period || edu.details);
+                  
+                  return Array.isArray(displayEducation) && displayEducation.length > 0 ? (
+                    displayEducation.map((edu, index) => (
+                      <div key={index} className="education-item">
+                        {isEditing ? (
+                          <div className="edit-form">
+                            <div className="form-row">
+                              <input
+                                type="text"
+                                className="edit-input"
+                                value={edu.degree}
+                                onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
+                                placeholder="Degree"
+                              />
+                              <button className="remove-btn" onClick={() => removeEducation(index)}>
+                                <X size={16} />
+                              </button>
+                            </div>
                             <input
                               type="text"
                               className="edit-input"
-                              value={edu.degree}
-                              onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
-                              placeholder="Degree"
+                              value={edu.institution}
+                              onChange={(e) => handleEducationChange(index, 'institution', e.target.value)}
+                              placeholder="Institution"
                             />
-                            <button className="remove-btn" onClick={() => removeEducation(index)}>
-                              <X size={16} />
-                            </button>
+                            <input
+                              type="text"
+                              className="edit-input"
+                              value={edu.period}
+                              onChange={(e) => handleEducationChange(index, 'period', e.target.value)}
+                              placeholder="Period (e.g., 2016 - 2020)"
+                            />
+                            <input
+                              type="text"
+                              className="edit-input"
+                              value={edu.details}
+                              onChange={(e) => handleEducationChange(index, 'details', e.target.value)}
+                              placeholder="Additional details"
+                            />
                           </div>
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={edu.institution}
-                            onChange={(e) => handleEducationChange(index, 'institution', e.target.value)}
-                            placeholder="Institution"
-                          />
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={edu.period}
-                            onChange={(e) => handleEducationChange(index, 'period', e.target.value)}
-                            placeholder="Period (e.g., 2016 - 2020)"
-                          />
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={edu.details}
-                            onChange={(e) => handleEducationChange(index, 'details', e.target.value)}
-                            placeholder="Additional details"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="education-header">
-                            <h4>{edu.degree}</h4>
-                            <span className="period">{edu.period}</span>
-                          </div>
-                          <p className="institution">{edu.institution}</p>
-                          <p className="education-details">{edu.details}</p>
-                        </>
-                      )}
+                        ) : (
+                          <>
+                            <div className="education-header">
+                              <h4>{edu.degree}</h4>
+                              <span className="period">{edu.period}</span>
+                            </div>
+                            <p className="institution">{edu.institution}</p>
+                            <p className="education-details">{edu.details}</p>
+                          </>
+                        )}
+                      </div>
+                    ))
+                  ) : isEditing ? (
+                    <div className="empty-section-prompt">
+                      <p>Click "Add Education" below to add your academic background</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="empty-section-prompt">
-                    <p>Add your Education details to highlight your academic background</p>
-                    <button className="add-btn education-add-btn" onClick={() => {
-                      setIsEditing(true);
-                      addEducation();
-                    }}>
-                      <Plus size={16} /> Add Education
-                    </button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="empty-section-prompt">
+                      <p>Add your Education details to highlight your academic background</p>
+                    </div>
+                  );
+                })()}
                 {isEditing && (
                   <button className="add-btn education-add-btn" onClick={addEducation}>
                     <Plus size={16} /> Add Education
@@ -908,22 +907,11 @@ function Profile() {
                             handleInputChange('skills', updatedSkills);
                           }}
                         >
-                          <option value="EXPERT">Expert</option>
-                          <option value="ADVANCED">Advanced</option>
-                          <option value="INTERMEDIATE">Intermediate</option>
                           <option value="BEGINNER">Beginner</option>
+                          <option value="INTERMEDIATE">Intermediate</option>
+                          <option value="ADVANCED">Advanced</option>
+                          <option value="EXPERT">Expert</option>
                         </select>
-                        <input
-                          type="number"
-                          className="skill-years-input"
-                          value={skill.years}
-                          onChange={(e) => {
-                            const updatedSkills = [...formData.skills];
-                            updatedSkills[index] = { ...skill, years: parseInt(e.target.value) || 0 };
-                            handleInputChange('skills', updatedSkills);
-                          }}
-                          min="0"
-                        /> years
                         <button
                           className="remove-skill-btn"
                           onClick={() => {
@@ -939,8 +927,7 @@ function Profile() {
                   <button
                     className="add-skill-btn"
                     onClick={() => {
-                      const skillLevel = mapExperienceToSkillLevel(user?.experience);
-                      const updatedSkills = [...formData.skills, { name: '', level: skillLevel, years: 1 }];
+                      const updatedSkills = [...formData.skills, { name: '', level: 'BEGINNER' }];
                       handleInputChange('skills', updatedSkills);
                     }}
                   >
@@ -955,7 +942,6 @@ function Profile() {
                         <span className="skill-name">{skill.name}</span>
                         <span className={`skill-level ${skill.level.toLowerCase()}`}>{skill.level}</span>
                       </div>
-                      <div className="skill-years">{skill.years} years</div>
                     </div>
                   ))}
                 </div>
