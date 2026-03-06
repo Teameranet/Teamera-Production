@@ -1008,36 +1008,6 @@
   background-color: #4338ca;
 }
 
-/* Leave project button */
-.leave-project-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.leave-project-btn:hover {
-  background-color: #dc2626;
-}
-
-.leave-project-btn.confirming {
-  background-color: #991b1b;
-  animation: pulse 0.5s ease-in-out;
-}
-
-.leave-project-btn:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
-
 /* Team members list */
 .team-list {
   flex: 1;

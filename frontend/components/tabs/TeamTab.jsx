@@ -1,93 +1,30 @@
 import { useState, useRef } from 'react';
-import { Users, UserPlus, X, LogOut } from 'lucide-react';
+import { Users, UserPlus, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useProjects } from '../../context/ProjectContext';
 import UserAvatar from '../UserAvatar';
 import './Tabs.css';
 
-function TeamTab({ project, isAdmin, isOwner }) {
+function TeamTab({ project, isAdmin }) {
   const { user } = useAuth();
-  const { leaveProject } = useProjects();
   const [confirmingRemoval, setConfirmingRemoval] = useState(null);
-  const [confirmingLeave, setConfirmingLeave] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const teamListRef = useRef(null);
 
   // Use actual project team members instead of hardcoded data
   const teamMembers = project?.teamMembers || [];
 
-  const handleRemoveMember = async (memberId, memberName) => {
-    if (!isAdmin || isProcessing) return;
+  const handleRemoveMember = (memberId) => {
+    if (!isAdmin) return;
     
     if (confirmingRemoval === memberId) {
       // Actually remove the member
-      setIsProcessing(true);
-      
-      try {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiBaseUrl}/api/projects/${project.id || project._id}/team/${memberId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          console.log('Member removed successfully:', memberName);
-          // The project will be updated via polling or you can trigger a refresh
-          window.location.reload(); // Simple refresh for now
-        } else {
-          alert('Failed to remove member: ' + result.message);
-        }
-      } catch (error) {
-        console.error('Error removing member:', error);
-        alert('Failed to remove member. Please try again.');
-      } finally {
-        setIsProcessing(false);
-        setConfirmingRemoval(null);
-      }
+      console.log('Removing member:', memberId);
+      setConfirmingRemoval(null);
     } else {
       // Ask for confirmation
       setConfirmingRemoval(memberId);
       // Auto-cancel after 3 seconds
       setTimeout(() => {
         setConfirmingRemoval(null);
-      }, 3000);
-    }
-  };
-
-  const handleLeaveProject = async () => {
-    if (isOwner || isProcessing) return; // Owner cannot leave their own project
-    
-    if (confirmingLeave) {
-      // Actually leave the project
-      setIsProcessing(true);
-      
-      try {
-        const success = await leaveProject(project.id || project._id, user.id);
-        
-        if (success) {
-          console.log('Left project successfully');
-          // Close the collaboration space or refresh
-          window.location.reload();
-        } else {
-          alert('Failed to leave project. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error leaving project:', error);
-        alert('Failed to leave project. Please try again.');
-      } finally {
-        setIsProcessing(false);
-        setConfirmingLeave(false);
-      }
-    } else {
-      // Ask for confirmation
-      setConfirmingLeave(true);
-      // Auto-cancel after 3 seconds
-      setTimeout(() => {
-        setConfirmingLeave(false);
       }, 3000);
     }
   };
@@ -131,24 +68,14 @@ function TeamTab({ project, isAdmin, isOwner }) {
 
   return (
     <div className="team-section">
-      <div className="team-actions">
-        {isAdmin && (
+      {isAdmin && (
+        <div className="team-actions">
           <button className="invite-btn" onClick={handleInviteMembers}>
             <UserPlus size={20} />
             Invite Members
           </button>
-        )}
-        {!isOwner && (
-          <button 
-            className={`leave-project-btn ${confirmingLeave ? 'confirming' : ''}`}
-            onClick={handleLeaveProject}
-            disabled={isProcessing}
-          >
-            <LogOut size={20} />
-            {confirmingLeave ? 'Confirm Leave?' : 'Leave Project'}
-          </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div ref={teamListRef} className="team-list scrollable">
         {teamMembers.length > 0 ? (
@@ -184,8 +111,7 @@ function TeamTab({ project, isAdmin, isOwner }) {
                 {isAdmin && member.role !== 'OWNER' && member.role !== 'Founder' && (
                   <button 
                     className={`remove-member-btn ${confirmingRemoval === memberId ? 'confirming' : ''}`}
-                    onClick={() => handleRemoveMember(memberId, member.name)}
-                    disabled={isProcessing}
+                    onClick={() => handleRemoveMember(memberId)}
                     aria-label={confirmingRemoval === memberId ? "Confirm removal" : "Remove member"}
                   >
                     <X size={18} />

@@ -18,94 +18,29 @@ export const NotificationProvider = ({ children }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const { user } = useAuth();
 
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-    // Fetch notifications from backend when user changes
+    // Initialize with some sample notifications for demo
     useEffect(() => {
-        const fetchNotifications = async () => {
-            if (!user?.id) {
-                setUserNotifications({});
-                return;
-            }
-
-            try {
-                const response = await fetch(`${apiBaseUrl}/api/notifications/${user.id}`);
-                const result = await response.json();
-
-                if (result.success && result.data) {
-                    // Transform backend notifications to match frontend format
-                    const transformedNotifications = result.data.map(notif => ({
-                        id: notif._id || notif.id,
-                        type: notif.type,
-                        icon: getIconForType(notif.type),
-                        title: notif.title,
-                        time: getRelativeTime(notif.createdAt),
-                        color: getColorForType(notif.type),
-                        read: notif.read,
-                        projectName: notif.projectName,
-                        applicantName: notif.applicantName,
-                        position: notif.position,
-                        navigationPath: notif.navigationPath,
-                        navigationState: notif.navigationState
-                    }));
-
-                    setUserNotifications({
-                        [user.id]: transformedNotifications
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching notifications:', error);
-            }
+        const initialNotifications = {
+            '1': [ // User-1 (demo user)
+                {
+                    id: 1,
+                    type: 'application',
+                    icon: <Users size={16} />,
+                    title: 'New application received for EcoTrack project',
+                    time: '2 hours ago',
+                    color: '#10b981',
+                    read: false,
+                    projectName: 'EcoTrack',
+                    applicantName: 'John Smith',
+                    navigationPath: '/dashboard',
+                    navigationState: { tab: 'applications', subTab: 'received' }
+                },
+              
+            ]
         };
 
-        fetchNotifications();
-
-        // Poll for new notifications every 30 seconds
-        const interval = setInterval(fetchNotifications, 30000);
-
-        return () => clearInterval(interval);
-    }, [user?.id]);
-
-    // Helper function to get icon for notification type
-    const getIconForType = (type) => {
-        switch (type) {
-            case 'application':
-                return <Users size={16} />;
-            case 'acceptance':
-                return <CheckCircle size={16} />;
-            case 'rejection':
-                return <XCircle size={16} />;
-            default:
-                return <Users size={16} />;
-        }
-    };
-
-    // Helper function to get color for notification type
-    const getColorForType = (type) => {
-        switch (type) {
-            case 'application':
-                return '#10b981';
-            case 'acceptance':
-                return '#10b981';
-            case 'rejection':
-                return '#ef4444';
-            default:
-                return '#10b981';
-        }
-    };
-
-    // Helper function to get relative time
-    const getRelativeTime = (dateString) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
-
-        if (diffInSeconds < 60) return 'Just now';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-        return date.toLocaleDateString();
-    };
+        setUserNotifications(initialNotifications);
+    }, []);
 
     // Get notifications for current user
     const getNotificationsForUser = (userId) => {
@@ -200,67 +135,37 @@ export const NotificationProvider = ({ children }) => {
     };
 
     // Mark notification as read for current user
-    const markAsRead = async (notificationId) => {
+    const markAsRead = (notificationId) => {
         if (!user?.id) return;
 
-        try {
-            await fetch(`${apiBaseUrl}/api/notifications/${notificationId}/read`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            setUserNotifications(prev => ({
-                ...prev,
-                [user.id]: (prev[user.id] || []).map(notification =>
-                    notification.id === notificationId
-                        ? { ...notification, read: true }
-                        : notification
-                )
-            }));
-        } catch (error) {
-            console.error('Error marking notification as read:', error);
-        }
+        setUserNotifications(prev => ({
+            ...prev,
+            [user.id]: (prev[user.id] || []).map(notification =>
+                notification.id === notificationId
+                    ? { ...notification, read: true }
+                    : notification
+            )
+        }));
     };
 
     // Mark all notifications as read for current user
-    const markAllAsRead = async () => {
+    const markAllAsRead = () => {
         if (!user?.id) return;
 
-        try {
-            await fetch(`${apiBaseUrl}/api/notifications/${user.id}/read-all`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            setUserNotifications(prev => ({
-                ...prev,
-                [user.id]: (prev[user.id] || []).map(notification => ({ ...notification, read: true }))
-            }));
-        } catch (error) {
-            console.error('Error marking all notifications as read:', error);
-        }
+        setUserNotifications(prev => ({
+            ...prev,
+            [user.id]: (prev[user.id] || []).map(notification => ({ ...notification, read: true }))
+        }));
     };
 
     // Remove notification for current user
-    const removeNotification = async (notificationId) => {
+    const removeNotification = (notificationId) => {
         if (!user?.id) return;
 
-        try {
-            await fetch(`${apiBaseUrl}/api/notifications/${notificationId}`, {
-                method: 'DELETE'
-            });
-
-            setUserNotifications(prev => ({
-                ...prev,
-                [user.id]: (prev[user.id] || []).filter(notification => notification.id !== notificationId)
-            }));
-        } catch (error) {
-            console.error('Error removing notification:', error);
-        }
+        setUserNotifications(prev => ({
+            ...prev,
+            [user.id]: (prev[user.id] || []).filter(notification => notification.id !== notificationId)
+        }));
     };
 
     // Get current user's notifications

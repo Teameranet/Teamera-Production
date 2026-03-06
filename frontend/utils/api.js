@@ -9,20 +9,12 @@ class ApiClient {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const config = {
-      ...options,
-    };
-
-    // Only add Content-Type header if not FormData
-    if (!(options.body instanceof FormData)) {
-      config.headers = {
+      headers: {
         'Content-Type': 'application/json',
         ...options.headers,
-      };
-    } else {
-      config.headers = {
-        ...options.headers,
-      };
-    }
+      },
+      ...options,
+    };
 
     try {
       const response = await fetch(url, config);
@@ -108,24 +100,6 @@ export const endpoints = {
     removeBookmark: (userId, projectId) => `/api/dashboard/${userId}/bookmarks/${projectId}`,
     addApplication: (userId) => `/api/dashboard/${userId}/applications`,
     updateApplicationStatus: (userId, applicationId) => `/api/dashboard/${userId}/applications/${applicationId}`,
-  },
-  // Application endpoints
-  applications: {
-    submit: '/api/applications',
-    getByProject: (projectId) => `/api/applications/project/${projectId}`,
-    getByUser: (userId) => `/api/applications/user/${userId}`,
-    getReceived: (userId) => `/api/applications/received/${userId}`,
-    getById: (applicationId) => `/api/applications/${applicationId}`,
-    accept: (applicationId) => `/api/applications/${applicationId}/accept`,
-    reject: (applicationId) => `/api/applications/${applicationId}/reject`,
-    delete: (applicationId) => `/api/applications/${applicationId}`,
-  },
-  // Notification endpoints
-  notifications: {
-    getByUser: (userId) => `/api/notifications/${userId}`,
-    markAsRead: (notificationId) => `/api/notifications/${notificationId}/read`,
-    markAllAsRead: (userId) => `/api/notifications/${userId}/read-all`,
-    delete: (notificationId) => `/api/notifications/${notificationId}`,
   },
   // Contact endpoint
   contact: '/api/contact',

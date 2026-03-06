@@ -75,3 +75,24 @@ User Accounts: Registration, login, profile management, and skill updates.
 ## Note:
 To maintain clarity and organization, separate files should be created for frontend components, backend logic, server configuration, and API integration, ensuring clean code and maintainability. The development process should prioritize performance optimization and scalability while staying strictly within the constraints of React JSX, avoiding TypeScript. Additionally, all currency-related transactions and price displays (e.g., for competition prizes or future premium features) should use Indian currency (INR ₹) to align with regional financial standards. This structured approach will result in a fully functional and modernized clone of arn.net, ready for deployment and future expansion.
 
+----------------------------------------------------------------------------------------------------------------------------
+## Feature: Reapply to Projects with Rejected or Pending Applications
+### Feature Prompt
+Users can able to reapply  the same project position if their application status is "Rejected" or "Pending".
+- The backend automatically deletes the old application when a new one is submitted for the same position
+- Users with "ACCEPTED" status cannot reapply (they're already part of the team)
+- The reapply feature uses the same application submission endpoint
+
+## Fix: Collaboration Space Not Updating After Accepting Application
+### Feature Prompt
+When a project owner accepts an application in the Dashboard, the newly added team member doesn't appear in the Collaboration Space in real-time. (The user had to refresh the page or reopen the Collaboration Space to see the updated team.)
+The Collaboration Space component was using cached project data from the ProjectContext. When an application was accepted, the backend updated the project's team members, but the frontend's project state wasn't show on run time .
+- Real-time UI updates without page refresh
+- Consistent data across all components
+- Better user experience with immediate feedback
+
+## Feature: Allow Reapplication After Being Removed or Leaving Project
+### Feature Prompt
+Users can now reapply to a project if they:
+1. Were previously accepted but removed by the project owner
+2. Voluntarily left the project after being accepted

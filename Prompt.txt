@@ -715,6 +715,26 @@ Delete Project → Removes from MongoDB → Disappears from all views
 
 Page Refresh → Loads from MongoDB → All data persists
 
-# Integrated the complete backend with database fletch the data on frontend properly 
+#### Scenario 1: User Removed by Project Owner
+1. User was accepted and added to project team
+2. Project owner removes user from team (via team management)
+3. User's ACCEPTED application still exists in database
+4. User visits project page and sees apply buttons again
+5. User can submit a new application
+6. Backend detects user is not in team, deletes old application, creates new one
+7. New application has PENDING status
 
-- If user apply the posiction
+#### Scenario 2: User Leaves Project Voluntarily
+1. User was accepted and is part of project team
+2. User clicks "Leave Project" in Collaboration Space
+3. User is removed from team members list
+4. User's ACCEPTED application still exists in database
+5. User visits project page and sees apply buttons again
+6. User can reapply following same flow as Scenario 1
+
+#### Scenario 3: Current Team Member
+1. User is currently in the project team
+2. User visits project page
+3. Apply buttons are hidden
+4. "You are already a team member" notice is shown
+5. User cannot submit duplicate applications

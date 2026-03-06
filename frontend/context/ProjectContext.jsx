@@ -244,61 +244,35 @@ export const ProjectProvider = ({ children }) => {
     }
   };
 
-  const applyToProject = async (projectId, applicationData) => {
-    try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('projectId', projectId);
-      formData.append('applicantId', applicationData.userId);
-      formData.append('applicantName', applicationData.applicantName || 'Unknown User');
-      formData.append('applicantAvatar', applicationData.applicantAvatar || 'U');
-      formData.append('applicantColor', applicationData.applicantColor || '#4f46e5');
-      formData.append('position', applicationData.position);
-      formData.append('projectName', applicationData.projectName || 'Unknown Project');
-      formData.append('message', applicationData.message || '');
-      formData.append('skills', JSON.stringify(applicationData.skills || []));
-      formData.append('userDetails', JSON.stringify(applicationData.userDetails || {}));
-      
-      // Add resume file if present
-      if (applicationData.resume) {
-        formData.append('resume', applicationData.resume);
-      }
+  const applyToProject = (projectId, applicationData) => {
+    // Create a new application
+    const newApplication = {
+      id: Date.now().toString(),
+      applicantId: applicationData.userId,
+      applicantName: applicationData.applicantName || 'Unknown User',
+      applicantAvatar: applicationData.applicantAvatar || 'U',
+      applicantColor: applicationData.applicantColor || '#4f46e5',
+      position: applicationData.position,
+      skills: applicationData.skills || [],
+      projectId: projectId,
+      projectName: applicationData.projectName || 'Unknown Project',
+      appliedDate: new Date().toISOString().split('T')[0],
+      status: 'PENDING',
+      message: applicationData.message || '',
+      hasResume: !!applicationData.resume,
+      resumeUrl: applicationData.resumeUrl || null,
+      userDetails: applicationData.userDetails || null
+    };
 
-      const response = await fetch(`${apiBaseUrl}/api/applications`, {
-        method: 'POST',
-        body: formData
-      });
+    // Add application to the applications list
+    setApplications(prev => [...prev, newApplication]);
 
-      const result = await response.json();
-
-      if (response.ok && result.success && result.data) {
-        const newApplication = {
-          ...result.data,
-          id: result.data._id || result.data.id,
-          appliedDate: new Date(result.data.createdAt).toISOString().split('T')[0]
-        };
-
-        // Add application to local state
-        setApplications(prev => [...prev, newApplication]);
-
-        // Update project application count
-        setProjects(prev => prev.map(project =>
-          project.id === projectId
-            ? { ...project, applications: (project.applications || 0) + 1 }
-            : project
-        ));
-
-        return { success: true, data: newApplication };
-      } else {
-        // Return error message from backend
-        const errorMessage = result.message || result.error || 'Failed to submit application';
-        console.error('Failed to submit application:', errorMessage);
-        return { success: false, error: errorMessage };
-      }
-    } catch (error) {
-      console.error('Error submitting application:', error);
-      return { success: false, error: 'Network error. Please try again.' };
-    }
+    // Update project application count
+    setProjects(prev => prev.map(project =>
+      project.id === projectId
+        ? { ...project, applications: project.applications + 1 }
+        : project
+    ));
   };
 
   // Add a user to a project's team members
@@ -357,86 +331,41 @@ export const ProjectProvider = ({ children }) => {
   };
 
   // Accept an application
-  const acceptApplication = async (applicationId) => {
-    try {
-      const application = applications.find(app => app.id === applicationId || app._id === applicationId);
-      if (!application) return false;
+  const acceptApplication = (applicationId) => {
+    const application = applications.find(app => app.id === applicationId);
+    if (!application) return false;
 
-      console.log('Accepting application:', applicationId, 'for project:', application.projectId);
+    console.log('Accepting application:', applicationId, 'for project:', application.projectId);
+    console.log('Adding user:', application.applicantName, 'with position:', application.position);
 
-      const response = await fetch(`${apiBaseUrl}/api/applications/${applicationId}/accept`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+    // Update application status
+    setApplications(prev => prev.map(app =>
+      app.id === applicationId ? { ...app, status: 'ACCEPTED' } : app
+    ));
 
-      const result = await response.json();
+    // Add user to project team with position name and color
+    const userData = {
+      id: application.applicantId,
+      name: application.applicantName,
+      role: application.position, // This will be the position name (e.g., "Frontend Developer")
+      avatar: application.applicantAvatar,
+      applicantColor: application.applicantColor || '#4f46e5',
+      email: application.userDetails?.email || undefined
+    };
 
-      if (result.success && result.data) {
-        // Update application status in local state
-        setApplications(prev => prev.map(app =>
-          (app.id === applicationId || app._id === applicationId) 
-            ? { ...app, status: 'ACCEPTED' } 
-            : app
-        ));
-
-        // Fetch updated project to get the new team member
-        const projectResponse = await fetch(`${apiBaseUrl}/api/projects/${application.projectId}`);
-        const projectResult = await projectResponse.json();
-
-        if (projectResult.success && projectResult.data) {
-          const updatedProject = {
-            ...projectResult.data,
-            id: projectResult.data._id || projectResult.data.id
-          };
-
-          // Update projects in local state
-          setProjects(prev => prev.map(project =>
-            (project.id === application.projectId || project._id === application.projectId)
-              ? updatedProject
-              : project
-          ));
-        }
-
-        return true;
-      } else {
-        console.error('Failed to accept application:', result.message);
-        return false;
-      }
-    } catch (error) {
-      console.error('Error accepting application:', error);
-      return false;
-    }
+    console.log('User data to add:', userData);
+    const result = addUserToProject(application.projectId, userData);
+    console.log('Add user result:', result);
+    
+    return result;
   };
 
   // Reject an application
-  const rejectApplication = async (applicationId) => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/applications/${applicationId}/reject`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setApplications(prev => prev.map(app =>
-          (app.id === applicationId || app._id === applicationId)
-            ? { ...app, status: 'REJECTED' }
-            : app
-        ));
-        return true;
-      } else {
-        console.error('Failed to reject application:', result.message);
-        return false;
-      }
-    } catch (error) {
-      console.error('Error rejecting application:', error);
-      return false;
-    }
+  const rejectApplication = (applicationId) => {
+    setApplications(prev => prev.map(app =>
+      app.id === applicationId ? { ...app, status: 'REJECTED' } : app
+    ));
+    return true;
   };
 
   // Get applications for a specific project

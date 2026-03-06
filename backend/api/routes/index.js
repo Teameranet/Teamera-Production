@@ -4,11 +4,8 @@ import contactController from "../controllers/contactController.js";
 import userController from "../controllers/userController.js";
 import dashboardController from "../controllers/dashboardController.js";
 import projectController from "../controllers/projectController.js";
-import applicationController from "../controllers/applicationController.js";
 import { logger } from "../../middleware/auth.js";
 import { validateRegistration } from "../../middleware/validation.js";
-import upload from "../../middleware/upload.js";
-import Notification from "../../models/Notification.js";
 
 const router = express.Router();
 
@@ -53,112 +50,6 @@ router.get("/projects/user/:userId", projectController.getUserProjects);
 router.put("/projects/:id/stage", projectController.updateProjectStage);
 router.post("/projects/:id/team", projectController.addTeamMember);
 router.delete("/projects/:id/team/:userId", projectController.removeTeamMember);
-
-// Application endpoints
-router.post("/applications", upload.single('resume'), applicationController.submitApplication);
-router.get("/applications/project/:projectId", applicationController.getProjectApplications);
-router.get("/applications/user/:userId", applicationController.getUserApplications);
-router.get("/applications/received/:userId", applicationController.getReceivedApplications);
-router.get("/applications/:applicationId", applicationController.getApplicationById);
-router.put("/applications/:applicationId/accept", applicationController.acceptApplication);
-router.put("/applications/:applicationId/reject", applicationController.rejectApplication);
-router.delete("/applications/:applicationId", applicationController.deleteApplication);
-
-// Notification endpoints
-router.get("/notifications/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const notifications = await Notification.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
-    
-    res.json({
-      success: true,
-      data: notifications
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching notifications',
-      error: error.message
-    });
-  }
-});
-
-router.put("/notifications/:notificationId/read", async (req, res) => {
-  try {
-    const { notificationId } = req.params;
-    const notification = await Notification.findByIdAndUpdate(
-      notificationId,
-      { read: true },
-      { new: true }
-    );
-    
-    if (!notification) {
-      return res.status(404).json({
-        success: false,
-        message: 'Notification not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      data: notification
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error updating notification',
-      error: error.message
-    });
-  }
-});
-
-router.put("/notifications/:userId/read-all", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    await Notification.updateMany(
-      { userId, read: false },
-      { read: true }
-    );
-    
-    res.json({
-      success: true,
-      message: 'All notifications marked as read'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error updating notifications',
-      error: error.message
-    });
-  }
-});
-
-router.delete("/notifications/:notificationId", async (req, res) => {
-  try {
-    const { notificationId } = req.params;
-    const notification = await Notification.findByIdAndDelete(notificationId);
-    
-    if (!notification) {
-      return res.status(404).json({
-        success: false,
-        message: 'Notification not found'
-      });
-    }
-    
-    res.json({
-      success: true,
-      message: 'Notification deleted'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting notification',
-      error: error.message
-    });
-  }
-});
 
 // API info endpoint
 router.get("/", (req, res) => {

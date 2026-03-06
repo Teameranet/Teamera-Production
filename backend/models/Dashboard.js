@@ -125,6 +125,6 @@ dashboardSchema.methods.updateStats = function() {
   ).length;
 };
 
-const Dashboard = mongoose.models.Dashboard || mongoose.model('Dashboard', dashboardSchema);
+const Dashboard = mongoose.model('Dashboard', dashboardSchema);
 
 export default Dashboard;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Users, MapPin, Calendar, IndianRupee, Upload, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
+import { useNotifications } from '../context/NotificationContext';
 import UserAvatar from './UserAvatar';
 import './ProjectModal.css';
 
@@ -16,6 +17,7 @@ function ProjectModal({ project, onClose }) {
   const [showToast, setShowToast] = useState(false);
   const { user } = useAuth();
   const { applyToProject } = useProjects();
+  const { addApplicationNotification } = useNotifications();
 
   // Function to create milestone data based on project stage
   // const getMilestonesByStage = (stage) => {
@@ -78,17 +80,18 @@ function ProjectModal({ project, onClose }) {
   //   });
   // };
 
-  const handleApplicationSubmit = async (e) => {
+  const handleApplicationSubmit = (e) => {
     e.preventDefault();
     if (!user || !selectedPosition) return;
 
-    const result = await applyToProject(project.id, {
+    applyToProject(project.id, {
       userId: user.id,
       applicantName: user.name,
       applicantAvatar: user.name ? user.name.charAt(0) : 'U',
       applicantColor: '#4f46e5',
       message: applicationData.message,
       resume: applicationData.resume,
+      resumeUrl: applicationData.resume ? URL.createObjectURL(applicationData.resume) : null,
       position: selectedPosition.role,
       projectName: project.title,
       skills: selectedPosition.skills || [],
@@ -104,22 +107,25 @@ function ProjectModal({ project, onClose }) {
       }
     });
 
-    if (result && result.success) {
-      // Show success toast notification
-      setShowToast(true);
-
-      // Hide toast and redirect after delay
-      setTimeout(() => {
-        setShowToast(false);
-        setShowApplicationForm(false);
-        setApplicationData({ message: '', resume: null });
-        setSelectedPosition(null);
-        onClose(); // Redirect back to projects
-      }, 2000);
+    // Add application notification for the project owner only
+    if (project.ownerId) {
+      console.log(`Sending notification to project owner ${project.ownerId} for project "${project.title}" from applicant "${user.name}"`);
+      addApplicationNotification(project.ownerId, project.title, user.name);
     } else {
-      // Show error message
-      alert(result?.error || 'Failed to submit application. Please try again.');
+      console.warn(`No ownerId found for project "${project.title}". Notification not sent.`);
     }
+
+    // Show toast notification
+    setShowToast(true);
+
+    // Hide toast and redirect after delay
+    setTimeout(() => {
+      setShowToast(false);
+      setShowApplicationForm(false);
+      setApplicationData({ message: '', resume: null });
+      setSelectedPosition(null);
+      onClose(); // Redirect back to projects
+    }, 2000);
   };
 
   const handlePositionSelect = (position) => {
