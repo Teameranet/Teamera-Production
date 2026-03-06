@@ -133,9 +133,13 @@ function ProfileModal({ user, onClose }) {
               {(() => {
                 // Use 'experiences' array from user object (backend field)
                 const experiences = Array.isArray(user.experiences) ? user.experiences : [];
-                return experiences.length > 0 ? (
+                // Filter out empty experience items
+                const validExperiences = experiences.filter(exp => 
+                  exp.title || exp.company || exp.period || exp.duration || exp.description
+                );
+                return validExperiences.length > 0 ? (
                 <div className="experience-list">
-                  {experiences.map((exp, index) => (
+                  {validExperiences.map((exp, index) => (
                     <div key={index} className="experience-item">
                       <h4>{exp.title}</h4>
                       <p className="company-name">{exp.company}</p>
@@ -161,9 +165,13 @@ function ProfileModal({ user, onClose }) {
               <h3>Education</h3>
               {(() => {
                 const education = Array.isArray(user.education) ? user.education : [];
-                return education.length > 0 ? (
+                // Filter out empty education items
+                const validEducation = education.filter(edu => 
+                  edu.degree || edu.institution || edu.duration || edu.period || edu.description || edu.details
+                );
+                return validEducation.length > 0 ? (
                 <div className="education-list">
-                  {education.map((edu, index) => (
+                  {validEducation.map((edu, index) => (
                     <div key={index} className="education-item">
                       <h4>{edu.degree}</h4>
                       <p className="institution-name">{edu.institution}</p>

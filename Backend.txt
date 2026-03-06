@@ -96,3 +96,9 @@ The Collaboration Space component was using cached project data from the Project
 Users can now reapply to a project if they:
 1. Were previously accepted but removed by the project owner
 2. Voluntarily left the project after being accepted
+
+Integrated the Backend & Database project Application
+- Update the Dashbord -> Application Management of Both User ( Rescive & Send ) Section with correct details
+- Show correct details on profilemodel 
+- User should able to apply the project project with (Uplode file )
+- The project Owner able to downloads uplode file & get application-message 
