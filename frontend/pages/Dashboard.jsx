@@ -20,7 +20,9 @@ function Dashboard() {
   const { 
     projects, 
     bookmarkedProjects, 
-    applications, 
+    applications,
+    applicationsLoading,
+    fetchApplications,
     acceptApplication, 
     rejectApplication, 
     getReceivedApplications, 
@@ -76,15 +78,38 @@ function Dashboard() {
     }
   }, [pendingCollabProjectId, projects]);
 
+  // Refresh applications when switching to applications tab
+  useEffect(() => {
+    if (activeTab === 'applications' && user) {
+      console.log('Applications tab active, refreshing data...');
+      fetchApplications();
+    }
+  }, [activeTab, user]);
+
   // Get applications for the current user
   const receivedApplications = user ? getReceivedApplications(user.id) : [];
   const sentApplications = user ? getSentApplications(user.id) : [];
+
+  // Debug logging
+  useEffect(() => {
+    if (user) {
+      console.log('Dashboard - Current User ID:', user.id);
+      console.log('Dashboard - Total Applications:', applications.length);
+      console.log('Dashboard - Received Applications:', receivedApplications.length);
+      console.log('Dashboard - Sent Applications:', sentApplications.length);
+      
+      if (applications.length > 0) {
+        console.log('Sample Application:', applications[0]);
+      }
+    }
+  }, [user, applications, receivedApplications.length, sentApplications.length]);
 
   // Filter applications based on the selected tab
   const filteredApplications = applicationTab === 'received' ? receivedApplications : sentApplications;
 
   // Get real application counts
-  const receivedApplicationsCount = receivedApplications.filter(app => app.status === 'PENDING').length;
+  //[only for pending ] const receivedApplicationsCount = receivedApplications.filter(app => app.status === 'PENDING').length;
+  const receivedApplicationsCount = receivedApplications.length;
   const sentApplicationsCount = sentApplications.length;
 
   // Get bookmarked projects
@@ -93,14 +118,17 @@ function Dashboard() {
   );
 
   // Function to handle accepting an application
-  const handleAcceptApplication = (applicationId) => {
+  const handleAcceptApplication = async (applicationId) => {
     // Find the application
-    const application = applications.find(app => app.id === applicationId);
+    const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
     
-    if (!application) return;
+    if (!application) {
+      console.error('Application not found:', applicationId);
+      return;
+    }
     
     // Accept the application using context function
-    const success = acceptApplication(applicationId);
+    const success = await acceptApplication(applicationId);
     
     if (success) {
       // Send acceptance notification to the applicant
@@ -124,18 +152,32 @@ function Dashboard() {
       setTimeout(() => {
         setToast({ show: false, message: '', type: '' });
       }, 3000);
+    } else {
+      // Show error toast
+      setToast({
+        show: true,
+        message: 'Failed to accept application. Please try again.',
+        type: 'error'
+      });
+      
+      setTimeout(() => {
+        setToast({ show: false, message: '', type: '' });
+      }, 2000);
     }
   };
 
   // Function to handle rejecting an application
-  const handleRejectApplication = (applicationId) => {
+  const handleRejectApplication = async (applicationId) => {
     // Find the application
-    const application = applications.find(app => app.id === applicationId);
+    const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
     
-    if (!application) return;
+    if (!application) {
+      console.error('Application not found:', applicationId);
+      return;
+    }
     
     // Reject the application using context function
-    const success = rejectApplication(applicationId);
+    const success = await rejectApplication(applicationId);
     
     if (success) {
       // Send rejection notification to the applicant
@@ -156,21 +198,79 @@ function Dashboard() {
       setTimeout(() => {
         setToast({ show: false, message: '', type: '' });
       }, 2000);
+    } else {
+      // Show error toast
+      setToast({
+        show: true,
+        message: 'Failed to reject application. Please try again.',
+        type: 'error'
+      });
+      
+      setTimeout(() => {
+        setToast({ show: false, message: '', type: '' });
+      }, 2000);
     }
   };
 
   // Function to handle viewing an applicant's profile
-  const handleViewProfile = (applicantId) => {
-    console.log(`Viewing profile for ${applicantId}`);
-    // Find the selected user from applications
-    const application = applications.find(app => app.applicantId === applicantId);
-    if (application && application.userDetails) {
-      // If viewing from "Sent" section, show current user's profile
-      // If viewing from "Received" section, show applicant's profile
-      if (applicationTab === 'sent') {
-        setSelectedUser(user);
+  const handleViewProfile = async (applicantId) => {
+    console.log(`Viewing profile for applicantId:`, applicantId);
+    
+    // If viewing from "Sent" section, show current user's profile
+    if (applicationTab === 'sent') {
+      setSelectedUser(user);
+      return;
+    }
+    
+    // For "Received" section, fetch full user profile from backend
+    try {
+      // Show loading state
+      setSelectedUser({ loading: true });
+      
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      // Convert applicantId to string for comparison
+      const idToFetch = typeof applicantId === 'object' ? applicantId._id || applicantId.toString() : applicantId.toString();
+      
+      console.log('Fetching profile for ID:', idToFetch);
+      
+      const response = await fetch(`${apiBaseUrl}/api/users/${idToFetch}/profile`);
+      const result = await response.json();
+      
+      console.log('Fetched user profile result:', result);
+      
+      if (result.success && result.data) {
+        // Add id field if not present
+        const userData = {
+          ...result.data,
+          id: result.data._id || result.data.id
+        };
+        setSelectedUser(userData);
       } else {
+        console.error('Failed to fetch user profile:', result.message);
+        // Fallback to application userDetails if API fails
+        const application = applications.find(app => {
+          const appId = app.applicantId?._id || app.applicantId;
+          return appId?.toString() === idToFetch;
+        });
+        if (application && application.userDetails) {
+          setSelectedUser(application.userDetails);
+        } else {
+          setSelectedUser(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Fallback to application userDetails
+      const idToFetch = typeof applicantId === 'object' ? applicantId._id || applicantId.toString() : applicantId.toString();
+      const application = applications.find(app => {
+        const appId = app.applicantId?._id || app.applicantId;
+        return appId?.toString() === idToFetch;
+      });
+      if (application && application.userDetails) {
         setSelectedUser(application.userDetails);
+      } else {
+        setSelectedUser(null);
       }
     }
   };
@@ -309,7 +409,11 @@ function Dashboard() {
             </div>
             
             {/* Applications list */}
-            {filteredApplications.length > 0 ? (
+            {applicationsLoading ? (
+              <div className="empty-applications">
+                <p>Loading applications...</p>
+              </div>
+            ) : filteredApplications.length > 0 ? (
               <div className="applications-list">
                 {filteredApplications.map(application => (
                   <div key={application.id} className="application-item">
@@ -395,7 +499,16 @@ function Dashboard() {
               </div>
             ) : (
               <div className="empty-applications">
-                <p>No applications to display.</p>
+                <p>
+                  {applicationTab === 'received' 
+                    ? 'No applications received yet. Applications for your projects will appear here.' 
+                    : 'No applications sent yet. Apply to projects to see them here.'}
+                </p>
+                {applications.length === 0 && (
+                  <p style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+                    Total applications in database: {applications.length}
+                  </p>
+                )}
               </div>
             )}
           </div>

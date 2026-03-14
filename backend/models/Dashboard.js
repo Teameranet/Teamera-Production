@@ -7,6 +7,14 @@ const dashboardSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  userName: {
+    type: String,
+    required: false
+  },
+  userEmail: {
+    type: String,
+    required: false
+  },
   bookmarkedProjects: [{
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -23,6 +31,41 @@ const dashboardSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    // ========================================
+    // APPLICANT INFORMATION (User who applied)
+    // ========================================
+    applicantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    applicantName: {
+      type: String,
+      required: true
+    },
+    applicantEmail: {
+      type: String,
+      required: true
+    },
+    // ========================================
+    // PROJECT OWNER INFORMATION (Who created the project)
+    // ========================================
+    projectOwnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    projectOwnerName: {
+      type: String,
+      required: true
+    },
+    projectOwnerEmail: {
+      type: String,
+      required: true
+    },
+    // ========================================
+    // APPLICATION DETAILS
+    // ========================================
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Project',
@@ -33,15 +76,6 @@ const dashboardSchema = new mongoose.Schema({
       required: true
     },
     position: {
-      type: String,
-      required: true
-    },
-    applicantId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    applicantName: {
       type: String,
       required: true
     },

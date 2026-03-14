@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema({
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
+  },
   title: {
     type: String,
     required: [true, 'Project title is required'],
@@ -54,21 +59,6 @@ const projectSchema = new mongoose.Schema({
   applications: {
     type: Number,
     default: 0
-  },
-  ownerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['active', 'completed', 'archived'],
-    default: 'active'
-  },
-  visibility: {
-    type: String,
-    enum: ['public', 'private'],
-    default: 'public'
   }
 }, {
   timestamps: true

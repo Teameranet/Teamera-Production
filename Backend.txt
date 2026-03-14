@@ -109,4 +109,6 @@ Update the & show the correct Number in MongoDB
 
 - Recreate  the Mongoose schema for Dashboard with these fields : (as Per BACKEND_DATABASE_STRUCTURE.md) 
 
-implemented  the bookmark functionality add a function to load bookmarks from the DB  when the user logs in 
+- Implemented  the bookmark functionality add a function to load bookmarks from the DB  when the user logs in 
+
+-The bookmark functionality allows users to save/bookmark projects they're interested in. All bookmark data is stored in MongoDB within the `dashboards` collection.

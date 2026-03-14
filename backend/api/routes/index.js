@@ -37,19 +37,24 @@ router.get("/dashboard/:userId/bookmarks", dashboardController.getBookmarkedProj
 router.get("/dashboard/:userId/applications", dashboardController.getApplications);
 router.post("/dashboard/:userId/bookmarks", dashboardController.addBookmark);
 router.delete("/dashboard/:userId/bookmarks/:projectId", dashboardController.removeBookmark);
-router.post("/dashboard/:userId/applications", dashboardController.addApplication);
-router.put("/dashboard/:userId/applications/:applicationId", dashboardController.updateApplicationStatus);
+
+// Application endpoints
+router.post("/applications/submit", dashboardController.submitApplication);
+router.patch("/applications/:applicationId/status", dashboardController.updateApplicationStatus);
+router.delete("/applications/:applicationId/withdraw", dashboardController.withdrawApplication);
+router.get("/applications/project/:projectId", dashboardController.getProjectApplications);
 
 // Project endpoints
 router.get("/projects", projectController.getAllProjects);
-router.get("/projects/:id", projectController.getProjectById);
 router.post("/projects", projectController.createProject);
-router.put("/projects/:id", projectController.updateProject);
-router.delete("/projects/:id", projectController.deleteProject);
 router.get("/projects/user/:userId", projectController.getUserProjects);
+router.post("/projects/:id/apply", projectController.incrementApplicationCount);
 router.put("/projects/:id/stage", projectController.updateProjectStage);
 router.post("/projects/:id/team", projectController.addTeamMember);
 router.delete("/projects/:id/team/:userId", projectController.removeTeamMember);
+router.get("/projects/:id", projectController.getProjectById);
+router.put("/projects/:id", projectController.updateProject);
+router.delete("/projects/:id", projectController.deleteProject);
 
 // API info endpoint
 router.get("/", (req, res) => {
@@ -78,8 +83,12 @@ router.get("/", (req, res) => {
         getApplications: "GET /api/dashboard/:userId/applications",
         addBookmark: "POST /api/dashboard/:userId/bookmarks",
         removeBookmark: "DELETE /api/dashboard/:userId/bookmarks/:projectId",
-        addApplication: "POST /api/dashboard/:userId/applications",
-        updateApplicationStatus: "PUT /api/dashboard/:userId/applications/:applicationId",
+      },
+      applications: {
+        submit: "POST /api/applications/submit",
+        updateStatus: "PATCH /api/applications/:applicationId/status",
+        withdraw: "DELETE /api/applications/:applicationId/withdraw",
+        getProjectApplications: "GET /api/applications/project/:projectId",
       },
       projects: {
         getAll: "GET /api/projects",
@@ -88,6 +97,7 @@ router.get("/", (req, res) => {
         update: "PUT /api/projects/:id",
         delete: "DELETE /api/projects/:id",
         getUserProjects: "GET /api/projects/user/:userId",
+        apply: "POST /api/projects/:id/apply",
         updateStage: "PUT /api/projects/:id/stage",
         addTeamMember: "POST /api/projects/:id/team",
         removeTeamMember: "DELETE /api/projects/:id/team/:userId",

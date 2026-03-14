@@ -36,14 +36,22 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       // Format team members, excluding the founder
       const teamMembersWithoutFounder = projectToEdit.teamMembers
         .filter(member => member.role !== "Founder")
-        .map(member => ({
-          name: member.name,
-          position: member.role,
-          email: member.email || '',
-          id: member.id,
-          verified: true, // Existing members are already verified
-          tempId: member.id || `temp-${Date.now()}-${Math.random()}` // Use id or generate tempId
-        }));
+        .map(member => {
+          // Extract ID - handle cases where id might be an object (populated) or string
+          const memberId = typeof member.id === 'string' ? member.id : 
+                          typeof member._id === 'string' ? member._id :
+                          member.id?._id || member.id?.toString() || 
+                          member._id?.toString() || null;
+          
+          return {
+            name: member.name,
+            position: member.role,
+            email: member.email || '',
+            id: memberId,
+            verified: true, // Existing members are already verified
+            tempId: memberId || `temp-${Date.now()}-${Math.random()}` // Use id or generate tempId
+          };
+        });
       
       setFormData({
         title: projectToEdit.title || '',
@@ -200,6 +208,18 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       return;
     }
 
+    // Check if this is the project owner in edit mode
+    if (isEditMode && projectToEdit) {
+      const founder = projectToEdit.teamMembers.find(m => m.role === "Founder");
+      if (founder && founder.email && 
+          member.email.trim().toLowerCase() === founder.email.toLowerCase()) {
+        alert('This is the project owner. The owner is automatically included in the team.');
+        // Remove this team member entry
+        removeTeamMember(index);
+        return;
+      }
+    }
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/verify-email`, {
         method: 'POST',
@@ -212,6 +232,13 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        // Check if this user is the current logged-in user (for new projects)
+        if (!isEditMode && user && (data.data._id === user.id || data.data._id === user._id)) {
+          alert('You are the project owner and will be automatically added as the founder.');
+          removeTeamMember(index);
+          return;
+        }
+        
         // User found - update member with verified data
         setFormData(prev => ({
           ...prev,
@@ -270,7 +297,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
 
     // Process team members for submission
     const processedTeamMembers = formData.teamMembers
-      .filter(member => member.name.trim() !== '')
+      .filter(member => member.name.trim() !== '' && member.position && member.position.trim() !== '')
       .map(member => ({
         // Only include id if it's a valid MongoDB ObjectId (24 hex characters) or existing user ID
         ...(member.id && typeof member.id === 'string' && member.id.length === 24 ? { id: member.id } : {}),
@@ -288,10 +315,48 @@ function CreateProjectModal({ onClose, projectToEdit }) {
     if (isEditMode) {
       // When editing, use the correct project ID (could be id or _id)
       const projectId = projectToEdit.id || projectToEdit._id;
-      editProject(projectId, {
-        ...projectData,
-        teamMembers: processedTeamMembers,
-      });
+      
+      // Find the founder from the original project
+      const founder = projectToEdit.teamMembers.find(member => member.role === "Founder");
+      
+      if (founder) {
+        // Extract founder ID for comparison
+        const founderId = typeof founder.id === 'string' ? founder.id : 
+                         typeof founder._id === 'string' ? founder._id :
+                         founder.id?._id || founder.id?.toString() || 
+                         founder._id?.toString() || null;
+        
+        // Remove any duplicate founder entries from processedTeamMembers
+        const teamMembersWithoutFounder = processedTeamMembers.filter(member => {
+          // Filter out if this member is the founder (by ID or email)
+          const isDuplicateById = member.id && founderId && member.id === founderId;
+          const isDuplicateByEmail = member.email && founder.email && 
+                                     member.email.toLowerCase() === founder.email.toLowerCase();
+          return !isDuplicateById && !isDuplicateByEmail;
+        });
+        
+        // Add founder at the beginning
+        const teamMembersWithFounder = [
+          {
+            id: founderId,
+            name: founder.name,
+            role: "Founder",
+            email: founder.email || ''
+          },
+          ...teamMembersWithoutFounder
+        ];
+        
+        editProject(projectId, {
+          ...projectData,
+          teamMembers: teamMembersWithFounder,
+        });
+      } else {
+        // No founder found, just use processed members
+        editProject(projectId, {
+          ...projectData,
+          teamMembers: processedTeamMembers,
+        });
+      }
     } else {
       // For new projects, add the current user as a founder
       projectData.teamMembers = [
@@ -312,8 +377,9 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       case 1:
         return formData.openPositions.some(pos => pos.role.trim() !== '');
       case 2:
-        // All team members must be verified if any are added
-        return formData.teamMembers.length === 0 || formData.teamMembers.every(m => m.verified);
+        // All team members must be verified and have a position if any are added
+        return formData.teamMembers.length === 0 || 
+               formData.teamMembers.every(m => m.verified && m.position && m.position.trim() !== '');
       case 3:
         return formData.funding && formData.timeline;
       default:
@@ -551,8 +617,16 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                           type="text"
                           value={member.position}
                           onChange={(e) => handleTeamMemberChange(index, 'position', e.target.value)}
-                          placeholder="Position/Role"
+                          placeholder="Position/Role *"
+                          required
                         />
+                      </div>
+                    )}
+                    
+                    {member.verified && (!member.position || member.position.trim() === '') && (
+                      <div className="verification-warning">
+                        <AlertCircle size={14} />
+                        <span>Please enter a position/role for this member</span>
                       </div>
                     )}
                     

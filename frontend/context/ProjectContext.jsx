@@ -21,12 +21,83 @@ export const ProjectProvider = ({ children }) => {
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [applications, setApplications] = useState([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  
+  // Function to fetch applications (can be called anytime)
+  const fetchApplications = async () => {
+    try {
+      setApplicationsLoading(true);
+      // Get userId from localStorage
+      const savedUser = localStorage.getItem('teamera_user');
+      if (!savedUser) {
+        console.log('No user found in localStorage');
+        setApplicationsLoading(false);
+        return;
+      }
 
-  // Fetch all projects from backend
-  useEffect(() => {
-    const fetchProjects = async () => {
+      const user = JSON.parse(savedUser);
+      const userId = user.id || user._id;
+
+      if (!userId) {
+        console.log('No userId found');
+        setApplicationsLoading(false);
+        return;
+      }
+
+      console.log('Fetching applications for user:', userId);
+
+      // Fetch applications from MongoDB
+      const response = await fetch(`${apiBaseUrl}/api/dashboard/${userId}/applications`);
+      const result = await response.json();
+
+      console.log('Applications fetch result:', result);
+
+      if (result.success && result.data) {
+        // Transform backend applications to match frontend format
+        const transformedApplications = result.data.map(app => ({
+          id: app.applicationId,
+          applicationId: app.applicationId,
+          applicantId: app.applicantId?._id || app.applicantId,
+          applicantName: app.applicantName,
+          applicantEmail: app.applicantEmail,
+          applicantAvatar: app.applicantAvatar || 'U',
+          applicantColor: app.applicantColor || '#4f46e5',
+          position: app.position,
+          skills: app.skills || [],
+          projectId: app.projectId?._id || app.projectId,
+          projectName: app.projectName,
+          projectOwnerId: app.projectOwnerId?._id || app.projectOwnerId,
+          projectOwnerName: app.projectOwnerName,
+          projectOwnerEmail: app.projectOwnerEmail,
+          appliedDate: app.appliedDate,
+          status: app.status,
+          message: app.message || '',
+          hasResume: app.hasResume || false,
+          resumeUrl: app.resumeUrl || '',
+          userDetails: app.applicantId ? {
+            name: app.applicantName,
+            email: app.applicantEmail
+          } : null
+        }));
+
+        console.log('Transformed applications:', transformedApplications.length);
+        setApplications(transformedApplications);
+      } else {
+        console.log('No applications found or fetch failed');
+        setApplications([]);
+      }
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      setApplications([]);
+    } finally {
+      setApplicationsLoading(false);
+    }
+  };
+   // Fetch all projects from backend
+    useEffect(() => {
+      const fetchProjectsData = async () => {
       try {
         setLoading(true);
         const response = await fetch(`${apiBaseUrl}/api/projects`);
@@ -48,14 +119,52 @@ export const ProjectProvider = ({ children }) => {
       }
     };
 
-    fetchProjects();
-    setHackathons(sampleHackathons);
+    const fetchBookmarks = async () => {
+      try {
+        // Get userId from localStorage
+        const savedUser = localStorage.getItem('teamera_user');
+        if (!savedUser) return;
 
-    // Load bookmarked projects from localStorage
-    const savedBookmarks = localStorage.getItem('bookmarkedProjects');
-    if (savedBookmarks) {
-      setBookmarkedProjects(JSON.parse(savedBookmarks));
-    }
+        const user = JSON.parse(savedUser);
+        const userId = user.id || user._id;
+
+        if (!userId) return;
+
+        // Fetch bookmarks from MongoDB
+        const response = await fetch(`${apiBaseUrl}/api/dashboard/${userId}/bookmarks`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          // Extract project IDs from bookmarked projects
+          // Handle both populated (object) and non-populated (string) projectId
+          const bookmarkIds = result.data.map(bookmark => {
+            const projectId = bookmark.projectId;
+            // If projectId is an object (populated), get its _id
+            if (projectId && typeof projectId === 'object') {
+              return projectId._id || projectId.id;
+            }
+            // If projectId is a string, use it directly
+            return projectId;
+          }).filter(Boolean).map(id => id.toString());
+
+          setBookmarkedProjects(bookmarkIds);
+          // Also update localStorage for offline access
+          localStorage.setItem('bookmarkedProjects', JSON.stringify(bookmarkIds));
+        }
+      } catch (error) {
+        console.error('Error fetching bookmarks:', error);
+        // Fallback to localStorage if API fails
+        const savedBookmarks = localStorage.getItem('bookmarkedProjects');
+        if (savedBookmarks) {
+          setBookmarkedProjects(JSON.parse(savedBookmarks));
+        }
+      }
+    };
+
+    fetchProjectsData();
+    fetchBookmarks();
+    fetchApplications(); // Call the function defined above
+    setHackathons(sampleHackathons);
   }, []);
 
   const createProject = async (projectData) => {
@@ -132,13 +241,56 @@ export const ProjectProvider = ({ children }) => {
       };
 
       // Ensure the founder remains in the team members list
-      if (updatedData.teamMembers && updatedData.teamMembers.length > 0) {
-        const founderIndex = updatedData.teamMembers.findIndex(
-          member => founder && member.id === founder.id
-        );
+      if (founder) {
+        // Extract founder ID for comparison
+        const founderId = typeof founder.id === 'string' ? founder.id : 
+                         typeof founder._id === 'string' ? founder._id :
+                         founder.id?._id || founder.id?.toString() || 
+                         founder._id?.toString() || null;
+        
+        // Check if founder is already in the team members (by ID or email)
+        const founderExists = updatedData.teamMembers?.some(member => {
+          const memberId = typeof member.id === 'string' ? member.id : 
+                          typeof member._id === 'string' ? member._id :
+                          member.id?._id || member.id?.toString() || 
+                          member._id?.toString() || null;
+          
+          const isSameById = memberId && founderId && memberId === founderId;
+          const isSameByEmail = member.email && founder.email && 
+                               member.email.toLowerCase() === founder.email.toLowerCase();
+          const isSameByRole = member.role === "Founder";
+          
+          return isSameById || isSameByEmail || isSameByRole;
+        }) ?? false;
 
-        if (founderIndex === -1 && founder) {
-          updatedData.teamMembers = [founder, ...updatedData.teamMembers];
+        if (!founderExists) {
+          // Add founder to the beginning of the team members array with properly extracted ID
+          updatedData.teamMembers = [
+            {
+              id: founderId,
+              name: founder.name,
+              role: "Founder",
+              email: founder.email || ''
+            },
+            ...(updatedData.teamMembers || [])
+          ];
+        }
+        
+        // Final deduplication: Remove any duplicate founders by role
+        const founderCount = updatedData.teamMembers.filter(m => m.role === "Founder").length;
+        if (founderCount > 1) {
+          console.warn('Multiple founders detected, removing duplicates');
+          let founderAdded = false;
+          updatedData.teamMembers = updatedData.teamMembers.filter(member => {
+            if (member.role === "Founder") {
+              if (!founderAdded) {
+                founderAdded = true;
+                return true; // Keep the first founder
+              }
+              return false; // Remove subsequent founders
+            }
+            return true; // Keep non-founder members
+          });
         }
       }
 
@@ -244,35 +396,99 @@ export const ProjectProvider = ({ children }) => {
     }
   };
 
-  const applyToProject = (projectId, applicationData) => {
-    // Create a new application
-    const newApplication = {
-      id: Date.now().toString(),
-      applicantId: applicationData.userId,
-      applicantName: applicationData.applicantName || 'Unknown User',
-      applicantAvatar: applicationData.applicantAvatar || 'U',
-      applicantColor: applicationData.applicantColor || '#4f46e5',
-      position: applicationData.position,
-      skills: applicationData.skills || [],
-      projectId: projectId,
-      projectName: applicationData.projectName || 'Unknown Project',
-      appliedDate: new Date().toISOString().split('T')[0],
-      status: 'PENDING',
-      message: applicationData.message || '',
-      hasResume: !!applicationData.resume,
-      resumeUrl: applicationData.resumeUrl || null,
-      userDetails: applicationData.userDetails || null
-    };
+  const applyToProject = async (projectId, applicationData) => {
+    try {
+      // Get user from localStorage
+      const savedUser = localStorage.getItem('teamera_user');
+      if (!savedUser) {
+        console.error('User not logged in');
+        return false;
+      }
 
-    // Add application to the applications list
-    setApplications(prev => [...prev, newApplication]);
+      const user = JSON.parse(savedUser);
+      const userId = user.id || user._id;
 
-    // Update project application count
-    setProjects(prev => prev.map(project =>
-      project.id === projectId
-        ? { ...project, applications: project.applications + 1 }
-        : project
-    ));
+      // Find the project
+      const project = projects.find(p => (p.id === projectId || p._id === projectId));
+      if (!project) {
+        console.error('Project not found');
+        return false;
+      }
+
+      // Prepare application payload for backend
+      const payload = {
+        projectId: projectId,
+        projectName: project.title,
+        position: applicationData.position,
+        applicantId: userId,
+        applicantName: user.name,
+        applicantEmail: user.email,
+        projectOwnerId: project.ownerId || project.ownerId?._id,
+        projectOwnerName: project.teamMembers?.find(m => m.role === 'Founder')?.name || 'Project Owner',
+        projectOwnerEmail: project.teamMembers?.find(m => m.role === 'Founder')?.email || '',
+        message: applicationData.message || '',
+        skills: applicationData.skills || [],
+        hasResume: !!applicationData.resumeUrl,
+        resumeUrl: applicationData.resumeUrl || ''
+      };
+
+      // Submit application to backend
+      const response = await fetch(`${apiBaseUrl}/api/applications/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Create local application object for immediate UI update
+        const newApplication = {
+          id: result.data.applicationId,
+          applicationId: result.data.applicationId,
+          applicantId: userId,
+          applicantName: user.name,
+          applicantAvatar: user.avatar || 'U',
+          applicantColor: applicationData.applicantColor || '#4f46e5',
+          position: applicationData.position,
+          skills: applicationData.skills || [],
+          projectId: projectId,
+          projectName: project.title,
+          appliedDate: result.data.appliedDate,
+          status: result.data.status,
+          message: applicationData.message || '',
+          hasResume: !!applicationData.resumeUrl,
+          resumeUrl: applicationData.resumeUrl || '',
+          userDetails: {
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar,
+            bio: user.bio,
+            skills: user.skills
+          }
+        };
+
+        // Add application to local state
+        setApplications(prev => [...prev, newApplication]);
+
+        // Update project application count
+        setProjects(prev => prev.map(p =>
+          (p.id === projectId || p._id === projectId)
+            ? { ...p, applications: (p.applications || 0) + 1 }
+            : p
+        ));
+
+        return true;
+      } else {
+        console.error('Failed to submit application:', result.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error applying to project:', error);
+      return false;
+    }
   };
 
   // Add a user to a project's team members
@@ -331,41 +547,124 @@ export const ProjectProvider = ({ children }) => {
   };
 
   // Accept an application
-  const acceptApplication = (applicationId) => {
-    const application = applications.find(app => app.id === applicationId);
-    if (!application) return false;
+  const acceptApplication = async (applicationId) => {
+    try {
+      const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
+      if (!application) {
+        console.error('Application not found:', applicationId);
+        return false;
+      }
 
-    console.log('Accepting application:', applicationId, 'for project:', application.projectId);
-    console.log('Adding user:', application.applicantName, 'with position:', application.position);
+      // Get current user
+      const savedUser = localStorage.getItem('teamera_user');
+      if (!savedUser) return false;
 
-    // Update application status
-    setApplications(prev => prev.map(app =>
-      app.id === applicationId ? { ...app, status: 'ACCEPTED' } : app
-    ));
+      const user = JSON.parse(savedUser);
+      const userId = user.id || user._id;
 
-    // Add user to project team with position name and color
-    const userData = {
-      id: application.applicantId,
-      name: application.applicantName,
-      role: application.position, // This will be the position name (e.g., "Frontend Developer")
-      avatar: application.applicantAvatar,
-      applicantColor: application.applicantColor || '#4f46e5',
-      email: application.userDetails?.email || undefined
-    };
+      console.log('Accepting application:', application.applicationId);
 
-    console.log('User data to add:', userData);
-    const result = addUserToProject(application.projectId, userData);
-    console.log('Add user result:', result);
-    
-    return result;
+      // Update application status in backend
+      const response = await fetch(`${apiBaseUrl}/api/applications/${application.applicationId || applicationId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'ACCEPTED',
+          reviewerId: userId
+        })
+      });
+
+      const result = await response.json();
+      console.log('Accept application result:', result);
+
+      if (result.success) {
+        // Update local application status
+        setApplications(prev => prev.map(app =>
+          (app.id === applicationId || app.applicationId === applicationId)
+            ? { ...app, status: 'ACCEPTED' }
+            : app
+        ));
+
+        // Refresh project to get updated team
+        const projectResponse = await fetch(`${apiBaseUrl}/api/projects/${application.projectId}`);
+        const projectResult = await projectResponse.json();
+
+        if (projectResult.success && projectResult.data) {
+          const updatedProject = {
+            ...projectResult.data,
+            id: projectResult.data._id || projectResult.data.id
+          };
+
+          setProjects(prev => prev.map(p =>
+            (p.id === application.projectId || p._id === application.projectId)
+              ? updatedProject
+              : p
+          ));
+        }
+
+        return true;
+      } else {
+        console.error('Failed to accept application:', result.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error accepting application:', error);
+      return false;
+    }
   };
 
   // Reject an application
-  const rejectApplication = (applicationId) => {
-    setApplications(prev => prev.map(app =>
-      app.id === applicationId ? { ...app, status: 'REJECTED' } : app
-    ));
-    return true;
+  const rejectApplication = async (applicationId) => {
+    try {
+      const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
+      if (!application) {
+        console.error('Application not found:', applicationId);
+        return false;
+      }
+
+      // Get current user
+      const savedUser = localStorage.getItem('teamera_user');
+      if (!savedUser) return false;
+
+      const user = JSON.parse(savedUser);
+      const userId = user.id || user._id;
+
+      console.log('Rejecting application:', application.applicationId);
+
+      // Update application status in backend
+      const response = await fetch(`${apiBaseUrl}/api/applications/${application.applicationId || applicationId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'REJECTED',
+          reviewerId: userId
+        })
+      });
+
+      const result = await response.json();
+      console.log('Reject application result:', result);
+
+      if (result.success) {
+        // Update local application status
+        setApplications(prev => prev.map(app =>
+          (app.id === applicationId || app.applicationId === applicationId)
+            ? { ...app, status: 'REJECTED' }
+            : app
+        ));
+
+        return true;
+      } else {
+        console.error('Failed to reject application:', result.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      return false;
+    }
   };
 
   // Get applications for a specific project
@@ -375,17 +674,35 @@ export const ProjectProvider = ({ children }) => {
 
   // Get applications received by a user (for their projects)
   const getReceivedApplications = (userId) => {
-    // Get projects owned by the user
-    const userProjects = userProjectMap[userId] || { ownedProjects: [], participatingProjects: [] };
-    const ownedProjectIds = userProjects.ownedProjects;
-
-    // Return applications for projects owned by the user
-    return applications.filter(app => ownedProjectIds.includes(app.projectId));
+    if (!userId) return [];
+    
+    // Filter applications where the current user is the project owner
+    return applications.filter(app => {
+      // Check if current user is the project owner
+      const isOwner = app.projectOwnerId && 
+        (app.projectOwnerId === userId || 
+         app.projectOwnerId.toString() === userId.toString() ||
+         app.projectOwnerId._id === userId ||
+         app.projectOwnerId._id?.toString() === userId.toString());
+      
+      return isOwner;
+    });
   };
 
   // Get applications sent by a user
   const getSentApplications = (userId) => {
-    return applications.filter(app => app.applicantId === userId);
+    if (!userId) return [];
+    
+    return applications.filter(app => {
+      // Check if current user is the applicant
+      const isApplicant = app.applicantId && 
+        (app.applicantId === userId || 
+         app.applicantId.toString() === userId.toString() ||
+         app.applicantId._id === userId ||
+         app.applicantId._id?.toString() === userId.toString());
+      
+      return isApplicant;
+    });
   };
 
   // Get projects for a specific user
@@ -435,21 +752,71 @@ export const ProjectProvider = ({ children }) => {
   };
 
   // Function to toggle bookmark status for a project
-  const toggleBookmark = (projectId) => {
-    setBookmarkedProjects(prevBookmarks => {
-      let newBookmarks;
-      if (prevBookmarks.includes(projectId)) {
-        // Remove bookmark
-        newBookmarks = prevBookmarks.filter(id => id !== projectId);
-      } else {
-        // Add bookmark
-        newBookmarks = [...prevBookmarks, projectId];
+  const toggleBookmark = async (projectId, userId) => {
+    // Get userId from localStorage if not provided
+    const currentUserId = userId || (() => {
+      const savedUser = localStorage.getItem('teamera_user');
+      if (savedUser) {
+        const user = JSON.parse(savedUser);
+        return user.id || user._id;
       }
+      return null;
+    })();
 
-      // Save to localStorage
-      localStorage.setItem('bookmarkedProjects', JSON.stringify(newBookmarks));
-      return newBookmarks;
-    });
+    if (!currentUserId) {
+      console.error('User not logged in');
+      return;
+    }
+
+    const isCurrentlyBookmarked = bookmarkedProjects.includes(projectId);
+
+    try {
+      if (isCurrentlyBookmarked) {
+        // Remove bookmark from backend
+        const response = await fetch(`${apiBaseUrl}/api/dashboard/${currentUserId}/bookmarks/${projectId}`, {
+          method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update local state
+          setBookmarkedProjects(prevBookmarks => {
+            const newBookmarks = prevBookmarks.filter(id => id !== projectId);
+            localStorage.setItem('bookmarkedProjects', JSON.stringify(newBookmarks));
+            return newBookmarks;
+          });
+          console.log('Bookmark removed successfully');
+        } else {
+          console.error('Failed to remove bookmark:', result.message);
+        }
+      } else {
+        // Add bookmark to backend
+        const response = await fetch(`${apiBaseUrl}/api/dashboard/${currentUserId}/bookmarks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ projectId })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update local state
+          setBookmarkedProjects(prevBookmarks => {
+            const newBookmarks = [...prevBookmarks, projectId];
+            localStorage.setItem('bookmarkedProjects', JSON.stringify(newBookmarks));
+            return newBookmarks;
+          });
+          console.log('Bookmark added successfully');
+        } else {
+          console.error('Failed to add bookmark:', result.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
   };
 
   // Function to check if a project is bookmarked
@@ -460,41 +827,65 @@ export const ProjectProvider = ({ children }) => {
   // Leave a project the user is participating in
   const leaveProject = async (projectId, userId) => {
     try {
+      // Ensure we have valid IDs
+      const cleanProjectId = projectId?._id || projectId;
+      const cleanUserId = userId?._id || userId;
+
+      console.log('leaveProject called with:', { projectId: cleanProjectId, userId: cleanUserId });
+
       // Find the project
-      const project = projects.find(p => p.id === projectId || p._id === projectId);
-      if (!project) return false;
+      const project = projects.find(p => (p.id === cleanProjectId || p._id === cleanProjectId));
+      if (!project) {
+        console.error('Project not found in local state');
+        return false;
+      }
 
       // Check if user is the owner
-      const isOwner = project.ownerId === userId || project.ownerId?._id === userId || project.ownerId?.toString() === userId;
-      if (isOwner) return false;
+      const projectOwnerId = project.ownerId?._id || project.ownerId;
+      const isOwner = projectOwnerId === cleanUserId || projectOwnerId?.toString() === cleanUserId?.toString();
+      if (isOwner) {
+        console.error('Cannot leave project: User is the owner');
+        return false;
+      }
 
-      const response = await fetch(`${apiBaseUrl}/api/projects/${projectId}/team/${userId}`, {
-        method: 'DELETE'
+      console.log('Making API call to remove team member...');
+      const response = await fetch(`${apiBaseUrl}/api/projects/${cleanProjectId}/team/${cleanUserId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
       const result = await response.json();
+      console.log('API response:', result);
 
       if (result.success) {
-        // Update local state
-        setProjects(prev => prev.map(p =>
-          (p.id === projectId || p._id === projectId)
-            ? {
-                ...p,
-                teamMembers: p.teamMembers.filter(member =>
-                  member.id !== userId && member.id?._id !== userId && member.id?.toString() !== userId
-                )
-              }
-            : p
-        ));
+        console.log('Successfully removed from backend, updating local state...');
+        
+        // Update local state - filter out the user from team members
+        setProjects(prev => prev.map(p => {
+          if (p.id === cleanProjectId || p._id === cleanProjectId) {
+            const updatedTeamMembers = p.teamMembers.filter(member => {
+              const memberId = member.id?._id || member.id;
+              return memberId?.toString() !== cleanUserId?.toString();
+            });
+            console.log('Updated team members count:', updatedTeamMembers.length, 'from', p.teamMembers.length);
+            return {
+              ...p,
+              teamMembers: updatedTeamMembers
+            };
+          }
+          return p;
+        }));
 
         // Update user project mapping
         setUserProjectMap(prev => {
           const updatedUserProjects = { ...prev };
-          if (updatedUserProjects[userId]) {
-            updatedUserProjects[userId] = {
-              ...updatedUserProjects[userId],
-              participatingProjects: updatedUserProjects[userId].participatingProjects.filter(
-                id => id.toString() !== projectId.toString()
+          if (updatedUserProjects[cleanUserId]) {
+            updatedUserProjects[cleanUserId] = {
+              ...updatedUserProjects[cleanUserId],
+              participatingProjects: updatedUserProjects[cleanUserId].participatingProjects.filter(
+                id => id.toString() !== cleanProjectId.toString()
               )
             };
           }
@@ -503,7 +894,7 @@ export const ProjectProvider = ({ children }) => {
 
         return true;
       } else {
-        console.error('Failed to leave project:', result.message);
+        console.error('Failed to leave project:', result.message || result.error);
         return false;
       }
     } catch (error) {
@@ -517,6 +908,8 @@ export const ProjectProvider = ({ children }) => {
     hackathons,
     loading,
     applications,
+    applicationsLoading,
+    fetchApplications,
     createProject,
     editProject,
     deleteProject,

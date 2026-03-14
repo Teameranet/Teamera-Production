@@ -235,12 +235,30 @@ function CollaborationSpace({ onClose, activeProject = null, defaultTab = 'chat'
     try {
       // Get user ID from the project's team members
       const currentMember = selectedProject.teamMembers.find(member => member.name === user.name);
-      const userId = currentMember?.id || user.id;
+      
+      // Extract the actual ID string, handling both ObjectId objects and strings
+      let userId = null;
+      if (currentMember?.id) {
+        // If id is an object with _id property (populated reference)
+        if (typeof currentMember.id === 'object' && currentMember.id._id) {
+          userId = currentMember.id._id;
+        } else {
+          // If id is already a string
+          userId = currentMember.id;
+        }
+      } else if (user.id) {
+        userId = user.id;
+      } else if (user._id) {
+        userId = user._id;
+      }
 
       if (!userId) {
+        console.error('Unable to determine user ID', { currentMember, user });
         alert('Unable to determine user ID. Please try again.');
         return;
       }
+
+      console.log('Leaving project with userId:', userId, 'projectId:', selectedProject.id || selectedProject._id);
 
       // Call the leaveProject function from ProjectContext
       const success = await leaveProject(selectedProject.id || selectedProject._id, userId);

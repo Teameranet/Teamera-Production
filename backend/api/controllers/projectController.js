@@ -221,6 +221,8 @@ const projectController = {
   removeTeamMember: asyncHandler(async (req, res) => {
     const { id, userId } = req.params;
 
+    console.log('Removing team member - ProjectId:', id, 'UserId:', userId);
+
     const project = await Project.findById(id);
 
     if (!project) {
@@ -230,19 +232,67 @@ const projectController = {
     }
 
     // Don't allow removing the owner
-    if (project.ownerId.toString() === userId) {
+    if (project.ownerId && project.ownerId.toString() === userId) {
       return res
         .status(400)
         .json(errorResponse('Cannot remove project owner', 'CANNOT_REMOVE_OWNER'));
     }
 
-    project.teamMembers = project.teamMembers.filter(
-      member => member.id.toString() !== userId
-    );
+    // Log before filtering
+    console.log('Team members before removal:', project.teamMembers.length);
+    console.log('Team member IDs:', project.teamMembers.map(m => ({ id: m.id?.toString(), name: m.name })));
+
+    // Filter out the team member - handle both ObjectId and string comparisons
+    const initialLength = project.teamMembers.length;
+    project.teamMembers = project.teamMembers.filter(member => {
+      const memberId = member.id ? member.id.toString() : null;
+      const shouldKeep = memberId !== userId;
+      if (!shouldKeep) {
+        console.log('Removing member:', member.name, 'with ID:', memberId);
+      }
+      return shouldKeep;
+    });
+
+    // Log after filtering
+    console.log('Team members after removal:', project.teamMembers.length);
+
+    // Check if any member was actually removed
+    if (initialLength === project.teamMembers.length) {
+      console.log('Warning: No team member was removed. User might not be in the team.');
+      return res
+        .status(404)
+        .json(errorResponse('User is not a team member of this project', 'USER_NOT_FOUND'));
+    }
 
     await project.save();
+    console.log('Project saved successfully');
 
     const response = successResponse(project, 'Team member removed successfully');
+    res.json(response);
+  }),
+
+  // Increment application count
+  incrementApplicationCount: asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const project = await Project.findByIdAndUpdate(
+      id,
+      { $inc: { applications: 1 } },
+      { new: true }
+    )
+      .populate('ownerId', 'name email')
+      .populate('teamMembers.id', 'name email');
+
+    if (!project) {
+      return res
+        .status(404)
+        .json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
+    }
+
+    const response = successResponse(
+      { applications: project.applications },
+      'Application count incremented successfully'
+    );
     res.json(response);
   })
 };
