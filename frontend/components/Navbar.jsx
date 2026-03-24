@@ -68,6 +68,14 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
               Hackathons
             </Link>
           </li>
+          <li className="nav-item">
+            <Link 
+              to="/community" 
+              className={`nav-link ${location.pathname === '/community' ? 'active' : ''}`}
+            >
+              Community
+            </Link>
+          </li>
         </ul>
 
         {/* Desktop User Actions (right side) */}
@@ -122,7 +130,7 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
                     {/* Messages/Collaboration */}
                     <button onClick={onCollaborationClick} className="dropdown-item">
                       <MessageCircle size={16} />
-                      Messages
+                      My Workspace
                     </button>
 
                     {/* Settings Link */}
@@ -189,6 +197,15 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
                   onClick={() => setShowMobileMenu(false)}
                 >
                   Hackathons
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/community" 
+                  className={location.pathname === '/community' ? 'active' : ''}
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Community
                 </Link>
               </li>
             </ul>
