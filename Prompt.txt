@@ -438,3 +438,24 @@ All four tabs are in separate files with their own CSS:
 - Fix all Security Advisor Warning messages
 - Ensure every function is tested in browser console before marking complete
 - No demo user code (User 1 & User 2) — comment out end-to-end
+
+
+— Render "Projects I Own" sub-tab:
+
+- Each card has buttons: [Edit] [Delete] 
+
+[Change Stage] [Open Workspace]
+
+  - If Project is not create Show a "+ New Project" Button at the end that calls onCreateProject
+
+— Render "Projects I'm In" sub-tab:
+
+  - Show each participating project as a card
+
+  - Each card has buttons: [Open Workspace] [Leave Project]
+
+  - If Project is not Join Show "Join Project" Link at the redirect to Project Page
+-----------------------------------------------------------------------------
+On Projects I Own" sub-tab add the function "card-actions"
+
+Change Stage Button (with refresh icon) - Opens a dropdown to select a  project stage from dropdown 
