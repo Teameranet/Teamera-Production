@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { useState, useEffect, startTransition } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -13,12 +13,14 @@ import OnboardingModal from './components/OnboardingModal';
 import ProjectModal from './components/ProjectModal';
 import CreateProjectModal from './components/CreateProjectModal';
 import CollaborationSpace from './components/CollaborationSpace';
+import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ProjectProvider } from './context/ProjectContext';
 import { NotificationProvider } from './context/NotificationContext';
 import './styles/App.css';
 
-function App() {
+function AppContent() {
+  const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -48,11 +50,7 @@ function App() {
   };
 
   return (
-    <AuthProvider>
-      <ProjectProvider>
-        <NotificationProvider>
-          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <div className="app">
+    <div className="app">
             <Navbar 
               onAuthClick={() => handleModalState(setShowAuthModal, true)}
               onCreateProject={() => handleModalState(setShowCreateProject, true)}
@@ -69,8 +67,8 @@ function App() {
                   />
                 } />
                 <Route path="/hackathons" element={<Hackathons />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/community" element={<Community />} />
               </Routes>
             </main>
@@ -86,6 +84,9 @@ function App() {
                   // Skip onboarding for User-1 (demo user)
                   if (userData.id !== '1' && (!userData.bio || !userData.skills || userData.skills.length === 0)) {
                     handleModalState(setShowOnboarding, true);
+                  } else {
+                    // Redirect to dashboard after successful login
+                    navigate('/dashboard');
                   }
                 }}
               />
@@ -93,7 +94,11 @@ function App() {
 
             {showOnboarding && (
               <OnboardingModal 
-                onClose={() => handleModalState(setShowOnboarding, false)}
+                onClose={() => {
+                  handleModalState(setShowOnboarding, false);
+                  // Redirect to dashboard after onboarding
+                  navigate('/dashboard');
+                }}
               />
             )}
 
@@ -117,7 +122,17 @@ function App() {
               />
             )}
           </div>
-        </Router>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <ProjectProvider>
+        <NotificationProvider>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AppContent />
+          </Router>
         </NotificationProvider>
       </ProjectProvider>
     </AuthProvider>
