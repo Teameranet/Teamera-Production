@@ -216,11 +216,12 @@ Step 4 — Get user projects from ProjectContext:
 Step 5 — Render "Projects I Own" sub-tab:
   - Show each owned project as a card
   - Each card has buttons: [Edit] [Delete] [Change Stage] [Open Workspace]
-  - Include a "+ New Project" card at the end that calls onCreateProject
+  - If Project is not exist show a "+ New Project" Button at the end that calls onCreateProject
 
 Step 6 — Render "Projects I'm In" sub-tab:
   - Show each participating project as a card
   - Each card has buttons: [Open Workspace] [Leave Project]
+  - If Project is not Join Show "Join Project" Link at the redirect to Project Page
 
 Step 7 — Move the existing Bookmarks tab to second position (not default).
 Step 8 — Keep Applications tab as third position.
