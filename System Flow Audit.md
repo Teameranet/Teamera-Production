@@ -1,4 +1,5 @@
 # Teamera.net — End-to-End Flow Audit & Fix Guide
+
 > Perspective: UI/UX Designer + System Architect
 > App: Teamera.net — Team-building & startup collaboration platform
 > Stack: React 18 + Context API (frontend) | Express + MongoDB (backend)
@@ -23,27 +24,30 @@ The application was built feature-by-feature without a unified information archi
 This caused three systemic root failures that cascade into 20+ surface-level bugs:
 
 ### ROOT CAUSE A — No Single Source of Truth for "Where Does Each Feature Live?"
+
 Management actions (Edit, Delete, Stage, Leave) appear on both the Profile page and the Projects
 discovery page. The Dashboard is missing its primary section (My Projects). The result: users
 cannot find where to manage their work, and the same action exists in 3 wrong places.
 
 ### ROOT CAUSE B — No Route Protection + No Auth Guards on Actions
+
 /dashboard and /profile are publicly accessible with no redirect. Community posts, Hackathon
 registration, and Like/Comment actions fire for unauthenticated users. The backend has a full
 JWT authenticate() middleware that is never applied to any route.
 
 ### ROOT CAUSE C — Collaboration Data Is Not Shared
+
 The entire CollaborationSpace (Chat, Tasks, Files) stores data in localStorage only. This means
 team members each see their own isolated copy. The "collaboration" feature does not collaborate.
 This is the single most critical product failure in the system.
 
 ### SECONDARY ROOT CAUSES
+
 - Navbar is missing 3 items: Community link, "+ New Project" button (imported but never rendered), Dashboard in primary nav
 - Profile.jsx overwrites onboarding data on mount (re-fetches from backend before it is persisted)
-- NotificationContext stores JSX elements (<Users size={16}/>) in state — not serializable
+- NotificationContext stores JSX elements () in state — not serializable
 - 6 hardcoded sample projects in ProjectContext mix with real user data causing wrong permission logic
 - Duplicate files with spaces in names (Community - Copy.jsx) can break build tools
-
 
 ---
 
@@ -53,21 +57,23 @@ This is the single most critical product failure in the system.
 
 Every feature has exactly ONE correct home. This table is the law:
 
-| Feature                        | Dashboard                          | Profile Page              | Projects Page     | Notes                              |
-|--------------------------------|------------------------------------|---------------------------|-------------------|------------------------------------|
-| Projects You Own               | Full management (Edit/Delete/Stage/Workspace) | Read-only card + Open Workspace | REMOVE | Dual presence, different intent |
-| Projects You're In             | Leave + Open Workspace             | Read-only + Open Workspace | REMOVE           | Same — dual presence OK            |
-| Bookmarked Projects            | View + open ProjectModal           | NO                        | NO                | Operational, not portfolio         |
-| Create New Project             | "+ New Project" card in My Projects tab | NO                   | NO                | Action lives in Navbar + Dashboard |
-| Applications Received          | Applications tab → Received        | NO                        | NO                | Workflow only                      |
-| Applications Sent              | Applications tab → Sent            | NO                        | NO                | Workflow only                      |
-| Edit / Delete Project          | Dashboard → My Projects → Owned    | NO                        | NO                | Management = Dashboard only        |
-| Stage Change                   | Dashboard → My Projects → Owned    | NO                        | NO                | Management = Dashboard only        |
-| Open Collaboration Space       | My Projects card button            | Projects tab card button  | NO                | Both contexts valid                |
-| Bio / Skills / Experience      | NO                                 | Overview tab              | NO                | Identity only                      |
-| Privacy / Notification Settings| NO                                 | Settings tab (functional) | NO                | Account settings                   |
-| Community Feed                 | NO                                 | NO                        | NO                | Navbar → /community                |
-| Hackathons                     | NO (future: sidebar widget)        | NO                        | NO                | Navbar → /hackathons               |
+
+| Feature                         | Dashboard                                     | Profile Page                    | Projects Page | Notes                              |
+| ------------------------------- | --------------------------------------------- | ------------------------------- | ------------- | ---------------------------------- |
+| Projects You Own                | Full management (Edit/Delete/Stage/Workspace) | Read-only card + Open Workspace | REMOVE        | Dual presence, different intent    |
+| Projects You're In              | Leave + Open Workspace                        | Read-only + Open Workspace      | REMOVE        | Same — dual presence OK            |
+| Bookmarked Projects             | View + open ProjectModal                      | NO                              | NO            | Operational, not portfolio         |
+| Create New Project              | "+ New Project" card in My Projects tab       | NO                              | NO            | Action lives in Navbar + Dashboard |
+| Applications Received           | Applications tab → Received                   | NO                              | NO            | Workflow only                      |
+| Applications Sent               | Applications tab → Sent                       | NO                              | NO            | Workflow only                      |
+| Edit / Delete Project           | Dashboard → My Projects → Owned               | NO                              | NO            | Management = Dashboard only        |
+| Stage Change                    | Dashboard → My Projects → Owned               | NO                              | NO            | Management = Dashboard only        |
+| Open Collaboration Space        | My Projects card button                       | Projects tab card button        | NO            | Both contexts valid                |
+| Bio / Skills / Experience       | NO                                            | Overview tab                    | NO            | Identity only                      |
+| Privacy / Notification Settings | NO                                            | Settings tab (functional)       | NO            | Account settings                   |
+| Community Feed                  | NO                                            | NO                              | NO            | Navbar → /community                |
+| Hackathons                      | NO (future: sidebar widget)                   | NO                              | NO            | Navbar → /hackathons               |
+
 
 ### Backend Architecture — What Is Missing
 
@@ -76,6 +82,7 @@ NEVER applied to any route in backend/api/routes/index.js. Every write operation
 submit application, update profile, accept/reject) is publicly callable without a token.
 
 The backend also has no dedicated routes for:
+
 - Chat messages (stored only in localStorage)
 - Tasks (stored only in localStorage)
 - Files (stored only in localStorage)
@@ -88,17 +95,17 @@ shared workspace.
 AuthContext: Correct. Persists to localStorage. Single source of truth for user.
 ProjectContext: Polluted with 6 hardcoded sample projects. These mix with real data and cause
   wrong isOwner checks, wrong notification targets, and wrong application routing.
-NotificationContext: Stores JSX elements (icon: <Users size={16}/>) in state. JSX is not
+NotificationContext: Stores JSX elements (icon: ) in state. JSX is not
   serializable — cannot be persisted to backend or localStorage. Store icon type as a string key
   instead (e.g., iconType: 'users') and resolve to JSX at render time.
 CollaborationSpace: All data in localStorage. Must move to backend API.
-
 
 ---
 
 ## 3. CORRECT NAVIGATION
 
 ### Current Navbar (Logged In) — BROKEN
+
 ```
 [Logo]  [Home] [Projects] [Hackathons]                    [Bell] [Avatar]
                                                                   └── My Profile
@@ -106,10 +113,12 @@ CollaborationSpace: All data in localStorage. Must move to backend API.
                                                                   └── Messages
                                                                   └── Sign Out
 ```
+
 Problems: Community missing. "+ New Project" button never rendered. Dashboard only in dropdown.
 "Messages" label inconsistent with "Collaboration Space" in code.
 
 ### Correct Navbar (Logged In)
+
 ```
 [Logo]  [Home] [Projects] [Hackathons] [Community]   [+ New Project]  [Bell]  [Avatar]
                                                                                └── My Profile
@@ -120,6 +129,7 @@ Problems: Community missing. "+ New Project" button never rendered. Dashboard on
 ```
 
 ### Correct Navbar (Logged Out)
+
 ```
 [Logo]  [Home] [Projects] [Hackathons] [Community]                    [Join Teamera]
 ```
@@ -127,6 +137,7 @@ Problems: Community missing. "+ New Project" button never rendered. Dashboard on
 ### Fix Instructions for Navbar.jsx
 
 PROMPT — Fix Navbar Navigation:
+
 ```
 In frontend/components/Navbar.jsx, make these 4 changes:
 
@@ -157,6 +168,7 @@ In frontend/components/Navbar.jsx, make these 4 changes:
 ### Route Protection Fix
 
 PROMPT — Add Protected Routes:
+
 ```
 Create frontend/components/ProtectedRoute.jsx:
 
@@ -181,7 +193,6 @@ In AuthContext.jsx login() function, add:
 (import useNavigate from react-router-dom inside AuthContext or pass navigate as a callback)
 ```
 
-
 ---
 
 ## 4. CRITICAL FLOW FIXES
@@ -191,6 +202,7 @@ Each fix below is a self-contained human prompt. Execute in order.
 ---
 
 ### FIX-01 — Dashboard: Add "My Projects" Tab (CRITICAL — Core Feature Missing)
+
 File: frontend/pages/Dashboard.jsx, frontend/pages/Dashboard.css
 
 ```
@@ -230,6 +242,7 @@ Step 8 — Keep Applications tab as third position.
 ---
 
 ### FIX-02 — Dashboard: Fix Bookmarked Project Click (Opens Wrong Component)
+
 File: frontend/pages/Dashboard.jsx
 
 ```
@@ -253,6 +266,7 @@ Remove any code that opens CollaborationSpace from a bookmark card click.
 ---
 
 ### FIX-03 — Dashboard: Fix Accept Application Auto-Opening CollaborationSpace
+
 File: frontend/pages/Dashboard.jsx
 
 ```
@@ -273,6 +287,7 @@ The user must always choose when to open the workspace — never auto-open it.
 ---
 
 ### FIX-04 — Dashboard: Fix Invisible Toast Notifications
+
 File: frontend/pages/Dashboard.jsx, frontend/pages/Dashboard.css
 
 ```
@@ -296,6 +311,7 @@ padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 ---
 
 ### FIX-05 — Profile: Remove Management Controls (Profile = Read-Only Portfolio)
+
 File: frontend/pages/Profile.jsx
 
 ```
@@ -326,6 +342,7 @@ These management actions belong exclusively in Dashboard → My Projects tab.
 ---
 
 ### FIX-06 — Profile: Remove Hardcoded Fake Data
+
 File: frontend/pages/Profile.jsx
 
 ```
@@ -350,6 +367,7 @@ which is semantically wrong. Change the label to "Projects Joined" or calculate 
 ---
 
 ### FIX-07 — Profile: Fix Settings Tab (Non-Functional Buttons)
+
 File: frontend/pages/Profile.jsx
 
 ```
@@ -372,6 +390,7 @@ appear as broken UI. Dead buttons are worse than no buttons.
 ---
 
 ### FIX-08 — ProjectModal: Fix Apply Closing Entire Modal
+
 File: frontend/components/ProjectModal.jsx
 
 ```
@@ -392,6 +411,7 @@ Fix:
 ---
 
 ### FIX-09 — Projects Page: Remove Owner Management Controls from Discovery Page
+
 File: frontend/pages/Projects.jsx
 
 ```
@@ -414,6 +434,7 @@ Also fix the empty state visibility bug:
 ---
 
 ### FIX-10 — Community & Hackathons: Add Auth Guards
+
 File: frontend/pages/Community.jsx, frontend/pages/Hackathons.jsx
 
 ```
@@ -444,6 +465,7 @@ In App.jsx, update the routes:
 ---
 
 ### FIX-11 — Onboarding: Restore "Skip for Now" Button
+
 File: frontend/components/OnboardingModal.jsx
 
 ```
@@ -466,6 +488,7 @@ calling handleComplete() or making any API calls.
 ---
 
 ### FIX-12 — CollaborationSpace: Fix Member Filter (Fragile Name Matching)
+
 File: frontend/components/CollaborationSpace.jsx
 
 ```
@@ -490,6 +513,7 @@ Apply the same ID-based check to isAdmin.
 ---
 
 ### FIX-13 — CollaborationSpace: Fix Fixed Width Breaking Tablets
+
 File: frontend/components/CollaborationSpace.css
 
 ```
@@ -508,6 +532,7 @@ This allows the modal to shrink on tablet viewports (768px–900px) instead of o
 ---
 
 ### FIX-14 — NotificationContext: Fix Non-Serializable JSX in State
+
 File: frontend/context/NotificationContext.jsx
 
 ```
@@ -535,6 +560,7 @@ and move them to NotificationModal.jsx where they are actually rendered.
 ---
 
 ### FIX-15 — ProjectContext: Remove Hardcoded Sample Projects
+
 File: frontend/context/ProjectContext.jsx
 
 ```
@@ -557,6 +583,7 @@ If sample data is needed for development/demo, use a separate seed script in the
 ---
 
 ### FIX-16 — Backend: Apply JWT Auth Middleware to Protected Routes
+
 File: backend/api/routes/index.js
 
 ```
@@ -589,6 +616,7 @@ Also: In frontend API calls that hit protected routes, pass the JWT token in the
 ---
 
 ### FIX-17 — Collaboration Data: Move Chat/Tasks/Files to Backend
+
 File: backend/api/routes/index.js, backend/models/ (new files), frontend/components/tabs/
 
 ```
@@ -620,6 +648,7 @@ Step 4 — For real-time chat, consider adding Socket.io to the backend server.
 ---
 
 ### FIX-18 — Delete Duplicate/Copy Files
+
 File: frontend/pages/
 
 ```
@@ -633,7 +662,6 @@ Files with spaces in their names can break certain build tools and import resolv
 Verify no file imports these copy files before deleting.
 ```
 
-
 ---
 
 ## 5. SYSTEM DESIGN FIXES
@@ -641,6 +669,7 @@ Verify no file imports these copy files before deleting.
 ### Design Token Standardization
 
 PROMPT — Fix Visual Inconsistency (3 Blues, 3 Border Radii):
+
 ```
 In frontend/styles/App.css, add CSS custom properties at the :root level:
 
@@ -750,6 +779,7 @@ After replacement, verify in browser that all colors render correctly.
 ### Loading States
 
 PROMPT — Add Loading Skeletons:
+
 ```
 Create frontend/components/LoadingSkeleton.jsx:
 
@@ -788,6 +818,7 @@ while data is loading instead of showing blank screens.
 ### Accessibility Fixes
 
 PROMPT — Fix Modal Accessibility:
+
 ```
 Apply these changes to ALL modal components:
   AuthModal.jsx, OnboardingModal.jsx, ProjectModal.jsx, CreateProjectModal.jsx,
