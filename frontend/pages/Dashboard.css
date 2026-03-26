@@ -531,6 +531,13 @@
   color: #6b7280;
 }
 
+.applicant-location {
+  font-size: 0.85rem;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
 .application-details {
   display: flex;
   flex-direction: column;
@@ -615,7 +622,7 @@
   gap: 0.75rem;
 }
 
-.view-profile-btn, .message-btn, .resume-btn {
+.view-profile-btn, .view-project-btn, .message-btn, .resume-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -636,6 +643,15 @@
 
 .view-profile-btn:hover {
   background: #e5e7eb;
+}
+
+.view-project-btn {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.view-project-btn:hover {
+  background: #bfdbfe;
 }
 
 .message-btn {

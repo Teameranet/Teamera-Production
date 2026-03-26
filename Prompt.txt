@@ -438,3 +438,48 @@ All four tabs are in separate files with their own CSS:
 - Fix all Security Advisor Warning messages
 - Ensure every function is tested in browser console before marking complete
 - No demo user code (User 1 & User 2) — comment out end-to-end
+
+
+Step 5 — Render "Projects I Own" sub-tab:
+  - Show each owned project as a card
+  - Each card has "card-actions" buttons: [Change Stage (With Dropdown function)] [Edit] [Delete] [Shared] 
+
+  - If Project is not exist show a "+ New Project" Button at the end that calls onCreateProject
+
+— Render "Projects I'm In" sub-tab:
+
+  - Show each participating project as a card
+
+  - Each card has buttons: [Open Workspace] [Leave Project]
+
+  - If Project is not Join Show "Join Project" Link at the redirect to Project Page
+-----------------------------------------------------------------------------
+On Projects I Own" sub-tab add the function "card-actions"
+
+Change Stage Button (with refresh icon) - Opens a dropdown to select a  project stage from dropdown 
+---------------------------------------------------------------------------------------
+### ✅ Users CAN Re-apply When:
+- Previous application status: **REJECTED**
+- Previous application status: **WITHDRAWN**
+- Previous application status: **REMOVED** (when project owner removes them from team)
+
+### ❌ Users CANNOT Re-apply When:
+- Current application status: **PENDING** (already applied, waiting for review)
+- Current application status: **ACCEPTED** (already on the team)
+
+### Scenario 3: Duplicate Application (Blocked)
+1. User has PENDING application
+2. User tries to apply again
+3. Backend blocks with message: "You already have a pending application..."
+4. Error toast shown (red) → Form stays open
+5. User can close form or wait for review
+
+### Scenario 4: Already Accepted (Blocked)
+1. User is already on team (ACCEPTED)
+2. User tries to apply again
+3. Backend blocks with message: "You are already accepted..."
+4. Error toast shown (red) → Form stays open
+5. User realizes they're already a team member
+----------------------------------------------------------
+Received tab: Show applicant details (who applied to your project)
+Sent tab: Show project owner details (whose project you applied to)

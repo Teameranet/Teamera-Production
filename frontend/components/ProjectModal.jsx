@@ -15,6 +15,8 @@ function ProjectModal({ project, onClose }) {
     resume: null
   });
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success'); // 'success' or 'error'
   const { user } = useAuth();
   const { applyToProject } = useProjects();
   const { addApplicationNotification } = useNotifications();
@@ -80,11 +82,11 @@ function ProjectModal({ project, onClose }) {
   //   });
   // };
 
-  const handleApplicationSubmit = (e) => {
+  const handleApplicationSubmit = async (e) => {
     e.preventDefault();
     if (!user || !selectedPosition) return;
 
-    applyToProject(project.id, {
+    const result = await applyToProject(project.id, {
       userId: user.id,
       applicantName: user.name,
       applicantAvatar: user.name ? user.name.charAt(0) : 'U',
@@ -107,25 +109,39 @@ function ProjectModal({ project, onClose }) {
       }
     });
 
-    // Add application notification for the project owner only
-    if (project.ownerId) {
-      console.log(`Sending notification to project owner ${project.ownerId} for project "${project.title}" from applicant "${user.name}"`);
-      addApplicationNotification(project.ownerId, project.title, user.name);
+    if (result.success) {
+      // Add application notification for the project owner only
+      if (project.ownerId) {
+        console.log(`Sending notification to project owner ${project.ownerId} for project "${project.title}" from applicant "${user.name}"`);
+        addApplicationNotification(project.ownerId, project.title, user.name);
+      } else {
+        console.warn(`No ownerId found for project "${project.title}". Notification not sent.`);
+      }
+
+      // Show success toast notification
+      setToastMessage('Your application has been sent successfully!');
+      setToastType('success');
+      setShowToast(true);
+
+      // Hide toast and redirect after delay
+      setTimeout(() => {
+        setShowToast(false);
+        setShowApplicationForm(false);
+        setApplicationData({ message: '', resume: null });
+        setSelectedPosition(null);
+        onClose(); // Redirect back to projects
+      }, 2000);
     } else {
-      console.warn(`No ownerId found for project "${project.title}". Notification not sent.`);
+      // Show error toast notification
+      setToastMessage(result.message || 'Failed to submit application. Please try again.');
+      setToastType('error');
+      setShowToast(true);
+
+      // Hide toast after delay but keep form open
+      setTimeout(() => {
+        setShowToast(false);
+      }, 4000);
     }
-
-    // Show toast notification
-    setShowToast(true);
-
-    // Hide toast and redirect after delay
-    setTimeout(() => {
-      setShowToast(false);
-      setShowApplicationForm(false);
-      setApplicationData({ message: '', resume: null });
-      setSelectedPosition(null);
-      onClose(); // Redirect back to projects
-    }, 2000);
   };
 
   const handlePositionSelect = (position) => {
@@ -424,10 +440,10 @@ function ProjectModal({ project, onClose }) {
 
         {/* Toast notification */}
         {showToast && (
-          <div className="toast-notification">
+          <div className={`toast-notification ${toastType}`}>
             <div className="toast-content">
-              <div className="toast-icon">✓</div>
-              <div className="toast-message">Your application has been sent</div>
+              <div className="toast-icon">{toastType === 'success' ? '✓' : '✕'}</div>
+              <div className="toast-message">{toastMessage}</div>
             </div>
           </div>
         )}

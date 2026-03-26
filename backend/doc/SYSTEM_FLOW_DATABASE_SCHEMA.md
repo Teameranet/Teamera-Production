@@ -108,57 +108,319 @@ db.projects.createIndex({ industry: 1 })
 
 ---
 
-## Collection 3: `dashboards`
+## Collection 3: `applications`
 
 ### Purpose
-User-specific dashboard data including bookmarks, applications, and statistics.
+User-centric application management system where each user has one document containing all their sent and received applications.
 
 ### Schema Structure
 ```javascript
 {
   _id: ObjectId,
-  userId: ObjectId, // Reference to User (unique)
+  userId: ObjectId, // Reference to User (unique, indexed)
   userName: String,
   userEmail: String,
-  bookmarkedProjects: [{
-    projectId: ObjectId, // Reference to Project
-    bookmarkedAt: Date
-  }],
-  applications: [{
-    applicationId: String, // Unique application identifier
-   // ========================================
-   // APPLICANT INFORMATION (User who applied)
+  
   // ========================================
+  // APPLICATIONS RECEIVED (For Project Owners)
+  // ========================================
+  applications_received: [{
+    applicationId: String, // Unique application identifier
+    
+    // APPLICANT INFORMATION (User who applied)
     applicantId: ObjectId, // Reference to User
     applicantName: String,
     applicantEmail: String,
-  // ========================================
-  // PROJECT OWNER INFORMATION (Who created the project)
-  // ========================================
-    projectOwnerId: ObjectId,  // Reference to User
-    projectOwnerName: "String",
-    projectOwnerEmail: "String",
- // ========================================
- // APPLICATION DETAILS
- // ========================================
+    applicantAvatar: String,
+    applicantTitle: String,
+    applicantLocation: String,
+    
+    // PROJECT INFORMATION
     projectId: ObjectId, // Reference to Project
     projectName: String,
-    position: String,
-    message: String,
-    skills: [String],
-    status: String, // "PENDING", "ACCEPTED", "REJECTED"
+    projectStage: String,
+    
+    // APPLICATION DETAILS
+    position: String, // Role applied for
+    message: String, // Cover letter/application message
+    skills: [String], // Skills relevant to the position
+    status: String, // "PENDING", "ACCEPTED", "REJECTED", "REMOVED"
+    
+    // RESUME/ATTACHMENTS
     hasResume: Boolean,
     resumeUrl: String,
-    appliedDate: Date
+    resumeFileName: String,
+    attachments: [{
+      fileName: String,
+      fileUrl: String,
+      fileType: String,
+      fileSize: Number
+    }],
+    
+    // REVIEW INFORMATION
+    reviewNotes: String, // Notes from project owner
+    reviewedAt: Date,
+    reviewedBy: ObjectId, // Reference to User who reviewed
+    rating: Number, // Optional rating (1-5)
+    removedFromTeamAt: Date, // When member was removed from team (if status="REMOVED")
+    removalReason: String, // Reason for removal from team
+    
+    // TIMESTAMPS
+    appliedDate: Date,
+    statusUpdatedAt: Date
   }],
+  
+  // ========================================
+  // APPLICATIONS SENT (For Applicants)
+  // ========================================
+  applications_sent: [{
+    applicationId: String, // Unique application identifier (same as in received)
+    
+    // PROJECT OWNER INFORMATION (Who created the project)
+    projectOwnerId: ObjectId, // Reference to User
+    projectOwnerName: String,
+    projectOwnerEmail: String,
+    projectOwnerAvatar: String,
+    
+    // PROJECT INFORMATION
+    projectId: ObjectId, // Reference to Project
+    projectName: String,
+    projectStage: String,
+    projectIndustry: String,
+    
+    // APPLICATION DETAILS
+    position: String, // Role applied for
+    message: String, // Cover letter/application message
+    skills: [String], // Skills relevant to the position
+    status: String, // "PENDING", "ACCEPTED", "REJECTED", "WITHDRAWN", "REMOVED"
+    
+    // RESUME/ATTACHMENTS
+    hasResume: Boolean,
+    resumeUrl: String,
+    resumeFileName: String,
+    attachments: [{
+      fileName: String,
+      fileUrl: String,
+      fileType: String,
+      fileSize: Number
+    }],
+    
+    // REVIEW INFORMATION
+    reviewNotes: String, // Feedback from project owner
+    reviewedAt: Date,
+    reviewedBy: ObjectId, // Reference to User who reviewed
+    rejectionReason: String, // Reason for rejection (if applicable)
+    removedFromTeamAt: Date, // When member was removed from team (if status="REMOVED")
+    removalReason: String, // Reason for removal from team
+    
+    // TIMESTAMPS
+    appliedDate: Date,
+    statusUpdatedAt: Date,
+    withdrawnAt: Date // If user withdraws application
+  }],
+  
+  // ========================================
+  // STATISTICS
+  // ========================================
+  stats: {
+    // Received Statistics
+    totalReceived: Number,
+    pendingReceived: Number,
+    acceptedReceived: Number,
+    rejectedReceived: Number,
+    removedReceived: Number, // Members removed from team
+    
+    // Sent Statistics
+    totalSent: Number,
+    pendingSent: Number,
+    acceptedSent: Number,
+    rejectedSent: Number,
+    withdrawnSent: Number,
+    removedSent: Number // User was removed from team
+  },
+  
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Indexes
+```javascript
+db.applications.createIndex({ userId: 1 }, { unique: true })
+db.applications.createIndex({ "applications_received.applicationId": 1 })
+db.applications.createIndex({ "applications_received.status": 1 })
+db.applications.createIndex({ "applications_received.applicantId": 1 })
+db.applications.createIndex({ "applications_received.projectId": 1 })
+db.applications.createIndex({ "applications_sent.applicationId": 1 })
+db.applications.createIndex({ "applications_sent.status": 1 })
+db.applications.createIndex({ "applications_sent.projectId": 1 })
+db.applications.createIndex({ "applications_sent.projectOwnerId": 1 })
+```
+
+### Data Synchronization Rules
+
+**IMPORTANT:** When an application is submitted, it must be added to TWO user documents:
+
+1. **On Application Submission:**
+   - Add to `applications_sent` array in applicant's document
+   - Add to `applications_received` array in project owner's document
+   - Both entries share the same `applicationId`
+   - Update stats in both documents
+   - **Duplicate Check:** Only block if user has PENDING or ACCEPTED application for same project-position
+   - **Re-application Allowed:** Users can re-apply after REJECTED, WITHDRAWN, or REMOVED status
+
+2. **On Status Update:**
+   - Update status in applicant's `applications_sent` array
+   - Update status in project owner's `applications_received` array
+   - Update `statusUpdatedAt` timestamp in both
+   - Add review notes to both arrays
+   - Update stats in both documents
+
+3. **On Application Withdrawal:**
+   - Update status to "WITHDRAWN" in applicant's `applications_sent`
+   - Update status to "WITHDRAWN" in project owner's `applications_received`
+   - Set `withdrawnAt` timestamp in applicant's document
+   - Update stats in both documents
+   - **Re-application Allowed:** User can submit new application after withdrawal
+
+4. **On Application Rejection:**
+   - Update status to "REJECTED" in both `applications_sent` and `applications_received`
+   - Set `reviewedAt` timestamp and `reviewNotes` in both documents
+   - Update stats in both documents
+   - **Re-application Allowed:** User can submit new application after rejection
+   - Previous rejected application remains in history for reference
+
+5. **On Team Member Removal:**
+   - Find the accepted application for the removed member
+   - Update status to "REMOVED" in both `applications_sent` and `applications_received`
+   - Set `removedFromTeamAt` timestamp in both documents
+   - Add `removalReason` to both documents
+   - Update stats in both documents (increment removedReceived and removedSent)
+   - **Re-application Allowed:** User can submit new application after being removed
+   - This allows tracking of members who were accepted but later removed
+   - Removed members can reapply to rejoin the project
+
+### Query Patterns
+
+```javascript
+// Get all applications received by a project owner
+db.applications.findOne(
+  { userId: projectOwnerId },
+  { applications_received: 1, "stats.totalReceived": 1 }
+)
+
+// Get pending applications received
+db.applications.findOne(
+  { userId: projectOwnerId },
+  { 
+    applications_received: { 
+      $elemMatch: { status: "PENDING" } 
+    } 
+  }
+)
+
+// Get all applications sent by a user
+db.applications.findOne(
+  { userId: applicantId },
+  { applications_sent: 1, "stats.totalSent": 1 }
+)
+
+// Get specific application by applicationId (from sender's view)
+db.applications.findOne(
+  { 
+    userId: applicantId,
+    "applications_sent.applicationId": applicationId 
+  },
+  { 
+    "applications_sent.$": 1 
+  }
+)
+
+// Get specific application by applicationId (from receiver's view)
+db.applications.findOne(
+  { 
+    userId: projectOwnerId,
+    "applications_received.applicationId": applicationId 
+  },
+  { 
+    "applications_received.$": 1 
+  }
+)
+
+// Check for duplicate application - only block PENDING or ACCEPTED
+db.applications.findOne({
+  userId: applicantId,
+  "applications_sent": {
+    $elemMatch: {
+      projectId: projectId,
+      position: position,
+      status: { $in: ["PENDING", "ACCEPTED"] }
+    }
+  }
+})
+
+// Note: Users CAN re-apply if previous status was REJECTED, WITHDRAWN, or REMOVED
+
+// Get applications for a specific project
+db.applications.findOne(
+  { userId: projectOwnerId },
+  {
+    applications_received: {
+      $filter: {
+        input: "$applications_received",
+        as: "app",
+        cond: { $eq: ["$$app.projectId", projectId] }
+      }
+    }
+  }
+)
+```
+
+---
+
+## Collection 4: `dashboards`
+
+### Purpose
+User-specific dashboard data including bookmarks and general statistics.
+
+### Schema Structure
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId, // Reference to User (unique, indexed)
+  userName: String,
+  userEmail: String,
+  
+  // ========================================
+  // BOOKMARKED PROJECTS
+  // ========================================
+  bookmarkedProjects: [{
+    projectId: ObjectId, // Reference to Project
+    projectName: String,
+    projectStage: String,
+    bookmarkedAt: Date
+  }],
+  
+  // ========================================
+  // GENERAL STATISTICS
+  // ========================================
   stats: {
     totalBookmarks: Number,
-    totalApplicationsReceived: Number,
-    totalApplicationsSent: Number,
-    pendingApplications: Number,
-    acceptedApplications: Number,
-    rejectedApplications: Number
+    totalProjects: Number, // Projects owned by user
+    totalTeamMembers: Number, // Total members across all projects
+    profileCompleteness: Number // Percentage (0-100)
   },
+  
+  // ========================================
+  // QUICK ACCESS
+  // ========================================
+  recentActivity: [{
+    type: String, // "application_sent", "application_received", "status_change", "bookmark_added", "member_added", "member_removed"
+    description: String,
+    relatedId: ObjectId,
+    timestamp: Date
+  }],
+  
   createdAt: Date,
   updatedAt: Date
 }
@@ -168,14 +430,12 @@ User-specific dashboard data including bookmarks, applications, and statistics.
 ```javascript
 db.dashboards.createIndex({ userId: 1 }, { unique: true })
 db.dashboards.createIndex({ "bookmarkedProjects.projectId": 1 })
-db.dashboards.createIndex({ "applications.applicationId": 1 })
-db.dashboards.createIndex({ "applications.status": 1 })
+db.dashboards.createIndex({ "recentActivity.timestamp": -1 })
 ```
 
 
 ---
-
-## Collection 4: `notifications`
+## Collection 5: `notifications`
 
 ### Purpose
 Real-time notification system for application updates and system events.
@@ -215,7 +475,7 @@ db.notifications.createIndex({ type: 1 })
 
 ---
 
-## Collection 5: `messages`
+## Collection 6: `messages`
 
 ### Purpose
 Communication system for project collaboration and team chat.
@@ -262,7 +522,7 @@ db.messages.createIndex({ mentions: 1 })
 
 ---
 
-## Collection 6: `hackathons`
+## Collection 7: `hackathons`
 
 ### Purpose
 Manage hackathon events, registrations, and submissions.
@@ -428,66 +688,204 @@ db.hackathons.createIndex({ tags: 1 })
 }
 ```
 
+### Example 3: Application Document
 
-### Example 3: Dashboard with Applications and Bookmarks
+```json
+{
+  "_id": "65f8a1b2c3d4e5f6a7b8c9f5",
+  "userId": "65f8a1b2c3d4e5f6a7b8c9d0",
+  "userName": "John Developer",
+  "userEmail": "john.dev@example.com",
+  "applications_received": [
+    {
+      "applicationId": "APP-2024-001",
+      "applicantId": "65f8a1b2c3d4e5f6a7b8c9d2",
+      "applicantName": "Jane Smith",
+      "applicantEmail": "jane@example.com",
+      "applicantAvatar": "https://example.com/avatars/jane.jpg",
+      "applicantTitle": "Frontend Developer",
+      "applicantLocation": "New York, NY",
+      "projectId": "65f8a1b2c3d4e5f6a7b8c9e0",
+      "projectName": "AI-Powered Task Manager",
+      "projectStage": "MVP Development",
+      "position": "Frontend Developer",
+      "message": "I'm excited to join your team. I have 3 years of React experience.",
+      "skills": ["React", "TypeScript", "Tailwind CSS", "Redux"],
+      "status": "PENDING",
+      "hasResume": true,
+      "resumeUrl": "https://example.com/resumes/jane-smith.pdf",
+      "resumeFileName": "jane-smith-resume.pdf",
+      "attachments": [
+        {
+          "fileName": "portfolio.pdf",
+          "fileUrl": "https://example.com/attachments/jane-portfolio.pdf",
+          "fileType": "application/pdf",
+          "fileSize": 2048576
+        }
+      ],
+      "reviewNotes": "",
+      "reviewedAt": null,
+      "reviewedBy": null,
+      "rating": null,
+      "appliedDate": "2024-03-08T10:30:00.000Z",
+      "statusUpdatedAt": "2024-03-08T10:30:00.000Z"
+    },
+    {
+      "applicationId": "APP-2024-005",
+      "applicantId": "65f8a1b2c3d4e5f6a7b8c9d5",
+      "applicantName": "Mike Johnson",
+      "applicantEmail": "mike@example.com",
+      "applicantAvatar": "https://example.com/avatars/mike.jpg",
+      "applicantTitle": "Backend Developer",
+      "applicantLocation": "San Francisco, CA",
+      "projectId": "65f8a1b2c3d4e5f6a7b8c9e0",
+      "projectName": "AI-Powered Task Manager",
+      "projectStage": "MVP Development",
+      "position": "Backend Developer",
+      "message": "I can help build scalable APIs for your project.",
+      "skills": ["Node.js", "Express", "MongoDB", "REST APIs"],
+      "status": "ACCEPTED",
+      "hasResume": true,
+      "resumeUrl": "https://example.com/resumes/mike-johnson.pdf",
+      "resumeFileName": "mike-johnson-resume.pdf",
+      "attachments": [],
+      "reviewNotes": "Great experience with Node.js. Perfect fit for our backend needs.",
+      "reviewedAt": "2024-03-09T15:20:00.000Z",
+      "reviewedBy": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "rating": 5,
+      "removedFromTeamAt": null,
+      "removalReason": null,
+      "appliedDate": "2024-03-07T14:15:00.000Z",
+      "statusUpdatedAt": "2024-03-09T15:20:00.000Z"
+    },
+    {
+      "applicationId": "APP-2024-003",
+      "applicantId": "65f8a1b2c3d4e5f6a7b8c9d6",
+      "applicantName": "Tom Designer",
+      "applicantEmail": "tom@example.com",
+      "applicantAvatar": "https://example.com/avatars/tom.jpg",
+      "applicantTitle": "UI/UX Designer",
+      "applicantLocation": "Austin, TX",
+      "projectId": "65f8a1b2c3d4e5f6a7b8c9e0",
+      "projectName": "AI-Powered Task Manager",
+      "projectStage": "MVP Development",
+      "position": "UI/UX Designer",
+      "message": "I'd love to help design the user interface.",
+      "skills": ["Figma", "UI Design", "UX Research", "Prototyping"],
+      "status": "REMOVED",
+      "hasResume": true,
+      "resumeUrl": "https://example.com/resumes/tom-designer.pdf",
+      "resumeFileName": "tom-designer-resume.pdf",
+      "attachments": [],
+      "reviewNotes": "Accepted initially but removed due to project direction change.",
+      "reviewedAt": "2024-02-20T10:00:00.000Z",
+      "reviewedBy": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "rating": 4,
+      "removedFromTeamAt": "2024-03-10T14:30:00.000Z",
+      "removalReason": "Project pivoted to focus on backend features, UI design role no longer needed.",
+      "appliedDate": "2024-02-18T09:00:00.000Z",
+      "statusUpdatedAt": "2024-03-10T14:30:00.000Z"
+    }
+  ],
+  "applications_sent": [
+    {
+      "applicationId": "APP-2024-010",
+      "projectOwnerId": "65f8a1b2c3d4e5f6a7b8c9d3",
+      "projectOwnerName": "Sarah Wilson",
+      "projectOwnerEmail": "sarah@example.com",
+      "projectOwnerAvatar": "https://example.com/avatars/sarah.jpg",
+      "projectId": "65f8a1b2c3d4e5f6a7b8c9e3",
+      "projectName": "E-commerce Platform",
+      "projectStage": "Beta Testing",
+      "projectIndustry": "E-commerce",
+      "position": "Full Stack Developer",
+      "message": "I'd love to contribute to your e-commerce platform.",
+      "skills": ["React", "Node.js", "PostgreSQL", "AWS"],
+      "status": "PENDING",
+      "hasResume": true,
+      "resumeUrl": "https://example.com/resumes/john-dev.pdf",
+      "resumeFileName": "john-dev-resume.pdf",
+      "attachments": [],
+      "reviewNotes": "",
+      "reviewedAt": null,
+      "reviewedBy": null,
+      "rejectionReason": "",
+      "appliedDate": "2024-03-09T11:00:00.000Z",
+      "statusUpdatedAt": "2024-03-09T11:00:00.000Z",
+      "withdrawnAt": null
+    }
+  ],
+  "stats": {
+    "totalReceived": 3,
+    "pendingReceived": 1,
+    "acceptedReceived": 1,
+    "rejectedReceived": 0,
+    "removedReceived": 1,
+    "totalSent": 1,
+    "pendingSent": 1,
+    "acceptedSent": 0,
+    "rejectedSent": 0,
+    "withdrawnSent": 0,
+    "removedSent": 0
+  },
+  "createdAt": "2024-02-01T09:00:00.000Z",
+  "updatedAt": "2024-03-09T15:20:00.000Z"
+}
+```
+
+### Example 4: Dashboard with Statistics
 ```json
 {
   "_id": "65f8a1b2c3d4e5f6a7b8c9f0",
   "userId": "65f8a1b2c3d4e5f6a7b8c9d0",
+  "userName": "John Developer",
+  "userEmail": "john.dev@example.com",
   "bookmarkedProjects": [
     {
-      "projectId": "65f8a1b2c3d4e5f6a7b8c9e0",
+      "projectId": "65f8a1b2c3d4e5f6a7b8c9e1",
+      "projectName": "E-commerce Platform",
+      "projectStage": "Beta Testing",
       "bookmarkedAt": "2024-03-05T11:20:00.000Z"
     },
     {
-      "projectId": "65f8a1b2c3d4e5f6a7b8c9e1",
-      "bookmarkedAt": "2024-03-07T14:15:00.000Z"
-    }
-  ],
-  "applications": [
-    {
-      "applicationId": "APP-2024-001",
       "projectId": "65f8a1b2c3d4e5f6a7b8c9e2",
-      "projectName": "E-commerce Platform",
-      "position": "Frontend Developer",
-      "applicantId": "65f8a1b2c3d4e5f6a7b8c9d2",
-      "applicantName": "Jane Smith",
-      "message": "I'm excited to join your team. I have 3 years of React experience.",
-      "skills": ["React", "Redux", "CSS", "JavaScript"],
-      "status": "PENDING",
-      "hasResume": true,
-      "resumeUrl": "https://example.com/resumes/jane-smith.pdf",
-      "appliedDate": "2024-03-08T10:30:00.000Z"
-    },
-    {
-      "applicationId": "APP-2024-002",
-      "projectId": "65f8a1b2c3d4e5f6a7b8c9e3",
       "projectName": "Mobile Fitness App",
-      "position": "Backend Developer",
-      "applicantId": "65f8a1b2c3d4e5f6a7b8c9d3",
-      "applicantName": "Mike Johnson",
-      "message": "I can help build scalable APIs for your fitness app.",
-      "skills": ["Node.js", "Express", "MongoDB", "REST APIs"],
-      "status": "ACCEPTED",
-      "hasResume": false,
-      "resumeUrl": "",
-      "appliedDate": "2024-03-06T15:45:00.000Z"
+      "projectStage": "MVP Development",
+      "bookmarkedAt": "2024-03-07T14:15:00.000Z"
     }
   ],
   "stats": {
     "totalBookmarks": 2,
-    "totalApplicationsReceived": 2,
-    "totalApplicationsSent": 5,
-    "pendingApplications": 1,
-    "acceptedApplications": 1,
-    "rejectedApplications": 0
+    "totalProjects": 3,
+    "totalTeamMembers": 8,
+    "profileCompleteness": 95
   },
+  "recentActivity": [
+    {
+      "type": "application_received",
+      "description": "New application for Frontend Developer position",
+      "relatedId": "65f8a1b2c3d4e5f6a7b8c9f5",
+      "timestamp": "2024-03-08T10:30:00.000Z"
+    },
+    {
+      "type": "status_change",
+      "description": "Application accepted for Backend Developer position",
+      "relatedId": "65f8a1b2c3d4e5f6a7b8c9f6",
+      "timestamp": "2024-03-07T16:20:00.000Z"
+    },
+    {
+      "type": "member_added",
+      "description": "New team member added to AI-Powered Task Manager",
+      "relatedId": "65f8a1b2c3d4e5f6a7b8c9e0",
+      "timestamp": "2024-03-06T09:15:00.000Z"
+    }
+  ],
   "createdAt": "2024-01-15T10:00:00.000Z",
   "updatedAt": "2024-03-09T17:00:00.000Z"
 }
 ```
 
-### Example 4: Notification for Application Status Change
+### Example 5: Notification for Application Status Change
 ```json
 {
   "_id": "65f8a1b2c3d4e5f6a7b8ca00",
@@ -514,7 +912,7 @@ db.hackathons.createIndex({ tags: 1 })
 ```
 
 
-### Example 5: Project Chat Message
+### Example 6: Project Chat Message
 ```json
 {
   "_id": "65f8a1b2c3d4e5f6a7b8ca10",
@@ -543,7 +941,7 @@ db.hackathons.createIndex({ tags: 1 })
 }
 ```
 
-### Example 6: Hackathon Event
+### Example 7: Hackathon Event
 ```json
 {
   "_id": "65f8a1b2c3d4e5f6a7b8ca20",
@@ -630,34 +1028,56 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create/Update Mongoose Models:**
 
-1. **User Model** (`backend/models/User.js`) - ✅ Already exists
+1. **User Model** (`backend/models/User.js`) -  Already exists
    - Verify all fields match schema
    - Add any missing validation
    - Ensure password hashing works
 
-2. **Project Model** (`backend/models/Project.js`) - ✅ Already exists
+2. **Project Model** (`backend/models/Project.js`) -  Already exists
    - Verify team members structure
    - Ensure open positions array is correct
    - Add text search indexes
 
-3. **Dashboard Model** (`backend/models/Dashboard.js`) - ✅ Already exists
-   - Verify applications array structure
-   - Ensure stats calculation method works
-   - Add proper indexes
+3. **Dashboard Model** (`backend/models/Dashboard.js`) -  Already exists
+   - Remove application statistics (moved to Application collection)
+   - Keep bookmarkedProjects array
+   - Keep general stats (totalBookmarks, totalProjects, totalTeamMembers, profileCompleteness)
+   - Keep recentActivity array
+   - Ensure proper indexes
 
-4. **Notification Model** (`backend/models/Notification.js`) - CREATE NEW
+4. **Application Model** (`backend/models/Application.js`) - CREATE NEW
+   ```javascript
+   // Define Application model with user-centric structure
+   // - userId (unique) - One document per user
+   // - applications_received array - Applications this user received
+   // - applications_sent array - Applications this user sent
+   // - stats object - Aggregated statistics
+   
+   // Add unique applicationId generation
+   // Add indexes for userId and nested arrays
+   // Add methods for:
+   //   - addReceivedApplication(applicationData)
+   //   - addSentApplication(applicationData)
+   //   - updateApplicationStatus(applicationId, status, isReceived)
+   //   - getReceivedApplications(filters)
+   //   - getSentApplications(filters)
+   //   - updateStats()
+   // Add validation for duplicate applications
+   ```
+
+5. **Notification Model** (`backend/models/Notification.js`) - CREATE NEW
    ```javascript
    // Define notification schema with type, priority, metadata
    // Add TTL index for auto-deletion
    // Add methods for marking as read
    ```
 
-5. **Message Model** (`backend/models/Message.js`) - ✅ Already exists
+6. **Message Model** (`backend/models/Message.js`) -  Already exists
    - Verify chat functionality
    - Add reactions and mentions support
    - Ensure proper indexing
 
-6. **Hackathon Model** (`backend/models/Hackathon.js`) - ✅ Already exists
+7. **Hackathon Model** (`backend/models/Hackathon.js`) -  Already exists
    - Verify participants and submissions arrays
    - Add status management
    - Ensure proper date handling
@@ -672,15 +1092,27 @@ db.hackathons.createIndex({ tags: 1 })
    - addBookmark(userId, projectId)
    - removeBookmark(userId, projectId)
    - getBookmarkedProjects(userId)
-   - submitApplication(applicationData)
-   - getApplications(userId, filters)
-   - updateApplicationStatus(applicationId, status, reviewNotes)
-   - withdrawApplication(applicationId, userId)
-   - getApplicationStats(userId)
+   - addRecentActivity(userId, activityData)
    - updateDashboardStats(userId)
+   - getRecentActivity(userId, limit)
    ```
 
-2. **Notification Service** (`backend/api/services/notificationService.js`)
+2. **Application Service** (`backend/api/services/applicationService.js`) - CREATE NEW
+   ```javascript
+   - submitApplication(applicationData) // Adds to both user documents
+   - getApplicationById(applicationId, userId, viewType) // viewType: 'sent' or 'received'
+   - getReceivedApplications(userId, filters) // From applications_received array
+   - getSentApplications(userId, filters) // From applications_sent array
+   - getApplicationsByProject(projectOwnerId, projectId, filters)
+   - updateApplicationStatus(applicationId, applicantId, projectOwnerId, status, reviewData)
+   - withdrawApplication(applicationId, userId)
+   - markApplicationAsRemoved(applicationId, applicantId, projectOwnerId, removalReason)
+   - checkDuplicateApplication(applicantId, projectId)
+   - getApplicationStats(userId)
+   - ensureApplicationDocument(userId) // Create if doesn't exist
+   ```
+
+3. **Notification Service** (`backend/api/services/notificationService.js`)
    ```javascript
    - createNotification(notificationData)
    - getUserNotifications(userId, filters)
@@ -692,7 +1124,7 @@ db.hackathons.createIndex({ tags: 1 })
    - sendNewApplicationNotification(projectOwner, application)
    ```
 
-3. **Project Service** (`backend/api/services/projectService.js`)
+4. **Project Service** (`backend/api/services/projectService.js`)
    ```javascript
    - createProject(projectData)
    - getProjects(filters, pagination)
@@ -706,7 +1138,7 @@ db.hackathons.createIndex({ tags: 1 })
    ```
 
 
-4. **Message Service** (`backend/api/services/messageService.js`)
+5. **Message Service** (`backend/api/services/messageService.js`)
    ```javascript
    - sendMessage(messageData)
    - getProjectMessages(projectId, pagination)
@@ -717,7 +1149,7 @@ db.hackathons.createIndex({ tags: 1 })
    - getUnreadMessages(userId, projectId)
    ```
 
-5. **Hackathon Service** (`backend/api/services/hackathonService.js`)
+6. **Hackathon Service** (`backend/api/services/hackathonService.js`)
    ```javascript
    - createHackathon(hackathonData)
    - getHackathons(filters, pagination)
@@ -733,31 +1165,45 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create Controller Files:**
 
-1. **Dashboard Controller** (`backend/api/controllers/dashboardController.js`) - ✅ Already exists
-   - Add missing endpoints
+1. **Dashboard Controller** (`backend/api/controllers/dashboardController.js`) -  Already exists
+   - GET /api/dashboard - Get user dashboard data
+   - POST /api/dashboard/bookmarks - Add bookmark
+   - DELETE /api/dashboard/bookmarks/:projectId - Remove bookmark
+   - GET /api/dashboard/bookmarks - Get bookmarked projects
+   - GET /api/dashboard/activity - Get recent activity
    - Implement error handling
    - Add input validation
 
-2. **Notification Controller** (`backend/api/controllers/notificationController.js`)
+2. **Application Controller** (`backend/api/controllers/applicationController.js`) - CREATE NEW
+   - POST /api/applications - Submit application
+   - GET /api/applications/sent - Get applications sent by user
+   - GET /api/applications/received - Get applications received by user
+   - GET /api/applications/:id - Get application details
+   - PATCH /api/applications/:id/status - Update application status (PENDING, ACCEPTED, REJECTED)
+   - DELETE /api/applications/:id - Withdraw application
+   - GET /api/applications/stats - Get application statistics
+   - Note: REMOVED status is set automatically when team member is removed via Project Controller
+
+3. **Notification Controller** (`backend/api/controllers/notificationController.js`)
    - GET /api/notifications - Get user notifications
    - PATCH /api/notifications/:id/read - Mark as read
    - PATCH /api/notifications/read-all - Mark all as read
    - DELETE /api/notifications/:id - Delete notification
    - GET /api/notifications/unread-count - Get unread count
 
-3. **Project Controller** (`backend/api/controllers/projectController.js`) - ✅ Already exists
+4. **Project Controller** (`backend/api/controllers/projectController.js`) -  Already exists
    - Verify all CRUD operations
-   - Add application management endpoints
    - Add team management endpoints
+   - Update to work with separate applications collection
 
-4. **Message Controller** (`backend/api/controllers/messageController.js`)
+5. **Message Controller** (`backend/api/controllers/messageController.js`)
    - POST /api/projects/:projectId/messages - Send message
    - GET /api/projects/:projectId/messages - Get messages
    - PATCH /api/messages/:id - Edit message
    - DELETE /api/messages/:id - Delete message
    - POST /api/messages/:id/reactions - Add reaction
 
-5. **Hackathon Controller** (`backend/api/controllers/hackathonController.js`)
+6. **Hackathon Controller** (`backend/api/controllers/hackathonController.js`)
    - POST /api/hackathons - Create hackathon
    - GET /api/hackathons - List hackathons
    - GET /api/hackathons/:id - Get hackathon details
@@ -769,20 +1215,21 @@ db.hackathons.createIndex({ tags: 1 })
 **Create/Update Route Files:**
 
 1. **Dashboard Routes** (`backend/api/routes/dashboardRoutes.js`)
-2. **Notification Routes** (`backend/api/routes/notificationRoutes.js`)
-3. **Project Routes** (`backend/api/routes/projectRoutes.js`)
-4. **Message Routes** (`backend/api/routes/messageRoutes.js`)
-5. **Hackathon Routes** (`backend/api/routes/hackathonRoutes.js`)
+2. **Application Routes** (`backend/api/routes/applicationRoutes.js`) - CREATE NEW
+3. **Notification Routes** (`backend/api/routes/notificationRoutes.js`)
+4. **Project Routes** (`backend/api/routes/projectRoutes.js`)
+5. **Message Routes** (`backend/api/routes/messageRoutes.js`)
+6. **Hackathon Routes** (`backend/api/routes/hackathonRoutes.js`)
 
 **Register all routes in** `backend/server.js`
 
 ### Step 5: Middleware
 
-1. **Authentication Middleware** (`backend/middleware/auth.js`) - ✅ Already exists
+1. **Authentication Middleware** (`backend/middleware/auth.js`) -  Already exists
    - Verify JWT token validation
    - Add role-based access control
 
-2. **Validation Middleware** (`backend/middleware/validation.js`) - ✅ Already exists
+2. **Validation Middleware** (`backend/middleware/validation.js`) -  Already exists
    - Add validation schemas for all endpoints
    - Sanitize user input
 
@@ -800,30 +1247,29 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create/Update Context Files:**
 
-1. **Auth Context** (`frontend/context/AuthContext.jsx`) - ✅ Already exists
+1. **Auth Context** (`frontend/context/AuthContext.jsx`) -  Already exists
    - Verify login/logout/register functions
    - Add token management
    - Add user state management
 
-2. **Project Context** (`frontend/context/ProjectContext.jsx`) - ✅ Already exists
-   - Add project CRUD operations
-   - Add application management
-   - Add team management
+2. **Project Context** (`frontend/context/ProjectContext.jsx`) -  Already exists
+   -  Project CRUD operations implemented
+   -  Application management implemented (fetchApplications, acceptApplication, rejectApplication)
+   -  Team management implemented
+   -  Bookmark management implemented
+   -  Helper functions: getReceivedApplications, getSentApplications
 
-3. **Notification Context** (`frontend/context/NotificationContext.jsx`) - ✅ Already exists
-   - Add real-time notification updates
-   - Add unread count tracking
-   - Add notification actions
+3. **Notification Context** (`frontend/context/NotificationContext.jsx`) -  Already exists
+   -  Real-time notification updates
+   -  Unread count tracking
+   -  Notification actions (addAcceptanceNotification, addRejectionNotification)
 
-4. **Dashboard Context** (`frontend/context/DashboardContext.jsx`) - CREATE NEW
-   ```javascript
-   - Manage dashboard state
-   - Handle bookmarks
-   - Track applications
-   - Update statistics
-   ```
+4. **Dashboard Context** - NOT NEEDED
+   - Dashboard functionality integrated into ProjectContext
+   - Bookmarks managed via ProjectContext
+   - Applications managed via ProjectContext
 
-5. **Message Context** (`frontend/context/MessageContext.jsx`) - CREATE NEW
+5. **Message Context** - FUTURE ENHANCEMENT
    ```javascript
    - Manage chat messages
    - Handle real-time updates
@@ -834,124 +1280,230 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create/Update Component Files:**
 
-1. **Dashboard Components:**
-   - `DashboardStats.jsx` - Display statistics cards
-   - `RecentApplications.jsx` - Show recent applications
-   - `BookmarkedProjects.jsx` - Display bookmarked projects
-   - `QuickActions.jsx` - Quick action buttons
+1. **Dashboard Components:** -  IMPLEMENTED IN Dashboard.jsx
+   -  Dashboard tabs (Bookmarks/Applications)
+   -  Application tabs (Received/Sent)
+   -  Bookmarked projects grid
+   -  Application list with status badges
+   -  Toast notifications
+   -  Empty states
 
-2. **Application Components:**
-   - `ApplicationForm.jsx` - Application submission form
-   - `ApplicationCard.jsx` - Single application display
-   - `ApplicationList.jsx` - List with filters
-   - `ApplicationModal.jsx` - Detailed view/edit
-   - `ApplicationStatusBadge.jsx` - Status indicator
-   - `ApplicationReviewPanel.jsx` - For project owners
+2. **Application Components:** -  INTEGRATED IN Dashboard.jsx
+   -  Application item display (inline in Dashboard)
+   -  Application status badges (PENDING/ACCEPTED/REJECTED/WITHDRAWN/REMOVED)
+   -  Application actions (Accept/Reject/View Profile/Download Resume)
+   -  Applicant info display with UserAvatar
+   -  Skills display
+   -  Relative time formatting
 
-3. **Project Components:** - ✅ Most already exist
-   - Verify `ProjectCard.jsx`
-   - Verify `ProjectModal.jsx`
-   - Add `ProjectApplications.jsx` - View applications
-   - Add `TeamManagement.jsx` - Manage team members
+3. **Project Components:** -  Already exist
+   -  `ProjectCard.jsx` - Displays project cards
+   -  `ProjectModal.jsx` - Project details modal
+   -  `CreateProjectModal.jsx` - Create new projects
+   -  `CollaborationSpace.jsx` - Team collaboration with tabs (Team/Chat/Tasks/Files)
 
-4. **Notification Components:**
-   - `NotificationBell.jsx` - Bell icon with count
-   - `NotificationDropdown.jsx` - Dropdown list
-   - `NotificationItem.jsx` - Single notification
-   - `NotificationCenter.jsx` - Full notification page
+4. **User Components:** -  Already exist
+   -  `UserAvatar.jsx` - User avatar display
+   -  `ProfileModal.jsx` - User profile modal
 
-5. **Chat/Message Components:**
-   - `ChatWindow.jsx` - Main chat interface
-   - `MessageList.jsx` - List of messages
-   - `MessageInput.jsx` - Input with attachments
-   - `MessageItem.jsx` - Single message display
-   - `MessageReactions.jsx` - Reaction picker
+5. **Notification Components:** -  Already exist
+   -  `NotificationModal.jsx` - Notification center
 
-6. **Hackathon Components:**
-   - `HackathonCard.jsx` - ✅ Already exists
-   - `HackathonDetails.jsx` - Detailed view
-   - `HackathonRegistration.jsx` - Registration form
-   - `HackathonSubmission.jsx` - Project submission
-   - `ParticipantsList.jsx` - Show participants
+6. **Chat/Message Components:** -  IMPLEMENTED
+   -  `ChatTab.jsx` - Chat interface in CollaborationSpace
+   -  `TeamTab.jsx` - Team management in CollaborationSpace
+   -  `TasksTab.jsx` - Task management in CollaborationSpace
+   -  `FilesTab.jsx` - File sharing in CollaborationSpace
+
+7. **Hackathon Components:**
+   -  `HackathonCard.jsx` - Already exists
+   -  `HackathonRegistrationModal.jsx` - Already exists
 
 
 ### Step 3: Pages
 
 **Create/Update Page Files:**
 
-1. **Dashboard Page** (`frontend/pages/Dashboard.jsx`) - ✅ Already exists
-   - Add statistics section
-   - Add recent applications
-   - Add bookmarked projects
-   - Add quick actions
+1. **Dashboard Page** (`frontend/pages/Dashboard.jsx`) -  FULLY IMPLEMENTED
+   -  Two main tabs: Bookmarks and Applications
+   -  Bookmarks tab: Displays bookmarked projects using ProjectCard
+   -  Applications tab with sub-tabs:
+     -  Received: Shows applications_received (user as project owner)
+     -  Sent: Shows applications_sent (user as applicant)
+   -  Application management:
+     -  Accept/Reject actions for PENDING applications
+     -  View applicant profile
+     -  Download resume
+     -  Status badges (PENDING/ACCEPTED/REJECTED/WITHDRAWN/REMOVED)
+   -  Integration with Application collection schema:
+     -  Uses getReceivedApplications() and getSentApplications()
+     -  Displays applicant info (name, title, avatar, location)
+     -  Shows project info (name, stage, position)
+     -  Displays application details (message, skills, resume)
+     -  Shows review info (notes, dates, status)
+   -  Toast notifications for actions
+   -  Opens CollaborationSpace on accept
+   -  Navigation from notifications (via location.state)
+   -  Empty states for no bookmarks/applications
+   -  Loading states
 
-2. **Applications Page** (`frontend/pages/Applications.jsx`) - CREATE NEW
-   - Full application management
-   - Filters (status, date, project)
-   - Search functionality
-   - Pagination
+2. **Applications Page** - NOT NEEDED
+   - All application management is in Dashboard.jsx
+   - Dashboard provides complete application workflow
 
-3. **Projects Page** (`frontend/pages/Projects.jsx`) - ✅ Already exists
-   - Add application functionality
-   - Add bookmark feature
-   - Improve filtering
+3. **Projects Page** (`frontend/pages/Projects.jsx`) -  Already exists
+   -  Project browsing and filtering
+   -  Bookmark feature
+   -  Application submission
 
-4. **Profile Page** (`frontend/pages/Profile.jsx`) - ✅ Already exists
-   - Add application history
-   - Add project history
-   - Add statistics
+4. **Profile Page** (`frontend/pages/Profile.jsx`) -  Already exists
+   - User profile display and editing
 
-5. **Hackathons Page** (`frontend/pages/Hackathons.jsx`) - ✅ Already exists
-   - Add registration flow
-   - Add submission flow
-   - Add participant view
+5. **Hackathons Page** (`frontend/pages/Hackathons.jsx`) -  Already exists
+   - Hackathon browsing and registration
 
-6. **Project Detail Page** (`frontend/pages/ProjectDetail.jsx`) - CREATE NEW
-   - Full project information
-   - Team members
-   - Chat/collaboration space
-   - Application form
-   - For owners: application management
+6. **Community Page** (`frontend/pages/Community.jsx`) -  Already exists
+   - Community features
+
+7. **Home Page** (`frontend/pages/Home.jsx`) -  Already exists
+   - Landing page
 
 ### Step 4: API Integration
 
-**Update API Utility** (`frontend/utils/api.js`) - ✅ Already exists
+**Update API Utility** (`frontend/utils/api.js`) -  Already exists
 
-Add API functions:
+ IMPLEMENTED API functions:
 
 ```javascript
-// Dashboard APIs
+// Dashboard APIs -  IMPLEMENTED
 export const getDashboardData = () => api.get('/dashboard')
 export const addBookmark = (projectId) => api.post('/dashboard/bookmarks', { projectId })
 export const removeBookmark = (projectId) => api.delete(`/dashboard/bookmarks/${projectId}`)
 
-// Application APIs
+// Application APIs -  IMPLEMENTED
 export const submitApplication = (data) => api.post('/applications', data)
 export const getApplications = (filters) => api.get('/applications', { params: filters })
 export const updateApplicationStatus = (id, status, notes) => 
   api.patch(`/applications/${id}/status`, { status, notes })
 export const withdrawApplication = (id) => api.delete(`/applications/${id}`)
 
-// Notification APIs
+// Notification APIs -  IMPLEMENTED
 export const getNotifications = () => api.get('/notifications')
 export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`)
 export const markAllNotificationsRead = () => api.patch('/notifications/read-all')
 export const getUnreadCount = () => api.get('/notifications/unread-count')
 
-// Message APIs
+// User APIs -  IMPLEMENTED
+export const getUserProfile = (userId) => api.get(`/users/${userId}/profile`)
+
+// Project APIs -  IMPLEMENTED
+export const getProjects = (filters) => api.get('/projects', { params: filters })
+export const createProject = (data) => api.post('/projects', data)
+export const updateProject = (id, data) => api.patch(`/projects/${id}`, data)
+export const deleteProject = (id) => api.delete(`/projects/${id}`)
+
+// Message APIs - FUTURE ENHANCEMENT
 export const sendMessage = (projectId, content) => 
   api.post(`/projects/${projectId}/messages`, { content })
 export const getMessages = (projectId) => api.get(`/projects/${projectId}/messages`)
 export const addReaction = (messageId, emoji) => 
   api.post(`/messages/${messageId}/reactions`, { emoji })
 
-// Hackathon APIs
+// Hackathon APIs -  IMPLEMENTED
 export const getHackathons = (filters) => api.get('/hackathons', { params: filters })
 export const registerForHackathon = (id, data) => 
   api.post(`/hackathons/${id}/register`, data)
 export const submitHackathonProject = (id, data) => 
   api.post(`/hackathons/${id}/submit`, data)
 ```
+
+---
+
+## FRONTEND IMPLEMENTATION STATUS
+
+### Dashboard.jsx - COMPLETE IMPLEMENTATION 
+
+**File Location:** `frontend/pages/Dashboard.jsx`
+
+**Key Features Implemented:**
+
+1. **Application Collection Integration** 
+   - Fully aligned with Application schema from SYSTEM_FLOW_DATABASE_SCHEMA.md
+   - Comprehensive inline documentation of schema structure
+   - Proper handling of applications_received and applications_sent arrays
+   - Correct status enums: PENDING, ACCEPTED, REJECTED, WITHDRAWN, REMOVED
+
+2. **Two Main Tabs** 
+   - Bookmarks Tab: Displays bookmarked projects
+   - Applications Tab: Full application management
+
+3. **Applications Tab Features** 
+   - Sub-tabs: Received (as project owner) and Sent (as applicant)
+   - Real-time application counts
+   - Status-based filtering
+   - Accept/Reject workflow for PENDING applications
+
+4. **Application Display** 
+   - Applicant information (name, title, avatar, location)
+   - Project information (name, stage, position)
+   - Application details (message, skills, resume)
+   - Status badges with icons
+   - Relative time display ("2 days ago")
+
+5. **Application Actions** 
+   - Accept Application → Adds to team → Opens CollaborationSpace
+   - Reject Application → Updates status → Sends notification
+   - View Profile → Fetches full user profile from API
+   - Download Resume → Opens resume URL
+
+6. **Notifications Integration** 
+   - Sends acceptance notifications to applicants
+   - Sends rejection notifications to applicants
+   - Toast notifications for user feedback
+   - Navigation from notification clicks (via location.state)
+
+7. **State Management** 
+   - Uses ProjectContext for applications, projects, bookmarks
+   - Uses AuthContext for user authentication
+   - Uses NotificationContext for notifications
+   - Proper loading states
+   - Error handling
+
+8. **User Experience** 
+   - Empty states for no bookmarks/applications
+   - Loading indicators
+   - Toast notifications for actions
+   - Smooth tab transitions
+   - Responsive design
+
+9. **Data Flow** 
+   - Fetches applications on tab switch
+   - Refreshes data after accept/reject
+   - Handles pending collaboration space opening
+   - Proper error handling and fallbacks
+
+10. **Profile Modal Integration** 
+    - Opens ProfileModal for applicant profiles
+    - Fetches full user data from API
+    - Fallback to application data if API fails
+    - Shows current user profile for sent applications
+
+**Code Quality:**
+- Comprehensive inline comments
+- Clear function names
+- Proper error handling
+- Console logging for debugging
+- Clean component structure
+
+**Schema Alignment:**
+The Dashboard.jsx file includes detailed comments at the top documenting the Application collection structure:
+- applications_received array structure
+- applications_sent array structure
+- All field names and types
+- Status enums
+- Nested objects (attachments, review info)
+
+This ensures developers understand the data structure when working with the component.
 
 
 ---
@@ -964,20 +1516,97 @@ export const submitHackathonProject = (id, data) =>
 2. **User clicks "Apply"** → Opens ApplicationForm
 3. **User fills form** → Validates input
 4. **Submit application** → POST /api/applications
-5. **Backend creates application** → Saves to Dashboard collection
+5. **Backend processes application:**
+   - Generates unique `applicationId`
+   - Adds to applicant's `applications_sent` array
+   - Adds to project owner's `applications_received` array
+   - Updates stats in both user documents
 6. **Backend creates notification** → Notifies project owner
 7. **Frontend updates UI** → Shows success message
-8. **Dashboard updates** → Shows new application
+8. **Dashboard updates** → Shows new application in both dashboards
 
 ### Application Review Flow
 
-1. **Project owner views applications** → GET /api/projects/:id/applications
+1. **Project owner views applications** → GET /api/applications/received
 2. **Owner reviews application** → Opens ApplicationReviewPanel
 3. **Owner accepts/rejects** → PATCH /api/applications/:id/status
-4. **Backend updates status** → Updates Dashboard collection
+4. **Backend updates status in BOTH user documents:**
+   - Updates in project owner's `applications_received` array
+   - Updates in applicant's `applications_sent` array
+   - Updates stats in both documents
 5. **Backend creates notification** → Notifies applicant
 6. **Frontend updates UI** → Shows updated status
-7. **Stats recalculated** → Dashboard stats updated
+7. **Stats recalculated** → Dashboard stats updated for both users
+
+### Re-application Flow (After Rejection)
+
+**Scenario:** User was rejected and wants to apply again
+
+1. **User views project** → Sees open positions
+2. **User clicks "Apply"** → Opens application form
+3. **User submits application** → POST /api/applications/submit
+4. **Backend checks for duplicates:**
+   - Looks for PENDING or ACCEPTED applications only
+   - Ignores REJECTED, WITHDRAWN, and REMOVED applications
+   - If no active application found → Allows submission
+5. **New application created:**
+   - New unique `applicationId` generated
+   - Added to both user documents (applications_sent and applications_received)
+   - Previous rejected application remains in history
+   - Status: PENDING
+6. **Project owner notified** → Receives notification about new application
+7. **Dashboard updated** → New application appears in both dashboards
+
+**Benefits:**
+- Users get second chances after improving skills/experience
+- Project owners can reconsider candidates
+- Removed team members can reapply to rejoin
+- Full application history maintained for reference
+- No data loss - all previous applications preserved
+
+**Business Rules:**
+- ✅ Can re-apply after: REJECTED, WITHDRAWN, REMOVED
+- ❌ Cannot re-apply if: PENDING (already applied), ACCEPTED (already on team)
+- Each application gets unique applicationId
+- Previous applications remain in database for analytics
+
+### Re-application Flow (After Team Removal)
+
+**Scenario:** User was accepted, joined team, but was later removed
+
+1. **User was on team** → Status: ACCEPTED
+2. **Project owner removes user** → Status changes to REMOVED
+   - `removedFromTeamAt` timestamp set
+   - `removalReason` recorded
+   - User removed from project.teamMembers array
+3. **User views project again** → Sees open positions
+4. **User clicks "Apply"** → Opens application form
+5. **User submits new application** → POST /api/applications/submit
+6. **Backend checks for duplicates:**
+   - Finds REMOVED application (not blocking)
+   - Allows new application submission
+7. **New application created:**
+   - New unique `applicationId` generated
+   - Added to both user documents
+   - Previous REMOVED application remains in history
+   - Status: PENDING
+8. **Project owner notified** → Receives notification
+   - Can see user's previous history
+   - Can review removal reason
+   - Can decide to give second chance
+9. **Dashboard updated** → New application appears
+
+**Use Cases:**
+- User left due to time constraints, now available again
+- Misunderstanding resolved, user wants to rejoin
+- User improved skills/behavior, wants another chance
+- Project needs changed, removed role is needed again
+
+**Benefits:**
+- Flexible team management
+- Second chances for both parties
+- Complete audit trail of member history
+- Project owners maintain full control
 
 ### Real-time Notification Flow
 
@@ -1045,8 +1674,8 @@ PORT=5000
 
 1. **User ↔ Projects**: One-to-Many (user owns multiple projects)
 2. **User ↔ Dashboard**: One-to-One (each user has one dashboard)
-3. **Project ↔ Applications**: One-to-Many (project receives multiple applications)
-4. **User ↔ Applications**: One-to-Many (user submits multiple applications)
+3. **User ↔ Applications**: One-to-One (each user has one application document with arrays)
+4. **Application Document**: Contains both sent and received applications for a user
 5. **User ↔ Notifications**: One-to-Many (user receives multiple notifications)
 6. **Project ↔ Messages**: One-to-Many (project has multiple messages)
 7. **Hackathon ↔ Participants**: Many-to-Many (via participants array)
@@ -1066,11 +1695,26 @@ db.users.createIndex({ "skills.name": 1 })
 db.projects.createIndex({ title: "text", description: "text" })
 db.projects.createIndex({ ownerId: 1 })
 db.projects.createIndex({ stage: 1, industry: 1 })
+db.projects.createIndex({ "teamMembers.id": 1 })
+db.projects.createIndex({ "teamMembers.status": 1 })
+db.projects.createIndex({ "teamHistory.memberId": 1 })
+db.projects.createIndex({ "teamHistory.timestamp": -1 })
+
+// Applications
+db.applications.createIndex({ userId: 1 }, { unique: true })
+db.applications.createIndex({ "applications_received.applicationId": 1 })
+db.applications.createIndex({ "applications_received.status": 1 })
+db.applications.createIndex({ "applications_received.applicantId": 1 })
+db.applications.createIndex({ "applications_received.projectId": 1 })
+db.applications.createIndex({ "applications_sent.applicationId": 1 })
+db.applications.createIndex({ "applications_sent.status": 1 })
+db.applications.createIndex({ "applications_sent.projectId": 1 })
+db.applications.createIndex({ "applications_sent.projectOwnerId": 1 })
 
 // Dashboards
 db.dashboards.createIndex({ userId: 1 }, { unique: true })
-db.dashboards.createIndex({ "applications.status": 1 })
-db.dashboards.createIndex({ "applications.projectId": 1 })
+db.dashboards.createIndex({ "bookmarkedProjects.projectId": 1 })
+db.dashboards.createIndex({ "recentActivity.timestamp": -1 })
 
 // Notifications
 db.notifications.createIndex({ userId: 1, isRead: 1, createdAt: -1 })
@@ -1091,12 +1735,116 @@ db.hackathons.createIndex({ "participants.userId": 1 })
 // Get user's dashboard with populated data
 Dashboard.findOne({ userId })
   .populate('bookmarkedProjects.projectId')
-  .populate('applications.applicantId', 'name email avatar')
 
-// Get project with applications
+// Get user's application document
+Application.findOne({ userId })
+
+// Get applications received by project owner
+Application.findOne(
+  { userId: projectOwnerId },
+  { applications_received: 1, "stats.totalReceived": 1 }
+)
+
+// Get pending applications received
+Application.aggregate([
+  { $match: { userId: projectOwnerId } },
+  { $unwind: "$applications_received" },
+  { $match: { "applications_received.status": "PENDING" } },
+  { $sort: { "applications_received.appliedDate": -1 } }
+])
+
+// Get applications sent by user
+Application.findOne(
+  { userId: applicantId },
+  { applications_sent: 1, "stats.totalSent": 1 }
+)
+
+// Get specific application by applicationId (from sender's view)
+Application.findOne(
+  { 
+    userId: applicantId,
+    "applications_sent.applicationId": applicationId 
+  },
+  { "applications_sent.$": 1 }
+)
+
+// Get specific application by applicationId (from receiver's view)
+Application.findOne(
+  { 
+    userId: projectOwnerId,
+    "applications_received.applicationId": applicationId 
+  },
+  { "applications_received.$": 1 }
+)
+
+// Check for duplicate application
+Application.findOne({
+  userId: applicantId,
+  "applications_sent": {
+    $elemMatch: {
+      projectId: projectId,
+      status: { $ne: "WITHDRAWN" }
+    }
+  }
+})
+
+// Get applications for a specific project
+Application.aggregate([
+  { $match: { userId: projectOwnerId } },
+  { $unwind: "$applications_received" },
+  { $match: { "applications_received.projectId": projectId } },
+  { $sort: { "applications_received.appliedDate": -1 } }
+])
+
+// Update application status in both arrays
+Application.updateOne(
+  { 
+    userId: projectOwnerId,
+    "applications_received.applicationId": applicationId 
+  },
+  { 
+    $set: { 
+      "applications_received.$.status": "ACCEPTED",
+      "applications_received.$.statusUpdatedAt": new Date(),
+      "applications_received.$.reviewNotes": "Great fit!"
+    }
+  }
+)
+
+Application.updateOne(
+  { 
+    userId: applicantId,
+    "applications_sent.applicationId": applicationId 
+  },
+  { 
+    $set: { 
+      "applications_sent.$.status": "ACCEPTED",
+      "applications_sent.$.statusUpdatedAt": new Date(),
+      "applications_sent.$.reviewNotes": "Great fit!"
+    }
+  }
+)
+
+// Get project with team members and history
 Project.findById(projectId)
   .populate('ownerId', 'name email avatar')
   .populate('teamMembers.id', 'name email avatar skills')
+  .populate('teamHistory.memberId', 'name email avatar')
+  .populate('teamHistory.performedBy', 'name email')
+
+// Get active team members only
+Project.findById(projectId)
+  .populate({
+    path: 'teamMembers.id',
+    match: { status: 'active' },
+    select: 'name email avatar skills'
+  })
+
+// Get team history for a specific member
+Project.findOne(
+  { _id: projectId },
+  { teamHistory: { $elemMatch: { memberId: memberId } } }
+)
 
 // Get unread notifications
 Notification.find({ userId, isRead: false })
