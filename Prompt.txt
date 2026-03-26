@@ -483,3 +483,6 @@ Change Stage Button (with refresh icon) - Opens a dropdown to select a  project 
 ----------------------------------------------------------
 Received tab: Show applicant details (who applied to your project)
 Sent tab: Show project owner details (whose project you applied to)
+
+Received tab: Profile button + View Project button + Resume button (if available) + Accept/Reject (if pending)
+Sent tab: View Project button + Resume button (if available) - NO Profile button

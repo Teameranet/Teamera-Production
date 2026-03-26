@@ -557,13 +557,15 @@ function Dashboard() {
                       </div>
                       
                       <div className="application-actions">
-                        <button 
-                          className="view-profile-btn" 
-                          onClick={() => handleViewProfile(application)}
-                        >
-                          <User size={16} />
-                          Profile
-                        </button>
+                        {applicationTab === 'received' && (
+                          <button 
+                            className="view-profile-btn" 
+                            onClick={() => handleViewProfile(application)}
+                          >
+                            <User size={16} />
+                            Profile
+                          </button>
+                        )}
                         <button 
                           className="view-project-btn" 
                           onClick={() => handleViewProject(application)}
