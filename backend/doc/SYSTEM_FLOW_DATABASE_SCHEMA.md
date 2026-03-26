@@ -266,6 +266,8 @@ db.applications.createIndex({ "applications_sent.projectOwnerId": 1 })
    - Add to `applications_received` array in project owner's document
    - Both entries share the same `applicationId`
    - Update stats in both documents
+   - **Duplicate Check:** Only block if user has PENDING or ACCEPTED application for same project-position
+   - **Re-application Allowed:** Users can re-apply after REJECTED, WITHDRAWN, or REMOVED status
 
 2. **On Status Update:**
    - Update status in applicant's `applications_sent` array
@@ -279,14 +281,24 @@ db.applications.createIndex({ "applications_sent.projectOwnerId": 1 })
    - Update status to "WITHDRAWN" in project owner's `applications_received`
    - Set `withdrawnAt` timestamp in applicant's document
    - Update stats in both documents
+   - **Re-application Allowed:** User can submit new application after withdrawal
 
-4. **On Team Member Removal:**
+4. **On Application Rejection:**
+   - Update status to "REJECTED" in both `applications_sent` and `applications_received`
+   - Set `reviewedAt` timestamp and `reviewNotes` in both documents
+   - Update stats in both documents
+   - **Re-application Allowed:** User can submit new application after rejection
+   - Previous rejected application remains in history for reference
+
+5. **On Team Member Removal:**
    - Find the accepted application for the removed member
    - Update status to "REMOVED" in both `applications_sent` and `applications_received`
    - Set `removedFromTeamAt` timestamp in both documents
    - Add `removalReason` to both documents
    - Update stats in both documents (increment removedReceived and removedSent)
+   - **Re-application Allowed:** User can submit new application after being removed
    - This allows tracking of members who were accepted but later removed
+   - Removed members can reapply to rejoin the project
 
 ### Query Patterns
 
@@ -335,16 +347,19 @@ db.applications.findOne(
   }
 )
 
-// Check for duplicate application
+// Check for duplicate application - only block PENDING or ACCEPTED
 db.applications.findOne({
   userId: applicantId,
   "applications_sent": {
     $elemMatch: {
       projectId: projectId,
-      status: { $ne: "WITHDRAWN" }
+      position: position,
+      status: { $in: ["PENDING", "ACCEPTED"] }
     }
   }
 })
+
+// Note: Users CAN re-apply if previous status was REJECTED, WITHDRAWN, or REMOVED
 
 // Get applications for a specific project
 db.applications.findOne(
@@ -1013,17 +1028,17 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create/Update Mongoose Models:**
 
-1. **User Model** (`backend/models/User.js`) - ✅ Already exists
+1. **User Model** (`backend/models/User.js`) -  Already exists
    - Verify all fields match schema
    - Add any missing validation
    - Ensure password hashing works
 
-2. **Project Model** (`backend/models/Project.js`) - ✅ Already exists
+2. **Project Model** (`backend/models/Project.js`) -  Already exists
    - Verify team members structure
    - Ensure open positions array is correct
    - Add text search indexes
 
-3. **Dashboard Model** (`backend/models/Dashboard.js`) - ✅ Already exists
+3. **Dashboard Model** (`backend/models/Dashboard.js`) -  Already exists
    - Remove application statistics (moved to Application collection)
    - Keep bookmarkedProjects array
    - Keep general stats (totalBookmarks, totalProjects, totalTeamMembers, profileCompleteness)
@@ -1057,12 +1072,12 @@ db.hackathons.createIndex({ tags: 1 })
    // Add methods for marking as read
    ```
 
-6. **Message Model** (`backend/models/Message.js`) - ✅ Already exists
+6. **Message Model** (`backend/models/Message.js`) -  Already exists
    - Verify chat functionality
    - Add reactions and mentions support
    - Ensure proper indexing
 
-7. **Hackathon Model** (`backend/models/Hackathon.js`) - ✅ Already exists
+7. **Hackathon Model** (`backend/models/Hackathon.js`) -  Already exists
    - Verify participants and submissions arrays
    - Add status management
    - Ensure proper date handling
@@ -1150,7 +1165,7 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create Controller Files:**
 
-1. **Dashboard Controller** (`backend/api/controllers/dashboardController.js`) - ✅ Already exists
+1. **Dashboard Controller** (`backend/api/controllers/dashboardController.js`) -  Already exists
    - GET /api/dashboard - Get user dashboard data
    - POST /api/dashboard/bookmarks - Add bookmark
    - DELETE /api/dashboard/bookmarks/:projectId - Remove bookmark
@@ -1176,7 +1191,7 @@ db.hackathons.createIndex({ tags: 1 })
    - DELETE /api/notifications/:id - Delete notification
    - GET /api/notifications/unread-count - Get unread count
 
-4. **Project Controller** (`backend/api/controllers/projectController.js`) - ✅ Already exists
+4. **Project Controller** (`backend/api/controllers/projectController.js`) -  Already exists
    - Verify all CRUD operations
    - Add team management endpoints
    - Update to work with separate applications collection
@@ -1210,11 +1225,11 @@ db.hackathons.createIndex({ tags: 1 })
 
 ### Step 5: Middleware
 
-1. **Authentication Middleware** (`backend/middleware/auth.js`) - ✅ Already exists
+1. **Authentication Middleware** (`backend/middleware/auth.js`) -  Already exists
    - Verify JWT token validation
    - Add role-based access control
 
-2. **Validation Middleware** (`backend/middleware/validation.js`) - ✅ Already exists
+2. **Validation Middleware** (`backend/middleware/validation.js`) -  Already exists
    - Add validation schemas for all endpoints
    - Sanitize user input
 
@@ -1232,30 +1247,29 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create/Update Context Files:**
 
-1. **Auth Context** (`frontend/context/AuthContext.jsx`) - ✅ Already exists
+1. **Auth Context** (`frontend/context/AuthContext.jsx`) -  Already exists
    - Verify login/logout/register functions
    - Add token management
    - Add user state management
 
-2. **Project Context** (`frontend/context/ProjectContext.jsx`) - ✅ Already exists
-   - Add project CRUD operations
-   - Add application management
-   - Add team management
+2. **Project Context** (`frontend/context/ProjectContext.jsx`) -  Already exists
+   -  Project CRUD operations implemented
+   -  Application management implemented (fetchApplications, acceptApplication, rejectApplication)
+   -  Team management implemented
+   -  Bookmark management implemented
+   -  Helper functions: getReceivedApplications, getSentApplications
 
-3. **Notification Context** (`frontend/context/NotificationContext.jsx`) - ✅ Already exists
-   - Add real-time notification updates
-   - Add unread count tracking
-   - Add notification actions
+3. **Notification Context** (`frontend/context/NotificationContext.jsx`) -  Already exists
+   -  Real-time notification updates
+   -  Unread count tracking
+   -  Notification actions (addAcceptanceNotification, addRejectionNotification)
 
-4. **Dashboard Context** (`frontend/context/DashboardContext.jsx`) - CREATE NEW
-   ```javascript
-   - Manage dashboard state
-   - Handle bookmarks
-   - Track applications
-   - Update statistics
-   ```
+4. **Dashboard Context** - NOT NEEDED
+   - Dashboard functionality integrated into ProjectContext
+   - Bookmarks managed via ProjectContext
+   - Applications managed via ProjectContext
 
-5. **Message Context** (`frontend/context/MessageContext.jsx`) - CREATE NEW
+5. **Message Context** - FUTURE ENHANCEMENT
    ```javascript
    - Manage chat messages
    - Handle real-time updates
@@ -1266,124 +1280,230 @@ db.hackathons.createIndex({ tags: 1 })
 
 **Create/Update Component Files:**
 
-1. **Dashboard Components:**
-   - `DashboardStats.jsx` - Display statistics cards
-   - `RecentApplications.jsx` - Show recent applications
-   - `BookmarkedProjects.jsx` - Display bookmarked projects
-   - `QuickActions.jsx` - Quick action buttons
+1. **Dashboard Components:** -  IMPLEMENTED IN Dashboard.jsx
+   -  Dashboard tabs (Bookmarks/Applications)
+   -  Application tabs (Received/Sent)
+   -  Bookmarked projects grid
+   -  Application list with status badges
+   -  Toast notifications
+   -  Empty states
 
-2. **Application Components:**
-   - `ApplicationForm.jsx` - Application submission form
-   - `ApplicationCard.jsx` - Single application display
-   - `ApplicationList.jsx` - List with filters
-   - `ApplicationModal.jsx` - Detailed view/edit
-   - `ApplicationStatusBadge.jsx` - Status indicator
-   - `ApplicationReviewPanel.jsx` - For project owners
+2. **Application Components:** -  INTEGRATED IN Dashboard.jsx
+   -  Application item display (inline in Dashboard)
+   -  Application status badges (PENDING/ACCEPTED/REJECTED/WITHDRAWN/REMOVED)
+   -  Application actions (Accept/Reject/View Profile/Download Resume)
+   -  Applicant info display with UserAvatar
+   -  Skills display
+   -  Relative time formatting
 
-3. **Project Components:** - ✅ Most already exist
-   - Verify `ProjectCard.jsx`
-   - Verify `ProjectModal.jsx`
-   - Add `ProjectApplications.jsx` - View applications
-   - Add `TeamManagement.jsx` - Manage team members
+3. **Project Components:** -  Already exist
+   -  `ProjectCard.jsx` - Displays project cards
+   -  `ProjectModal.jsx` - Project details modal
+   -  `CreateProjectModal.jsx` - Create new projects
+   -  `CollaborationSpace.jsx` - Team collaboration with tabs (Team/Chat/Tasks/Files)
 
-4. **Notification Components:**
-   - `NotificationBell.jsx` - Bell icon with count
-   - `NotificationDropdown.jsx` - Dropdown list
-   - `NotificationItem.jsx` - Single notification
-   - `NotificationCenter.jsx` - Full notification page
+4. **User Components:** -  Already exist
+   -  `UserAvatar.jsx` - User avatar display
+   -  `ProfileModal.jsx` - User profile modal
 
-5. **Chat/Message Components:**
-   - `ChatWindow.jsx` - Main chat interface
-   - `MessageList.jsx` - List of messages
-   - `MessageInput.jsx` - Input with attachments
-   - `MessageItem.jsx` - Single message display
-   - `MessageReactions.jsx` - Reaction picker
+5. **Notification Components:** -  Already exist
+   -  `NotificationModal.jsx` - Notification center
 
-6. **Hackathon Components:**
-   - `HackathonCard.jsx` - ✅ Already exists
-   - `HackathonDetails.jsx` - Detailed view
-   - `HackathonRegistration.jsx` - Registration form
-   - `HackathonSubmission.jsx` - Project submission
-   - `ParticipantsList.jsx` - Show participants
+6. **Chat/Message Components:** -  IMPLEMENTED
+   -  `ChatTab.jsx` - Chat interface in CollaborationSpace
+   -  `TeamTab.jsx` - Team management in CollaborationSpace
+   -  `TasksTab.jsx` - Task management in CollaborationSpace
+   -  `FilesTab.jsx` - File sharing in CollaborationSpace
+
+7. **Hackathon Components:**
+   -  `HackathonCard.jsx` - Already exists
+   -  `HackathonRegistrationModal.jsx` - Already exists
 
 
 ### Step 3: Pages
 
 **Create/Update Page Files:**
 
-1. **Dashboard Page** (`frontend/pages/Dashboard.jsx`) - ✅ Already exists
-   - Add statistics section
-   - Add recent applications
-   - Add bookmarked projects
-   - Add quick actions
+1. **Dashboard Page** (`frontend/pages/Dashboard.jsx`) -  FULLY IMPLEMENTED
+   -  Two main tabs: Bookmarks and Applications
+   -  Bookmarks tab: Displays bookmarked projects using ProjectCard
+   -  Applications tab with sub-tabs:
+     -  Received: Shows applications_received (user as project owner)
+     -  Sent: Shows applications_sent (user as applicant)
+   -  Application management:
+     -  Accept/Reject actions for PENDING applications
+     -  View applicant profile
+     -  Download resume
+     -  Status badges (PENDING/ACCEPTED/REJECTED/WITHDRAWN/REMOVED)
+   -  Integration with Application collection schema:
+     -  Uses getReceivedApplications() and getSentApplications()
+     -  Displays applicant info (name, title, avatar, location)
+     -  Shows project info (name, stage, position)
+     -  Displays application details (message, skills, resume)
+     -  Shows review info (notes, dates, status)
+   -  Toast notifications for actions
+   -  Opens CollaborationSpace on accept
+   -  Navigation from notifications (via location.state)
+   -  Empty states for no bookmarks/applications
+   -  Loading states
 
-2. **Applications Page** (`frontend/pages/Applications.jsx`) - CREATE NEW
-   - Full application management
-   - Filters (status, date, project)
-   - Search functionality
-   - Pagination
+2. **Applications Page** - NOT NEEDED
+   - All application management is in Dashboard.jsx
+   - Dashboard provides complete application workflow
 
-3. **Projects Page** (`frontend/pages/Projects.jsx`) - ✅ Already exists
-   - Add application functionality
-   - Add bookmark feature
-   - Improve filtering
+3. **Projects Page** (`frontend/pages/Projects.jsx`) -  Already exists
+   -  Project browsing and filtering
+   -  Bookmark feature
+   -  Application submission
 
-4. **Profile Page** (`frontend/pages/Profile.jsx`) - ✅ Already exists
-   - Add application history
-   - Add project history
-   - Add statistics
+4. **Profile Page** (`frontend/pages/Profile.jsx`) -  Already exists
+   - User profile display and editing
 
-5. **Hackathons Page** (`frontend/pages/Hackathons.jsx`) - ✅ Already exists
-   - Add registration flow
-   - Add submission flow
-   - Add participant view
+5. **Hackathons Page** (`frontend/pages/Hackathons.jsx`) -  Already exists
+   - Hackathon browsing and registration
 
-6. **Project Detail Page** (`frontend/pages/ProjectDetail.jsx`) - CREATE NEW
-   - Full project information
-   - Team members
-   - Chat/collaboration space
-   - Application form
-   - For owners: application management
+6. **Community Page** (`frontend/pages/Community.jsx`) -  Already exists
+   - Community features
+
+7. **Home Page** (`frontend/pages/Home.jsx`) -  Already exists
+   - Landing page
 
 ### Step 4: API Integration
 
-**Update API Utility** (`frontend/utils/api.js`) - ✅ Already exists
+**Update API Utility** (`frontend/utils/api.js`) -  Already exists
 
-Add API functions:
+ IMPLEMENTED API functions:
 
 ```javascript
-// Dashboard APIs
+// Dashboard APIs -  IMPLEMENTED
 export const getDashboardData = () => api.get('/dashboard')
 export const addBookmark = (projectId) => api.post('/dashboard/bookmarks', { projectId })
 export const removeBookmark = (projectId) => api.delete(`/dashboard/bookmarks/${projectId}`)
 
-// Application APIs
+// Application APIs -  IMPLEMENTED
 export const submitApplication = (data) => api.post('/applications', data)
 export const getApplications = (filters) => api.get('/applications', { params: filters })
 export const updateApplicationStatus = (id, status, notes) => 
   api.patch(`/applications/${id}/status`, { status, notes })
 export const withdrawApplication = (id) => api.delete(`/applications/${id}`)
 
-// Notification APIs
+// Notification APIs -  IMPLEMENTED
 export const getNotifications = () => api.get('/notifications')
 export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`)
 export const markAllNotificationsRead = () => api.patch('/notifications/read-all')
 export const getUnreadCount = () => api.get('/notifications/unread-count')
 
-// Message APIs
+// User APIs -  IMPLEMENTED
+export const getUserProfile = (userId) => api.get(`/users/${userId}/profile`)
+
+// Project APIs -  IMPLEMENTED
+export const getProjects = (filters) => api.get('/projects', { params: filters })
+export const createProject = (data) => api.post('/projects', data)
+export const updateProject = (id, data) => api.patch(`/projects/${id}`, data)
+export const deleteProject = (id) => api.delete(`/projects/${id}`)
+
+// Message APIs - FUTURE ENHANCEMENT
 export const sendMessage = (projectId, content) => 
   api.post(`/projects/${projectId}/messages`, { content })
 export const getMessages = (projectId) => api.get(`/projects/${projectId}/messages`)
 export const addReaction = (messageId, emoji) => 
   api.post(`/messages/${messageId}/reactions`, { emoji })
 
-// Hackathon APIs
+// Hackathon APIs -  IMPLEMENTED
 export const getHackathons = (filters) => api.get('/hackathons', { params: filters })
 export const registerForHackathon = (id, data) => 
   api.post(`/hackathons/${id}/register`, data)
 export const submitHackathonProject = (id, data) => 
   api.post(`/hackathons/${id}/submit`, data)
 ```
+
+---
+
+## FRONTEND IMPLEMENTATION STATUS
+
+### Dashboard.jsx - COMPLETE IMPLEMENTATION 
+
+**File Location:** `frontend/pages/Dashboard.jsx`
+
+**Key Features Implemented:**
+
+1. **Application Collection Integration** 
+   - Fully aligned with Application schema from SYSTEM_FLOW_DATABASE_SCHEMA.md
+   - Comprehensive inline documentation of schema structure
+   - Proper handling of applications_received and applications_sent arrays
+   - Correct status enums: PENDING, ACCEPTED, REJECTED, WITHDRAWN, REMOVED
+
+2. **Two Main Tabs** 
+   - Bookmarks Tab: Displays bookmarked projects
+   - Applications Tab: Full application management
+
+3. **Applications Tab Features** 
+   - Sub-tabs: Received (as project owner) and Sent (as applicant)
+   - Real-time application counts
+   - Status-based filtering
+   - Accept/Reject workflow for PENDING applications
+
+4. **Application Display** 
+   - Applicant information (name, title, avatar, location)
+   - Project information (name, stage, position)
+   - Application details (message, skills, resume)
+   - Status badges with icons
+   - Relative time display ("2 days ago")
+
+5. **Application Actions** 
+   - Accept Application → Adds to team → Opens CollaborationSpace
+   - Reject Application → Updates status → Sends notification
+   - View Profile → Fetches full user profile from API
+   - Download Resume → Opens resume URL
+
+6. **Notifications Integration** 
+   - Sends acceptance notifications to applicants
+   - Sends rejection notifications to applicants
+   - Toast notifications for user feedback
+   - Navigation from notification clicks (via location.state)
+
+7. **State Management** 
+   - Uses ProjectContext for applications, projects, bookmarks
+   - Uses AuthContext for user authentication
+   - Uses NotificationContext for notifications
+   - Proper loading states
+   - Error handling
+
+8. **User Experience** 
+   - Empty states for no bookmarks/applications
+   - Loading indicators
+   - Toast notifications for actions
+   - Smooth tab transitions
+   - Responsive design
+
+9. **Data Flow** 
+   - Fetches applications on tab switch
+   - Refreshes data after accept/reject
+   - Handles pending collaboration space opening
+   - Proper error handling and fallbacks
+
+10. **Profile Modal Integration** 
+    - Opens ProfileModal for applicant profiles
+    - Fetches full user data from API
+    - Fallback to application data if API fails
+    - Shows current user profile for sent applications
+
+**Code Quality:**
+- Comprehensive inline comments
+- Clear function names
+- Proper error handling
+- Console logging for debugging
+- Clean component structure
+
+**Schema Alignment:**
+The Dashboard.jsx file includes detailed comments at the top documenting the Application collection structure:
+- applications_received array structure
+- applications_sent array structure
+- All field names and types
+- Status enums
+- Nested objects (attachments, review info)
+
+This ensures developers understand the data structure when working with the component.
 
 
 ---
@@ -1417,6 +1537,76 @@ export const submitHackathonProject = (id, data) =>
 5. **Backend creates notification** → Notifies applicant
 6. **Frontend updates UI** → Shows updated status
 7. **Stats recalculated** → Dashboard stats updated for both users
+
+### Re-application Flow (After Rejection)
+
+**Scenario:** User was rejected and wants to apply again
+
+1. **User views project** → Sees open positions
+2. **User clicks "Apply"** → Opens application form
+3. **User submits application** → POST /api/applications/submit
+4. **Backend checks for duplicates:**
+   - Looks for PENDING or ACCEPTED applications only
+   - Ignores REJECTED, WITHDRAWN, and REMOVED applications
+   - If no active application found → Allows submission
+5. **New application created:**
+   - New unique `applicationId` generated
+   - Added to both user documents (applications_sent and applications_received)
+   - Previous rejected application remains in history
+   - Status: PENDING
+6. **Project owner notified** → Receives notification about new application
+7. **Dashboard updated** → New application appears in both dashboards
+
+**Benefits:**
+- Users get second chances after improving skills/experience
+- Project owners can reconsider candidates
+- Removed team members can reapply to rejoin
+- Full application history maintained for reference
+- No data loss - all previous applications preserved
+
+**Business Rules:**
+- ✅ Can re-apply after: REJECTED, WITHDRAWN, REMOVED
+- ❌ Cannot re-apply if: PENDING (already applied), ACCEPTED (already on team)
+- Each application gets unique applicationId
+- Previous applications remain in database for analytics
+
+### Re-application Flow (After Team Removal)
+
+**Scenario:** User was accepted, joined team, but was later removed
+
+1. **User was on team** → Status: ACCEPTED
+2. **Project owner removes user** → Status changes to REMOVED
+   - `removedFromTeamAt` timestamp set
+   - `removalReason` recorded
+   - User removed from project.teamMembers array
+3. **User views project again** → Sees open positions
+4. **User clicks "Apply"** → Opens application form
+5. **User submits new application** → POST /api/applications/submit
+6. **Backend checks for duplicates:**
+   - Finds REMOVED application (not blocking)
+   - Allows new application submission
+7. **New application created:**
+   - New unique `applicationId` generated
+   - Added to both user documents
+   - Previous REMOVED application remains in history
+   - Status: PENDING
+8. **Project owner notified** → Receives notification
+   - Can see user's previous history
+   - Can review removal reason
+   - Can decide to give second chance
+9. **Dashboard updated** → New application appears
+
+**Use Cases:**
+- User left due to time constraints, now available again
+- Misunderstanding resolved, user wants to rejoin
+- User improved skills/behavior, wants another chance
+- Project needs changed, removed role is needed again
+
+**Benefits:**
+- Flexible team management
+- Second chances for both parties
+- Complete audit trail of member history
+- Project owners maintain full control
 
 ### Real-time Notification Flow
 

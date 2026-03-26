@@ -1,4 +1,5 @@
 import Dashboard from '../../models/Dashboard.js';
+import Application from '../../models/Application.js';
 import User from '../../models/User.js';
 import Project from '../../models/Project.js';
 
@@ -136,17 +137,24 @@ export const submitApplication = async (req, res) => {
     const {
       projectId,
       projectName,
+      projectStage,
+      projectIndustry,
       position,
       applicantId,
       applicantName,
       applicantEmail,
+      applicantAvatar,
+      applicantTitle,
+      applicantLocation,
       projectOwnerId,
       projectOwnerName,
       projectOwnerEmail,
+      projectOwnerAvatar,
       message,
       skills,
       hasResume,
-      resumeUrl
+      resumeUrl,
+      resumeFileName
     } = req.body;
 
     // Validate required fields
@@ -166,78 +174,162 @@ export const submitApplication = async (req, res) => {
       });
     }
 
-    // Generate unique application ID
-    const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    // Get or create applicant's dashboard
-    let applicantDashboard = await Dashboard.findOne({ userId: applicantId });
-    if (!applicantDashboard) {
-      const applicant = await User.findById(applicantId);
-      applicantDashboard = new Dashboard({
-        userId: applicantId,
-        userName: applicant.name,
-        userEmail: applicant.email
+    // Fetch full applicant details from User model to ensure we have complete data
+    const applicant = await User.findById(applicantId);
+    if (!applicant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Applicant not found'
       });
     }
 
-    // Get or create project owner's dashboard
-    let ownerDashboard = await Dashboard.findOne({ userId: projectOwnerId });
-    if (!ownerDashboard) {
-      const owner = await User.findById(projectOwnerId);
-      ownerDashboard = new Dashboard({
+    // Fetch full project owner details
+    const projectOwner = await User.findById(projectOwnerId);
+    if (!projectOwner) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project owner not found'
+      });
+    }
+
+    // Generate unique application ID
+    const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Get or create applicant's Application document
+    let applicantApplication = await Application.findOne({ userId: applicantId });
+    if (!applicantApplication) {
+      applicantApplication = new Application({
+        userId: applicantId,
+        userName: applicant.name,
+        userEmail: applicant.email,
+        applications_received: [],
+        applications_sent: []
+      });
+    }
+
+    // Get or create project owner's Application document
+    let ownerApplication = await Application.findOne({ userId: projectOwnerId });
+    if (!ownerApplication) {
+      ownerApplication = new Application({
         userId: projectOwnerId,
-        userName: owner.name,
-        userEmail: owner.email
+        userName: projectOwner.name,
+        userEmail: projectOwner.email,
+        applications_received: [],
+        applications_sent: []
       });
     }
 
     // Check if user already applied to this project for this position
-    const existingApplication = applicantDashboard.applications.find(
-      app => app.projectId.toString() === projectId && app.position === position
+    // Only block if there's a PENDING or ACCEPTED application
+    // Allow re-application if previous was REJECTED, WITHDRAWN, or REMOVED
+    const existingActiveApplication = applicantApplication.applications_sent.find(
+      app => app.projectId.toString() === projectId && 
+             app.position === position &&
+             (app.status === 'PENDING' || app.status === 'ACCEPTED')
     );
 
-    if (existingApplication) {
+    if (existingActiveApplication) {
+      const statusMessage = existingActiveApplication.status === 'PENDING' 
+        ? 'You already have a pending application for this position. Please wait for the project owner to review it.'
+        : 'You are already accepted for this position and part of the team.';
+      
       return res.status(400).json({
         success: false,
-        message: 'You have already applied to this position'
+        message: statusMessage,
+        existingStatus: existingActiveApplication.status
       });
     }
 
-    // Create application object
-    const applicationData = {
+    // Check if there was a previous rejected, withdrawn, or removed application (for logging)
+    const previousApplication = applicantApplication.applications_sent.find(
+      app => app.projectId.toString() === projectId && 
+             app.position === position &&
+             (app.status === 'REJECTED' || app.status === 'WITHDRAWN' || app.status === 'REMOVED')
+    );
+
+    if (previousApplication) {
+      console.log(`User ${applicantId} is re-applying to ${projectName} - ${position} after ${previousApplication.status} status`);
+    }
+
+    const now = new Date();
+
+    // Create application for applicant's applications_sent array
+    // Use data from User model to ensure completeness
+    const sentApplicationData = {
       applicationId,
+      projectOwnerId,
+      projectOwnerName: projectOwner.name,
+      projectOwnerEmail: projectOwner.email,
+      projectOwnerAvatar: projectOwner.avatar || '',
       projectId,
       projectName,
+      projectStage: projectStage || project.stage || '',
+      projectIndustry: projectIndustry || project.industry || '',
       position,
-      applicantId,
-      applicantName,
-      applicantEmail,
-      projectOwnerId,
-      projectOwnerName,
-      projectOwnerEmail,
       message: message || '',
       skills: skills || [],
       status: 'PENDING',
       hasResume: hasResume || false,
       resumeUrl: resumeUrl || '',
-      appliedDate: new Date()
+      resumeFileName: resumeFileName || '',
+      attachments: [],
+      reviewNotes: '',
+      reviewedAt: null,
+      reviewedBy: null,
+      rejectionReason: '',
+      removedFromTeamAt: null,
+      removalReason: '',
+      appliedDate: now,
+      statusUpdatedAt: now,
+      withdrawnAt: null
     };
 
-    // Add to both dashboards
-    applicantDashboard.applications.push(applicationData);
-    ownerDashboard.applications.push(applicationData);
+    // Create application for owner's applications_received array
+    // Use data from User model to ensure completeness
+    const receivedApplicationData = {
+      applicationId,
+      applicantId,
+      applicantName: applicant.name,
+      applicantEmail: applicant.email,
+      applicantAvatar: applicant.avatar || '',
+      applicantTitle: applicant.title || '',
+      applicantLocation: applicant.location || '',
+      projectId,
+      projectName,
+      projectStage: projectStage || project.stage || '',
+      position,
+      message: message || '',
+      skills: skills || [],
+      status: 'PENDING',
+      hasResume: hasResume || false,
+      resumeUrl: resumeUrl || '',
+      resumeFileName: resumeFileName || '',
+      attachments: [],
+      reviewNotes: '',
+      reviewedAt: null,
+      reviewedBy: null,
+      rating: null,
+      removedFromTeamAt: null,
+      removalReason: '',
+      appliedDate: now,
+      statusUpdatedAt: now
+    };
+
+    // Add to both Application documents
+    applicantApplication.applications_sent.push(sentApplicationData);
+    ownerApplication.applications_received.push(receivedApplicationData);
 
     // Update stats
-    applicantDashboard.updateStats();
-    ownerDashboard.updateStats();
+    applicantApplication.updateStats();
+    ownerApplication.updateStats();
 
     // Increment project application count
     project.applications = (project.applications || 0) + 1;
 
     // Save all changes
     await Promise.all([
-      applicantDashboard.save(),
-      ownerDashboard.save(),
+      applicantApplication.save(),
+      ownerApplication.save(),
       project.save()
     ]);
 
@@ -247,7 +339,7 @@ export const submitApplication = async (req, res) => {
       data: {
         applicationId,
         status: 'PENDING',
-        appliedDate: applicationData.appliedDate
+        appliedDate: now
       }
     });
   } catch (error) {
@@ -264,66 +356,107 @@ export const submitApplication = async (req, res) => {
 export const updateApplicationStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const { status, reviewerId } = req.body;
+    const { status, reviewerId, reviewNotes } = req.body;
 
-    if (!['PENDING', 'ACCEPTED', 'REJECTED'].includes(status)) {
+    if (!['PENDING', 'ACCEPTED', 'REJECTED', 'REMOVED'].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be PENDING, ACCEPTED, or REJECTED'
+        message: 'Invalid status. Must be PENDING, ACCEPTED, REJECTED, or REMOVED'
       });
     }
 
-    // Find the application in both applicant's and owner's dashboards
-    const dashboards = await Dashboard.find({
-      'applications.applicationId': applicationId
+    // Find the application in owner's applications_received
+    const ownerApplication = await Application.findOne({
+      'applications_received.applicationId': applicationId
     });
 
-    if (dashboards.length === 0) {
+    if (!ownerApplication) {
       return res.status(404).json({
         success: false,
         message: 'Application not found'
       });
     }
 
-    let applicantDashboard, ownerDashboard, applicationData;
+    // Find the specific application
+    const application = ownerApplication.applications_received.find(
+      app => app.applicationId === applicationId
+    );
 
-    // Update status in both dashboards
-    for (const dashboard of dashboards) {
-      const application = dashboard.applications.find(
-        app => app.applicationId === applicationId
-      );
-
-      if (application) {
-        // Verify the reviewer is the project owner
-        if (reviewerId && dashboard.userId.toString() !== reviewerId) {
-          // This is the applicant's dashboard
-          applicantDashboard = dashboard;
-        } else {
-          // This is the owner's dashboard
-          ownerDashboard = dashboard;
-        }
-
-        application.status = status;
-        applicationData = application;
-        dashboard.updateStats();
-        await dashboard.save();
-      }
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
     }
 
-    // If accepted, optionally add applicant to project team
-    if (status === 'ACCEPTED' && applicationData) {
-      const project = await Project.findById(applicationData.projectId);
+    // Verify the reviewer is the project owner
+    if (reviewerId && ownerApplication.userId.toString() !== reviewerId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the project owner can accept or reject applications'
+      });
+    }
+
+    const now = new Date();
+
+    // Update in owner's applications_received
+    await Application.updateOne(
+      { 
+        userId: ownerApplication.userId,
+        'applications_received.applicationId': applicationId 
+      },
+      { 
+        $set: { 
+          'applications_received.$.status': status,
+          'applications_received.$.statusUpdatedAt': now,
+          'applications_received.$.reviewedAt': now,
+          'applications_received.$.reviewedBy': reviewerId,
+          'applications_received.$.reviewNotes': reviewNotes || ''
+        }
+      }
+    );
+
+    // Update in applicant's applications_sent
+    await Application.updateOne(
+      { 
+        userId: application.applicantId,
+        'applications_sent.applicationId': applicationId 
+      },
+      { 
+        $set: { 
+          'applications_sent.$.status': status,
+          'applications_sent.$.statusUpdatedAt': now,
+          'applications_sent.$.reviewedAt': now,
+          'applications_sent.$.reviewedBy': reviewerId,
+          'applications_sent.$.reviewNotes': reviewNotes || ''
+        }
+      }
+    );
+
+    // Update stats in both documents
+    const updatedOwnerApp = await Application.findOne({ userId: ownerApplication.userId });
+    updatedOwnerApp.updateStats();
+    await updatedOwnerApp.save();
+
+    const updatedApplicantApp = await Application.findOne({ userId: application.applicantId });
+    updatedApplicantApp.updateStats();
+    await updatedApplicantApp.save();
+
+    // If accepted, add applicant to project team
+    if (status === 'ACCEPTED') {
+      const project = await Project.findById(application.projectId);
       if (project) {
         const isAlreadyMember = project.teamMembers.some(
-          member => member.id && member.id.toString() === applicationData.applicantId.toString()
+          member => member.id && member.id.toString() === application.applicantId.toString()
         );
 
         if (!isAlreadyMember) {
           project.teamMembers.push({
-            id: applicationData.applicantId,
-            name: applicationData.applicantName,
-            role: applicationData.position,
-            email: applicationData.applicantEmail,
+            id: application.applicantId,
+            name: application.applicantName,
+            role: application.position,
+            email: application.applicantEmail,
+            avatar: application.applicantAvatar || '',
             applicantColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
           });
           await project.save();
@@ -337,7 +470,7 @@ export const updateApplicationStatus = async (req, res) => {
       data: {
         applicationId,
         status,
-        updatedAt: new Date()
+        updatedAt: now
       }
     });
   } catch (error) {
@@ -412,29 +545,48 @@ export const getApplications = async (req, res) => {
     const { userId } = req.params;
     const { status } = req.query;
 
-    const dashboard = await Dashboard.findOne({ userId })
-      .populate('applications.projectId')
-      .populate('applications.applicantId', 'name email avatar bio title role skills location githubUrl linkedinUrl portfolioUrl experiences education');
+    // Use Application collection instead of Dashboard
+    let application = await Application.findOne({ userId })
+      .populate('applications_received.projectId')
+      .populate('applications_received.applicantId', 'name email avatar bio title role skills location githubUrl linkedinUrl portfolioUrl experiences education')
+      .populate('applications_sent.projectId')
+      .populate('applications_sent.projectOwnerId', 'name email avatar');
     
-    if (!dashboard) {
-      // Return empty array instead of 404 if dashboard doesn't exist yet
+    if (!application) {
+      // Return empty structure if application document doesn't exist yet
       return res.status(200).json({
         success: true,
-        data: []
+        data: {
+          applications_received: [],
+          applications_sent: [],
+          stats: {
+            totalReceived: 0,
+            pendingReceived: 0,
+            acceptedReceived: 0,
+            rejectedReceived: 0,
+            removedReceived: 0,
+            totalSent: 0,
+            pendingSent: 0,
+            acceptedSent: 0,
+            rejectedSent: 0,
+            withdrawnSent: 0,
+            removedSent: 0
+          }
+        }
       });
     }
 
-    let applications = dashboard.applications;
-
-    if (status) {
-      applications = applications.filter(app => app.status === status);
-    }
-
+    // Return the full application document with both arrays
     res.status(200).json({
       success: true,
-      data: applications
+      data: {
+        applications_received: application.applications_received || [],
+        applications_sent: application.applications_sent || [],
+        stats: application.stats
+      }
     });
   } catch (error) {
+    console.error('Error fetching applications:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching applications',
@@ -449,45 +601,39 @@ export const getProjectApplications = async (req, res) => {
     const { projectId } = req.params;
     const { status } = req.query;
 
-    // Find all dashboards that have applications for this project
-    const query = { 'applications.projectId': projectId };
-    
-    const dashboards = await Dashboard.find(query)
-      .populate('applications.applicantId', 'name email avatar bio skills');
+    // Find the project owner's Application document
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
 
-    if (!dashboards || dashboards.length === 0) {
+    // Find owner's Application document
+    const ownerApplication = await Application.findOne({ userId: project.ownerId })
+      .populate('applications_received.applicantId', 'name email avatar bio title role skills location');
+
+    if (!ownerApplication) {
       return res.status(200).json({
         success: true,
         data: []
       });
     }
 
-    // Extract applications for this project
-    let applications = [];
-    dashboards.forEach(dashboard => {
-      const projectApps = dashboard.applications.filter(
-        app => app.projectId.toString() === projectId
-      );
-      applications.push(...projectApps);
-    });
-
-    // Remove duplicates based on applicationId
-    const uniqueApplications = Array.from(
-      new Map(applications.map(app => [app.applicationId, app])).values()
+    // Filter applications for this project
+    let applications = ownerApplication.applications_received.filter(
+      app => app.projectId.toString() === projectId
     );
 
     // Filter by status if provided
     if (status) {
-      const filteredApps = uniqueApplications.filter(app => app.status === status);
-      return res.status(200).json({
-        success: true,
-        data: filteredApps
-      });
+      applications = applications.filter(app => app.status === status);
     }
 
     res.status(200).json({
       success: true,
-      data: uniqueApplications
+      data: applications
     });
   } catch (error) {
     console.error('Error fetching project applications:', error);
@@ -505,33 +651,70 @@ export const withdrawApplication = async (req, res) => {
     const { applicationId } = req.params;
     const { userId } = req.body;
 
-    // Find dashboards with this application
-    const dashboards = await Dashboard.find({
-      'applications.applicationId': applicationId
+    // Find applicant's Application document
+    const applicantApplication = await Application.findOne({ 
+      userId,
+      'applications_sent.applicationId': applicationId 
     });
 
-    if (dashboards.length === 0) {
+    if (!applicantApplication) {
       return res.status(404).json({
         success: false,
         message: 'Application not found'
       });
     }
 
-    // Remove application from both dashboards
-    for (const dashboard of dashboards) {
-      const appIndex = dashboard.applications.findIndex(
-        app => app.applicationId === applicationId
-      );
+    // Find the application
+    const application = applicantApplication.applications_sent.find(
+      app => app.applicationId === applicationId
+    );
 
-      if (appIndex !== -1) {
-        // Verify user is the applicant
-        if (dashboard.applications[appIndex].applicantId.toString() === userId) {
-          dashboard.applications.splice(appIndex, 1);
-          dashboard.updateStats();
-          await dashboard.save();
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+
+    const now = new Date();
+
+    // Update status to WITHDRAWN in applicant's applications_sent
+    await Application.updateOne(
+      { 
+        userId,
+        'applications_sent.applicationId': applicationId 
+      },
+      { 
+        $set: { 
+          'applications_sent.$.status': 'WITHDRAWN',
+          'applications_sent.$.statusUpdatedAt': now,
+          'applications_sent.$.withdrawnAt': now
         }
       }
-    }
+    );
+
+    // Update status to WITHDRAWN in owner's applications_received
+    await Application.updateOne(
+      { 
+        userId: application.projectOwnerId,
+        'applications_received.applicationId': applicationId 
+      },
+      { 
+        $set: { 
+          'applications_received.$.status': 'WITHDRAWN',
+          'applications_received.$.statusUpdatedAt': now
+        }
+      }
+    );
+
+    // Update stats in both documents
+    const updatedApplicantApp = await Application.findOne({ userId });
+    updatedApplicantApp.updateStats();
+    await updatedApplicantApp.save();
+
+    const updatedOwnerApp = await Application.findOne({ userId: application.projectOwnerId });
+    updatedOwnerApp.updateStats();
+    await updatedOwnerApp.save();
 
     res.status(200).json({
       success: true,

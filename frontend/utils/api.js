@@ -110,6 +110,7 @@ export const endpoints = {
   },
   // Application endpoints
   applications: {
+    get: (userId) => `/api/applications/${userId}`,
     submit: '/api/applications/submit',
     updateStatus: (applicationId) => `/api/applications/${applicationId}/status`,
     withdraw: (applicationId) => `/api/applications/${applicationId}/withdraw`,

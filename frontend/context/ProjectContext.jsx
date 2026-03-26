@@ -48,42 +48,98 @@ export const ProjectProvider = ({ children }) => {
 
       console.log('Fetching applications for user:', userId);
 
-      // Fetch applications from MongoDB
+      // Fetch applications from dashboard endpoint
       const response = await fetch(`${apiBaseUrl}/api/dashboard/${userId}/applications`);
       const result = await response.json();
 
       console.log('Applications fetch result:', result);
 
       if (result.success && result.data) {
-        // Transform backend applications to match frontend format
-        const transformedApplications = result.data.map(app => ({
-          id: app.applicationId,
-          applicationId: app.applicationId,
-          applicantId: app.applicantId?._id || app.applicantId,
-          applicantName: app.applicantName,
-          applicantEmail: app.applicantEmail,
-          applicantAvatar: app.applicantAvatar || 'U',
-          applicantColor: app.applicantColor || '#4f46e5',
-          position: app.position,
-          skills: app.skills || [],
-          projectId: app.projectId?._id || app.projectId,
-          projectName: app.projectName,
-          projectOwnerId: app.projectOwnerId?._id || app.projectOwnerId,
-          projectOwnerName: app.projectOwnerName,
-          projectOwnerEmail: app.projectOwnerEmail,
-          appliedDate: app.appliedDate,
-          status: app.status,
-          message: app.message || '',
-          hasResume: app.hasResume || false,
-          resumeUrl: app.resumeUrl || '',
-          userDetails: app.applicantId ? {
-            name: app.applicantName,
-            email: app.applicantEmail
-          } : null
-        }));
+        const applicationData = result.data;
+        
+        // Combine received and sent applications
+        const receivedApps = (applicationData.applications_received || []).map(app => {
+          // If applicantId is populated (object), extract data from it
+          const applicantData = typeof app.applicantId === 'object' && app.applicantId !== null
+            ? app.applicantId
+            : null;
 
-        console.log('Transformed applications:', transformedApplications.length);
-        setApplications(transformedApplications);
+          return {
+            ...app,
+            id: app.applicationId,
+            type: 'received',
+            // Use populated data if available, otherwise use stored fields
+            applicantName: applicantData?.name || app.applicantName,
+            applicantEmail: applicantData?.email || app.applicantEmail,
+            applicantAvatar: applicantData?.avatar || app.applicantAvatar || 'U',
+            applicantTitle: applicantData?.title || app.applicantTitle || '',
+            applicantLocation: applicantData?.location || app.applicantLocation || '',
+            applicantColor: app.applicantColor || '#4f46e5',
+            // Store full user details for profile modal
+            userDetails: applicantData ? {
+              _id: applicantData._id,
+              name: applicantData.name,
+              email: applicantData.email,
+              avatar: applicantData.avatar,
+              title: applicantData.title,
+              location: applicantData.location,
+              bio: applicantData.bio,
+              role: applicantData.role,
+              skills: applicantData.skills,
+              githubUrl: applicantData.githubUrl,
+              linkedinUrl: applicantData.linkedinUrl,
+              portfolioUrl: applicantData.portfolioUrl,
+              experiences: applicantData.experiences,
+              education: applicantData.education
+            } : {
+              _id: app.applicantId,
+              name: app.applicantName,
+              email: app.applicantEmail,
+              avatar: app.applicantAvatar,
+              title: app.applicantTitle,
+              location: app.applicantLocation
+            }
+          };
+        });
+
+        const sentApps = (applicationData.applications_sent || []).map(app => {
+          // If projectOwnerId is populated (object), extract data from it
+          const ownerData = typeof app.projectOwnerId === 'object' && app.projectOwnerId !== null
+            ? app.projectOwnerId
+            : null;
+
+          return {
+            ...app,
+            id: app.applicationId,
+            type: 'sent',
+            // Use populated data if available, otherwise use stored fields
+            projectOwnerName: ownerData?.name || app.projectOwnerName,
+            projectOwnerEmail: ownerData?.email || app.projectOwnerEmail,
+            projectOwnerAvatar: ownerData?.avatar || app.projectOwnerAvatar || 'U',
+            userDetails: ownerData ? {
+              _id: ownerData._id,
+              name: ownerData.name,
+              email: ownerData.email,
+              avatar: ownerData.avatar
+            } : {
+              _id: app.projectOwnerId,
+              name: app.projectOwnerName,
+              email: app.projectOwnerEmail,
+              avatar: app.projectOwnerAvatar
+            }
+          };
+        });
+
+        // Combine both arrays
+        const allApplications = [...receivedApps, ...sentApps];
+
+        console.log('Transformed applications:', {
+          received: receivedApps.length,
+          sent: sentApps.length,
+          total: allApplications.length
+        });
+        
+        setApplications(allApplications);
       } else {
         console.log('No applications found or fetch failed');
         setApplications([]);
@@ -419,17 +475,24 @@ export const ProjectProvider = ({ children }) => {
       const payload = {
         projectId: projectId,
         projectName: project.title,
+        projectStage: project.stage || '',
+        projectIndustry: project.industry || '',
         position: applicationData.position,
         applicantId: userId,
         applicantName: user.name,
         applicantEmail: user.email,
+        applicantAvatar: user.avatar || '',
+        applicantTitle: user.title || '',
+        applicantLocation: user.location || '',
         projectOwnerId: project.ownerId || project.ownerId?._id,
         projectOwnerName: project.teamMembers?.find(m => m.role === 'Founder')?.name || 'Project Owner',
         projectOwnerEmail: project.teamMembers?.find(m => m.role === 'Founder')?.email || '',
+        projectOwnerAvatar: project.teamMembers?.find(m => m.role === 'Founder')?.avatar || '',
         message: applicationData.message || '',
         skills: applicationData.skills || [],
         hasResume: !!applicationData.resumeUrl,
-        resumeUrl: applicationData.resumeUrl || ''
+        resumeUrl: applicationData.resumeUrl || '',
+        resumeFileName: applicationData.resume?.name || ''
       };
 
       // Submit application to backend
@@ -480,14 +543,21 @@ export const ProjectProvider = ({ children }) => {
             : p
         ));
 
-        return true;
+        return { success: true };
       } else {
         console.error('Failed to submit application:', result.message);
-        return false;
+        return { 
+          success: false, 
+          message: result.message || 'Failed to submit application',
+          existingStatus: result.existingStatus 
+        };
       }
     } catch (error) {
       console.error('Error applying to project:', error);
-      return false;
+      return { 
+        success: false, 
+        message: 'An error occurred while submitting your application. Please try again.' 
+      };
     }
   };
 
@@ -676,33 +746,16 @@ export const ProjectProvider = ({ children }) => {
   const getReceivedApplications = (userId) => {
     if (!userId) return [];
     
-    // Filter applications where the current user is the project owner
-    return applications.filter(app => {
-      // Check if current user is the project owner
-      const isOwner = app.projectOwnerId && 
-        (app.projectOwnerId === userId || 
-         app.projectOwnerId.toString() === userId.toString() ||
-         app.projectOwnerId._id === userId ||
-         app.projectOwnerId._id?.toString() === userId.toString());
-      
-      return isOwner;
-    });
+    // Filter applications by type 'received'
+    return applications.filter(app => app.type === 'received');
   };
 
   // Get applications sent by a user
   const getSentApplications = (userId) => {
     if (!userId) return [];
     
-    return applications.filter(app => {
-      // Check if current user is the applicant
-      const isApplicant = app.applicantId && 
-        (app.applicantId === userId || 
-         app.applicantId.toString() === userId.toString() ||
-         app.applicantId._id === userId ||
-         app.applicantId._id?.toString() === userId.toString());
-      
-      return isApplicant;
-    });
+    // Filter applications by type 'sent'
+    return applications.filter(app => app.type === 'sent');
   };
 
   // Get projects for a specific user

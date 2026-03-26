@@ -626,6 +626,14 @@
   animation: slideUp 0.3s ease-in-out;
 }
 
+.toast-notification.success {
+  background-color: #4ade80;
+}
+
+.toast-notification.error {
+  background-color: #f87171;
+}
+
 .toast-content {
   display: flex;
   align-items: center;
