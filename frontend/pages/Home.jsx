@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Rocket, Search, ArrowRight, Users, Lightbulb, Trophy, Target, GitBranch, MessageSquare, Shield, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Home.css';
@@ -6,12 +6,11 @@ import './Home.css';
 function Home({ onAuthClick }) {
   const { user } = useAuth();
 
+  // Redirect logged-in users to projects page
+  if (user) {
+    return <Navigate to="/projects" replace />;
+  }
 
-  const handleStartBuilding = () => {
-    if (!user) {
-      onAuthClick();
-    }
-  };
 
   return (
     <div className="home-container">
@@ -26,17 +25,10 @@ function Home({ onAuthClick }) {
             From concept to funded startup. Connect with talented individuals, collaborate on exciting projects, and turn your vision into reality. Join thousands of creators building the future together.
           </p>
           <div className="hero-actions">
-            {user ? (
-              <Link to="/projects" className="cta-button primary">
-                <Rocket size={20} className="button-icon" />
-                Explore Projects
-              </Link>
-            ) : (
-              <button className="cta-button primary" onClick={handleStartBuilding}>
-                <Rocket size={20} className="button-icon" />
-                Start Building Today
-              </button>
-            )}
+            <button className="cta-button primary" onClick={onAuthClick}>
+              <Rocket size={20} className="button-icon" />
+              Start Building Today
+            </button>
             <Link to="/hackathons" className="cta-button secondary">
               <Search size={20} className="button-icon" />
               Join Hackathons
@@ -238,17 +230,10 @@ function Home({ onAuthClick }) {
             Join thousands of entrepreneurs, developers, and creators who are building amazing projects together. Your next big opportunity is just one click away.
           </p>
           <div className="hero-actions">
-            {user ? (
-              <Link to="/projects" className="cta-button primary">
-                <Rocket size={20} className="button-icon" />
-                Get Started Free
-              </Link>
-            ) : (
-              <button className="cta-button primary" onClick={handleStartBuilding}>
-                <Rocket size={20} className="button-icon" />
-                Get Started Free
-              </button>
-            )}
+            <button className="cta-button primary" onClick={onAuthClick}>
+              <Rocket size={20} className="button-icon" />
+              Get Started Free
+            </button>
             <Link to="/hackathons" className="cta-button secondary">
               <Search size={20} className="button-icon" />
               Join Hackathons

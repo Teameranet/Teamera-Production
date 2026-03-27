@@ -85,8 +85,8 @@ function AppContent() {
                   if (userData.id !== '1' && (!userData.bio || !userData.skills || userData.skills.length === 0)) {
                     handleModalState(setShowOnboarding, true);
                   } else {
-                    // Redirect to dashboard after successful login
-                    navigate('/dashboard');
+                    // Redirect to projects page after successful login
+                    navigate('/projects');
                   }
                 }}
               />
@@ -96,8 +96,8 @@ function AppContent() {
               <OnboardingModal 
                 onClose={() => {
                   handleModalState(setShowOnboarding, false);
-                  // Redirect to dashboard after onboarding
-                  navigate('/dashboard');
+                  // Redirect to projects page after onboarding
+                  navigate('/projects');
                 }}
               />
             )}

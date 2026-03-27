@@ -24,6 +24,7 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);
+    navigate('/');
   };
 
   // Navigate to profile and close menus
@@ -37,21 +38,23 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
     <nav className="navbar">
       <div className="nav-container">
         {/* Logo Section */}
-        <Link to="/" className="nav-logo">
+        <Link to={user ? "/dashboard" : "/"} className="nav-logo">
           <span className="logo-text">Teamera</span>
           <span className="logo-dot">.net</span>
         </Link>
 
         {/* Desktop Navigation Menu */}
         <ul className="nav-menu desktop-menu">
-          <li className="nav-item">
-            <Link 
-              to="/" 
-              className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-            >
-              Home
-            </Link>
-          </li>
+          {!user && (
+            <li className="nav-item">
+              <Link 
+                to="/" 
+                className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+              >
+                Home
+              </Link>
+            </li>
+          )}
           <li className="nav-item">
             <Link 
               to="/projects" 
@@ -172,15 +175,17 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
           <div className="mobile-menu">
             {/* Mobile Navigation Links */}
             <ul className="mobile-nav-menu">
-              <li>
-                <Link 
-                  to="/" 
-                  className={location.pathname === '/' ? 'active' : ''}
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Home
-                </Link>
-              </li>
+              {!user && (
+                <li>
+                  <Link 
+                    to="/" 
+                    className={location.pathname === '/' ? 'active' : ''}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Home
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link 
                   to="/projects" 
