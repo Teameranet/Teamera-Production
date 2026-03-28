@@ -460,7 +460,7 @@ Change Stage Button (with refresh icon) - Opens a dropdown to select a  project 
 ---------------------------------------------------------------------------------------
 ### ✅ Users CAN Re-apply When:
 - Previous application status: **REJECTED**
-- Previous application status: **WITHDRAWN**
+- Previous application status: **QUIT**
 - Previous application status: **REMOVED** (when project owner removes them from team)
 
 ### ❌ Users CANNOT Re-apply When:
@@ -486,3 +486,13 @@ Sent tab: Show project owner details (whose project you applied to)
 
 Received tab: Profile button + View Project button + Resume button (if available) + Accept/Reject (if pending)
 Sent tab: View Project button + Resume button (if available) - NO Profile button
+-----------------------------------------------------------------------
+Check if the user has already applied to this position before showing the application form
+Display a clean SaaS-style message below the "Apply for this position" button if they have a pending application
+Keep the  "Apply for this position" button button size unchanged
+ to pop message give the Link of application (accept/reject)  to see the application  is reject or not
+ Add the Logic 
+- If Project owner Invite the member while creating the Project 
+- On that user (member) site show the pop message "You had Invided of Project Owner" on below the "Apply for this position" 
+- Give the link oper the" CollaborationSpace"
+- Display a clean SaaS-style message 

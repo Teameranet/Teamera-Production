@@ -144,7 +144,7 @@ User-centric application management system where each user has one document cont
     position: String, // Role applied for
     message: String, // Cover letter/application message
     skills: [String], // Skills relevant to the position
-    status: String, // "PENDING", "ACCEPTED", "REJECTED", "REMOVED"
+    status: String, // "PENDING", "ACCEPTED", "REJECTED", "REMOVED", "INVITED"
     
     // RESUME/ATTACHMENTS
     hasResume: Boolean,
@@ -192,7 +192,7 @@ User-centric application management system where each user has one document cont
     position: String, // Role applied for
     message: String, // Cover letter/application message
     skills: [String], // Skills relevant to the position
-    status: String, // "PENDING", "ACCEPTED", "REJECTED", "WITHDRAWN", "REMOVED"
+    status: String, // "PENDING", "ACCEPTED", "REJECTED", "QUIT", "REMOVED", "INVITED"
     
     // RESUME/ATTACHMENTS
     hasResume: Boolean,
@@ -216,7 +216,7 @@ User-centric application management system where each user has one document cont
     // TIMESTAMPS
     appliedDate: Date,
     statusUpdatedAt: Date,
-    withdrawnAt: Date // If user withdraws application
+    quitAt: Date // If user quits/leaves the project
   }],
   
   // ========================================
@@ -229,14 +229,16 @@ User-centric application management system where each user has one document cont
     acceptedReceived: Number,
     rejectedReceived: Number,
     removedReceived: Number, // Members removed from team
+    invitedReceived: Number, // Members invited during project creation
     
     // Sent Statistics
     totalSent: Number,
     pendingSent: Number,
     acceptedSent: Number,
     rejectedSent: Number,
-    withdrawnSent: Number,
-    removedSent: Number // User was removed from team
+    quitSent: Number, // User quit/left the project
+    removedSent: Number, // User was removed from team
+    invitedSent: Number // User was invited to join project
   },
   
   createdAt: Date,
@@ -267,30 +269,39 @@ db.applications.createIndex({ "applications_sent.projectOwnerId": 1 })
    - Both entries share the same `applicationId`
    - Update stats in both documents
    - **Duplicate Check:** Only block if user has PENDING or ACCEPTED application for same project-position
-   - **Re-application Allowed:** Users can re-apply after REJECTED, WITHDRAWN, or REMOVED status
+   - **Re-application Allowed:** Users can re-apply after REJECTED, QUIT, or REMOVED status
 
-2. **On Status Update:**
+2. **On Team Member Invitation (During Project Creation/Edit):**
+   - When a user adds team members while creating or editing a project, create INVITED applications
+   - Add to `applications_received` array in project owner's document with status "INVITED"
+   - Add to `applications_sent` array in invited member's document with status "INVITED"
+   - Both entries share the same `applicationId`
+   - Update stats in both documents (increment invitedReceived and invitedSent)
+   - This allows tracking of members who were directly invited vs. those who applied
+   - INVITED status indicates the member was added by the project owner, not through the application process
+
+3. **On Status Update:**
    - Update status in applicant's `applications_sent` array
    - Update status in project owner's `applications_received` array
    - Update `statusUpdatedAt` timestamp in both
    - Add review notes to both arrays
    - Update stats in both documents
 
-3. **On Application Withdrawal:**
-   - Update status to "WITHDRAWN" in applicant's `applications_sent`
-   - Update status to "WITHDRAWN" in project owner's `applications_received`
-   - Set `withdrawnAt` timestamp in applicant's document
+4. **On Application Quit (Member Leaves):**
+   - Update status to "QUIT" in applicant's `applications_sent`
+   - Update status to "QUIT" in project owner's `applications_received`
+   - Set `quitAt` timestamp in applicant's document
    - Update stats in both documents
-   - **Re-application Allowed:** User can submit new application after withdrawal
+   - **Re-application Allowed:** User can submit new application after quitting
 
-4. **On Application Rejection:**
+5. **On Application Rejection:**
    - Update status to "REJECTED" in both `applications_sent` and `applications_received`
    - Set `reviewedAt` timestamp and `reviewNotes` in both documents
    - Update stats in both documents
    - **Re-application Allowed:** User can submit new application after rejection
    - Previous rejected application remains in history for reference
 
-5. **On Team Member Removal:**
+6. **On Team Member Removal:**
    - Find the accepted application for the removed member
    - Update status to "REMOVED" in both `applications_sent` and `applications_received`
    - Set `removedFromTeamAt` timestamp in both documents
@@ -359,7 +370,7 @@ db.applications.findOne({
   }
 })
 
-// Note: Users CAN re-apply if previous status was REJECTED, WITHDRAWN, or REMOVED
+// Note: Users CAN re-apply if previous status was REJECTED, QUIT, or REMOVED
 
 // Get applications for a specific project
 db.applications.findOne(
@@ -812,7 +823,7 @@ db.hackathons.createIndex({ tags: 1 })
       "rejectionReason": "",
       "appliedDate": "2024-03-09T11:00:00.000Z",
       "statusUpdatedAt": "2024-03-09T11:00:00.000Z",
-      "withdrawnAt": null
+      "quitAt": null
     }
   ],
   "stats": {
@@ -825,7 +836,7 @@ db.hackathons.createIndex({ tags: 1 })
     "pendingSent": 1,
     "acceptedSent": 0,
     "rejectedSent": 0,
-    "withdrawnSent": 0,
+    "quitSent": 0,
     "removedSent": 0
   },
   "createdAt": "2024-02-01T09:00:00.000Z",
@@ -1290,7 +1301,7 @@ db.hackathons.createIndex({ tags: 1 })
 
 2. **Application Components:** -  INTEGRATED IN Dashboard.jsx
    -  Application item display (inline in Dashboard)
-   -  Application status badges (PENDING/ACCEPTED/REJECTED/WITHDRAWN/REMOVED)
+   -  Application status badges (PENDING/ACCEPTED/REJECTED/QUIT/REMOVED/INVITED)
    -  Application actions (Accept/Reject/View Profile/Download Resume)
    -  Applicant info display with UserAvatar
    -  Skills display
@@ -1334,7 +1345,7 @@ db.hackathons.createIndex({ tags: 1 })
      -  Accept/Reject actions for PENDING applications
      -  View applicant profile
      -  Download resume
-     -  Status badges (PENDING/ACCEPTED/REJECTED/WITHDRAWN/REMOVED)
+     -  Status badges (PENDING/ACCEPTED/REJECTED/QUIT/REMOVED/INVITED)
    -  Integration with Application collection schema:
      -  Uses getReceivedApplications() and getSentApplications()
      -  Displays applicant info (name, title, avatar, location)
@@ -1431,7 +1442,7 @@ export const submitHackathonProject = (id, data) =>
    - Fully aligned with Application schema from SYSTEM_FLOW_DATABASE_SCHEMA.md
    - Comprehensive inline documentation of schema structure
    - Proper handling of applications_received and applications_sent arrays
-   - Correct status enums: PENDING, ACCEPTED, REJECTED, WITHDRAWN, REMOVED
+   - Correct status enums: PENDING, ACCEPTED, REJECTED, QUIT, REMOVED, INVITED
 
 2. **Two Main Tabs** 
    - Bookmarks Tab: Displays bookmarked projects
@@ -1547,7 +1558,7 @@ This ensures developers understand the data structure when working with the comp
 3. **User submits application** → POST /api/applications/submit
 4. **Backend checks for duplicates:**
    - Looks for PENDING or ACCEPTED applications only
-   - Ignores REJECTED, WITHDRAWN, and REMOVED applications
+   - Ignores REJECTED, QUIT, and REMOVED applications
    - If no active application found → Allows submission
 5. **New application created:**
    - New unique `applicationId` generated
@@ -1565,7 +1576,7 @@ This ensures developers understand the data structure when working with the comp
 - No data loss - all previous applications preserved
 
 **Business Rules:**
-- ✅ Can re-apply after: REJECTED, WITHDRAWN, REMOVED
+- ✅ Can re-apply after: REJECTED, QUIT, REMOVED
 - ❌ Cannot re-apply if: PENDING (already applied), ACCEPTED (already on team)
 - Each application gets unique applicationId
 - Previous applications remain in database for analytics
@@ -1783,7 +1794,7 @@ Application.findOne({
   "applications_sent": {
     $elemMatch: {
       projectId: projectId,
-      status: { $ne: "WITHDRAWN" }
+      status: { $ne: "QUIT" }
     }
   }
 })
