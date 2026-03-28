@@ -81,7 +81,7 @@ const applicationSchema = new mongoose.Schema({
     }],
     status: {
       type: String,
-      enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'REMOVED'],
+      enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'REMOVED', 'INVITED', 'QUIT'],
       default: 'PENDING'
     },
     
@@ -206,7 +206,7 @@ const applicationSchema = new mongoose.Schema({
     }],
     status: {
       type: String,
-      enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'WITHDRAWN', 'REMOVED'],
+      enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'QUIT', 'REMOVED', 'INVITED'],
       default: 'PENDING'
     },
     
@@ -266,7 +266,7 @@ const applicationSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     },
-    withdrawnAt: {
+    quitAt: {
       type: Date,
       default: null
     }
@@ -297,6 +297,14 @@ const applicationSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
+    invitedReceived: {
+      type: Number,
+      default: 0
+    },
+    quitReceived: {
+      type: Number,
+      default: 0
+    },
     
     // Sent Statistics
     totalSent: {
@@ -315,11 +323,15 @@ const applicationSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
-    withdrawnSent: {
+    quitSent: {
       type: Number,
       default: 0
     },
     removedSent: {
+      type: Number,
+      default: 0
+    },
+    invitedSent: {
       type: Number,
       default: 0
     }
@@ -347,14 +359,17 @@ applicationSchema.methods.updateStats = function() {
   this.stats.acceptedReceived = this.applications_received.filter(app => app.status === 'ACCEPTED').length;
   this.stats.rejectedReceived = this.applications_received.filter(app => app.status === 'REJECTED').length;
   this.stats.removedReceived = this.applications_received.filter(app => app.status === 'REMOVED').length;
+  this.stats.invitedReceived = this.applications_received.filter(app => app.status === 'INVITED').length;
+  this.stats.quitReceived = this.applications_received.filter(app => app.status === 'QUIT').length;
   
   // Sent Statistics
   this.stats.totalSent = this.applications_sent.length;
   this.stats.pendingSent = this.applications_sent.filter(app => app.status === 'PENDING').length;
   this.stats.acceptedSent = this.applications_sent.filter(app => app.status === 'ACCEPTED').length;
   this.stats.rejectedSent = this.applications_sent.filter(app => app.status === 'REJECTED').length;
-  this.stats.withdrawnSent = this.applications_sent.filter(app => app.status === 'WITHDRAWN').length;
+  this.stats.quitSent = this.applications_sent.filter(app => app.status === 'QUIT').length;
   this.stats.removedSent = this.applications_sent.filter(app => app.status === 'REMOVED').length;
+  this.stats.invitedSent = this.applications_sent.filter(app => app.status === 'INVITED').length;
 };
 
 const Application = mongoose.model('Application', applicationSchema);

@@ -221,7 +221,7 @@ export const submitApplication = async (req, res) => {
 
     // Check if user already applied to this project for this position
     // Only block if there's a PENDING or ACCEPTED application
-    // Allow re-application if previous was REJECTED, WITHDRAWN, or REMOVED
+    // Allow re-application if previous was REJECTED, QUIT, or REMOVED
     const existingActiveApplication = applicantApplication.applications_sent.find(
       app => app.projectId.toString() === projectId && 
              app.position === position &&
@@ -240,11 +240,11 @@ export const submitApplication = async (req, res) => {
       });
     }
 
-    // Check if there was a previous rejected, withdrawn, or removed application (for logging)
+    // Check if there was a previous rejected, quit, or removed application (for logging)
     const previousApplication = applicantApplication.applications_sent.find(
       app => app.projectId.toString() === projectId && 
              app.position === position &&
-             (app.status === 'REJECTED' || app.status === 'WITHDRAWN' || app.status === 'REMOVED')
+             (app.status === 'REJECTED' || app.status === 'QUIT' || app.status === 'REMOVED')
     );
 
     if (previousApplication) {
@@ -281,7 +281,7 @@ export const submitApplication = async (req, res) => {
       removalReason: '',
       appliedDate: now,
       statusUpdatedAt: now,
-      withdrawnAt: null
+      quitAt: null
     };
 
     // Create application for owner's applications_received array
@@ -569,7 +569,7 @@ export const getApplications = async (req, res) => {
             pendingSent: 0,
             acceptedSent: 0,
             rejectedSent: 0,
-            withdrawnSent: 0,
+            quitSent: 0,
             removedSent: 0
           }
         }
@@ -645,90 +645,6 @@ export const getProjectApplications = async (req, res) => {
   }
 };
 
-// Withdraw application (for applicants)
-export const withdrawApplication = async (req, res) => {
-  try {
-    const { applicationId } = req.params;
-    const { userId } = req.body;
-
-    // Find applicant's Application document
-    const applicantApplication = await Application.findOne({ 
-      userId,
-      'applications_sent.applicationId': applicationId 
-    });
-
-    if (!applicantApplication) {
-      return res.status(404).json({
-        success: false,
-        message: 'Application not found'
-      });
-    }
-
-    // Find the application
-    const application = applicantApplication.applications_sent.find(
-      app => app.applicationId === applicationId
-    );
-
-    if (!application) {
-      return res.status(404).json({
-        success: false,
-        message: 'Application not found'
-      });
-    }
-
-    const now = new Date();
-
-    // Update status to WITHDRAWN in applicant's applications_sent
-    await Application.updateOne(
-      { 
-        userId,
-        'applications_sent.applicationId': applicationId 
-      },
-      { 
-        $set: { 
-          'applications_sent.$.status': 'WITHDRAWN',
-          'applications_sent.$.statusUpdatedAt': now,
-          'applications_sent.$.withdrawnAt': now
-        }
-      }
-    );
-
-    // Update status to WITHDRAWN in owner's applications_received
-    await Application.updateOne(
-      { 
-        userId: application.projectOwnerId,
-        'applications_received.applicationId': applicationId 
-      },
-      { 
-        $set: { 
-          'applications_received.$.status': 'WITHDRAWN',
-          'applications_received.$.statusUpdatedAt': now
-        }
-      }
-    );
-
-    // Update stats in both documents
-    const updatedApplicantApp = await Application.findOne({ userId });
-    updatedApplicantApp.updateStats();
-    await updatedApplicantApp.save();
-
-    const updatedOwnerApp = await Application.findOne({ userId: application.projectOwnerId });
-    updatedOwnerApp.updateStats();
-    await updatedOwnerApp.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Application withdrawn successfully'
-    });
-  } catch (error) {
-    console.error('Error withdrawing application:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error withdrawing application',
-      error: error.message
-    });
-  }
-};
 
 export default {
   getDashboard,
@@ -739,6 +655,5 @@ export default {
   getDashboardStats,
   getBookmarkedProjects,
   getApplications,
-  getProjectApplications,
-  withdrawApplication
+  getProjectApplications
 };

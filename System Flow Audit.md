@@ -601,7 +601,6 @@ Apply authenticate middleware to all write/protected routes:
   router.delete('/projects/:id/team/:userId', authenticate, projectController.removeTeamMember);
   router.post('/applications/submit', authenticate, dashboardController.submitApplication);
   router.patch('/applications/:applicationId/status', authenticate, dashboardController.updateApplicationStatus);
-  router.delete('/applications/:applicationId/withdraw', authenticate, dashboardController.withdrawApplication);
   router.put('/users/:id', authenticate, userController.updateUser);
   router.put('/users/:id/profile', authenticate, userController.updateUserProfile);
   router.delete('/users/:id', authenticate, userController.deleteUser);

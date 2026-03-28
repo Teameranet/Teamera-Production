@@ -1,5 +1,6 @@
 import Project from '../../models/Project.js';
 import User from '../../models/User.js';
+import Application from '../../models/Application.js';
 import {
   successResponse,
   errorResponse,
@@ -64,6 +65,89 @@ const projectController = {
 
     const newProject = await Project.create(projectData);
 
+    // Create invitation records for invited team members (excluding founder)
+    if (projectData.teamMembers && projectData.teamMembers.length > 0) {
+      const invitedMembers = projectData.teamMembers.filter(
+        member => member.role !== 'Founder' && member.id
+      );
+
+      for (const member of invitedMembers) {
+        try {
+          const applicationId = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Get owner details
+          const owner = await User.findById(newProject.ownerId);
+          if (!owner) continue;
+
+          // Get invited member details
+          const invitedUser = await User.findById(member.id);
+          if (!invitedUser) continue;
+
+          // Create/update application record for project owner (received)
+          await Application.findOneAndUpdate(
+            { userId: newProject.ownerId },
+            {
+              $push: {
+                applications_received: {
+                  applicationId,
+                  applicantId: member.id,
+                  applicantName: member.name,
+                  applicantEmail: member.email || invitedUser.email,
+                  applicantAvatar: invitedUser.avatar || '',
+                  applicantTitle: invitedUser.title || '',
+                  applicantLocation: invitedUser.location || '',
+                  projectId: newProject._id,
+                  projectName: newProject.title,
+                  projectStage: newProject.stage,
+                  position: member.role,
+                  message: 'Invited to join the project',
+                  status: 'INVITED',
+                  appliedDate: new Date(),
+                  statusUpdatedAt: new Date()
+                }
+              }
+            },
+            { upsert: true, new: true }
+          ).then(doc => {
+            doc.updateStats();
+            return doc.save();
+          });
+
+          // Create/update application record for invited member (sent)
+          await Application.findOneAndUpdate(
+            { userId: member.id },
+            {
+              $push: {
+                applications_sent: {
+                  applicationId,
+                  projectOwnerId: newProject.ownerId,
+                  projectOwnerName: owner.name,
+                  projectOwnerEmail: owner.email,
+                  projectOwnerAvatar: owner.avatar || '',
+                  projectId: newProject._id,
+                  projectName: newProject.title,
+                  projectStage: newProject.stage,
+                  projectIndustry: newProject.industry,
+                  position: member.role,
+                  message: 'Invited to join the project',
+                  status: 'INVITED',
+                  appliedDate: new Date(),
+                  statusUpdatedAt: new Date()
+                }
+              }
+            },
+            { upsert: true, new: true }
+          ).then(doc => {
+            doc.updateStats();
+            return doc.save();
+          });
+        } catch (error) {
+          console.error('Error creating invitation record:', error);
+          // Continue with other members even if one fails
+        }
+      }
+    }
+
     const response = successResponse(newProject, 'Project created successfully');
     res.status(201).json(response);
   }),
@@ -77,6 +161,14 @@ const projectController = {
     delete updateData._id;
     delete updateData.createdAt;
 
+    // Get the original project to compare team members
+    const originalProject = await Project.findById(id);
+    if (!originalProject) {
+      return res
+        .status(404)
+        .json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
+    }
+
     const updatedProject = await Project.findByIdAndUpdate(
       id,
       { $set: updateData },
@@ -85,10 +177,175 @@ const projectController = {
       .populate('ownerId', 'name email')
       .populate('teamMembers.id', 'name email');
 
-    if (!updatedProject) {
-      return res
-        .status(404)
-        .json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
+    // Check for newly added team members and removed team members
+    if (updateData.teamMembers) {
+      const originalMemberIds = originalProject.teamMembers
+        .filter(m => m.id && m.role !== 'Founder')
+        .map(m => m.id.toString());
+      
+      const updatedMemberIds = updateData.teamMembers
+        .filter(m => m.id && m.role !== 'Founder')
+        .map(m => m.id.toString());
+      
+      // Find newly added members
+      const newMembers = updateData.teamMembers.filter(
+        member => member.id && 
+                  member.role !== 'Founder' && 
+                  !originalMemberIds.includes(member.id.toString())
+      );
+
+      // Find removed members
+      const removedMemberIds = originalMemberIds.filter(
+        memberId => !updatedMemberIds.includes(memberId)
+      );
+
+      // Handle newly added members (create invitations)
+      for (const member of newMembers) {
+        try {
+          const applicationId = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Get owner details
+          const owner = await User.findById(updatedProject.ownerId);
+          if (!owner) continue;
+
+          // Get invited member details
+          const invitedUser = await User.findById(member.id);
+          if (!invitedUser) continue;
+
+          // Create/update application record for project owner (received)
+          await Application.findOneAndUpdate(
+            { userId: updatedProject.ownerId },
+            {
+              $push: {
+                applications_received: {
+                  applicationId,
+                  applicantId: member.id,
+                  applicantName: member.name,
+                  applicantEmail: member.email || invitedUser.email,
+                  applicantAvatar: invitedUser.avatar || '',
+                  applicantTitle: invitedUser.title || '',
+                  applicantLocation: invitedUser.location || '',
+                  projectId: updatedProject._id,
+                  projectName: updatedProject.title,
+                  projectStage: updatedProject.stage,
+                  position: member.role,
+                  message: 'Invited to join the project',
+                  status: 'INVITED',
+                  appliedDate: new Date(),
+                  statusUpdatedAt: new Date()
+                }
+              }
+            },
+            { upsert: true, new: true }
+          ).then(doc => {
+            doc.updateStats();
+            return doc.save();
+          });
+
+          // Create/update application record for invited member (sent)
+          await Application.findOneAndUpdate(
+            { userId: member.id },
+            {
+              $push: {
+                applications_sent: {
+                  applicationId,
+                  projectOwnerId: updatedProject.ownerId,
+                  projectOwnerName: owner.name,
+                  projectOwnerEmail: owner.email,
+                  projectOwnerAvatar: owner.avatar || '',
+                  projectId: updatedProject._id,
+                  projectName: updatedProject.title,
+                  projectStage: updatedProject.stage,
+                  projectIndustry: updatedProject.industry,
+                  position: member.role,
+                  message: 'Invited to join the project',
+                  status: 'INVITED',
+                  appliedDate: new Date(),
+                  statusUpdatedAt: new Date()
+                }
+              }
+            },
+            { upsert: true, new: true }
+          ).then(doc => {
+            doc.updateStats();
+            return doc.save();
+          });
+        } catch (error) {
+          console.error('Error creating invitation record:', error);
+          // Continue with other members even if one fails
+        }
+      }
+
+      // Handle removed members (update status to REMOVED)
+      const now = new Date();
+      for (const removedMemberId of removedMemberIds) {
+        try {
+          // Find the application for this project and removed member
+          const memberApplication = await Application.findOne({
+            userId: removedMemberId,
+            'applications_sent.projectId': id
+          });
+
+          if (memberApplication) {
+            const application = memberApplication.applications_sent.find(
+              app => app.projectId.toString() === id && 
+                     (app.status === 'ACCEPTED' || app.status === 'INVITED')
+            );
+
+            if (application) {
+              // Update member's applications_sent to REMOVED
+              await Application.updateOne(
+                {
+                  userId: removedMemberId,
+                  'applications_sent.applicationId': application.applicationId
+                },
+                {
+                  $set: {
+                    'applications_sent.$.status': 'REMOVED',
+                    'applications_sent.$.statusUpdatedAt': now,
+                    'applications_sent.$.removedFromTeamAt': now,
+                    'applications_sent.$.removalReason': 'Removed by project owner during project edit'
+                  }
+                }
+              );
+
+              // Update owner's applications_received to REMOVED
+              await Application.updateOne(
+                {
+                  userId: updatedProject.ownerId,
+                  'applications_received.applicationId': application.applicationId
+                },
+                {
+                  $set: {
+                    'applications_received.$.status': 'REMOVED',
+                    'applications_received.$.statusUpdatedAt': now,
+                    'applications_received.$.removedFromTeamAt': now,
+                    'applications_received.$.removalReason': 'Removed by project owner during project edit'
+                  }
+                }
+              );
+
+              // Update stats for both users
+              const updatedMemberApp = await Application.findOne({ userId: removedMemberId });
+              if (updatedMemberApp) {
+                updatedMemberApp.updateStats();
+                await updatedMemberApp.save();
+              }
+
+              const updatedOwnerApp = await Application.findOne({ userId: updatedProject.ownerId });
+              if (updatedOwnerApp) {
+                updatedOwnerApp.updateStats();
+                await updatedOwnerApp.save();
+              }
+
+              console.log(`Application status updated to REMOVED for removed member: ${removedMemberId}`);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating application status for removed member:', error);
+          // Continue with other members even if one fails
+        }
+      }
     }
 
     const response = successResponse(updatedProject, 'Project updated successfully');
@@ -266,6 +523,71 @@ const projectController = {
 
     await project.save();
     console.log('Project saved successfully');
+
+    // Update application status to REMOVED for both member and owner
+    const now = new Date();
+
+    // Find the application for this project and user
+    const memberApplication = await Application.findOne({
+      userId: userId,
+      'applications_sent.projectId': id
+    });
+
+    if (memberApplication) {
+      const application = memberApplication.applications_sent.find(
+        app => app.projectId.toString() === id && 
+               (app.status === 'ACCEPTED' || app.status === 'INVITED')
+      );
+
+      if (application) {
+        // Update member's applications_sent to REMOVED
+        await Application.updateOne(
+          {
+            userId: userId,
+            'applications_sent.applicationId': application.applicationId
+          },
+          {
+            $set: {
+              'applications_sent.$.status': 'REMOVED',
+              'applications_sent.$.statusUpdatedAt': now,
+              'applications_sent.$.removedFromTeamAt': now,
+              'applications_sent.$.removalReason': 'Removed by project owner'
+            }
+          }
+        );
+
+        // Update owner's applications_received to REMOVED
+        await Application.updateOne(
+          {
+            userId: project.ownerId,
+            'applications_received.applicationId': application.applicationId
+          },
+          {
+            $set: {
+              'applications_received.$.status': 'REMOVED',
+              'applications_received.$.statusUpdatedAt': now,
+              'applications_received.$.removedFromTeamAt': now,
+              'applications_received.$.removalReason': 'Removed by project owner'
+            }
+          }
+        );
+
+        // Update stats for both users
+        const updatedMemberApp = await Application.findOne({ userId: userId });
+        if (updatedMemberApp) {
+          updatedMemberApp.updateStats();
+          await updatedMemberApp.save();
+        }
+
+        const updatedOwnerApp = await Application.findOne({ userId: project.ownerId });
+        if (updatedOwnerApp) {
+          updatedOwnerApp.updateStats();
+          await updatedOwnerApp.save();
+        }
+
+        console.log('Application status updated to REMOVED');
+      }
+    }
 
     const response = successResponse(project, 'Team member removed successfully');
     res.json(response);

@@ -24,7 +24,7 @@ import ProjectCard from '../components/ProjectCard'; // Added import for Project
 // - applications_sent[]: Applications this user sent as applicant
 //   - Contains: projectOwnerId, projectOwnerName, projectOwnerEmail, projectOwnerAvatar
 //   - Project info: projectId, projectName, projectStage, projectIndustry
-//   - Application: position, message, skills, status (PENDING/ACCEPTED/REJECTED/WITHDRAWN/REMOVED)
+//   - Application: position, message, skills, status (PENDING/ACCEPTED/REJECTED/QUIT/REMOVED/INVITED)
 //   - Resume: hasResume, resumeUrl, resumeFileName, attachments[]
 //   - Review: reviewNotes, reviewedAt, reviewedBy, rejectionReason, removedFromTeamAt, removalReason
 // - stats: Aggregated counts for both received and sent applications
@@ -53,7 +53,10 @@ function Dashboard() {
   const [applicationTab, setApplicationTab] = useState('received');
   // State to track selected user for profile modal
   const [selectedUser, setSelectedUser] = useState(null);
-  // State to track selected project for project modal
+  // State to track selected project for project modal (from bookmarks)
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  // State to track selected project for project modal (from applications)
   const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
   // State to track toast notifications
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
@@ -455,8 +458,8 @@ function Dashboard() {
                     key={project.id}
                     project={project}
                     onClick={(project) => {
-                      setActiveCollabProject(project);
-                      setShowCollaborationSpace(true);
+                      setSelectedProject(project);
+                      setShowProjectModal(true);
                     }}
                   />
                 ))}
@@ -551,9 +554,12 @@ function Dashboard() {
                       <div className={`application-status status-${application.status.toLowerCase()}`}>
                         {application.status === 'PENDING' && <Clock size={16} />}
                         {application.status === 'ACCEPTED' && <CheckCircle size={16} />}
-                        {(application.status === 'REJECTED' || application.status === 'WITHDRAWN') && <XCircle size={16} />}
+                        {application.status === 'INVITED' && <CheckCircle size={16} />}
+                        {(application.status === 'REJECTED' || application.status === 'QUIT') && <XCircle size={16} />}
                         {application.status === 'REMOVED' && <XCircle size={16} />}
-                        <span>{application.status}</span>
+                        <span>
+                          {application.status === 'QUIT' ? 'Quit' : application.status}
+                        </span>
                       </div>
                       
                       <div className="application-actions">
@@ -638,11 +644,33 @@ function Dashboard() {
         />
       )}
       
-      {/* Project Modal */}
+      {/* Project Modal for Bookmarks */}
+      {showProjectModal && selectedProject && (
+        <ProjectModal
+          project={selectedProject}
+          onClose={() => {
+            setShowProjectModal(false);
+            setSelectedProject(null);
+          }}
+          onOpenCollaboration={(project) => {
+            setActiveCollabProject(project);
+            setShowCollaborationSpace(true);
+            setShowProjectModal(false);
+            setSelectedProject(null);
+          }}
+        />
+      )}
+      
+      {/* Project Modal for Applications */}
       {selectedProjectForModal && (
         <ProjectModal
           project={selectedProjectForModal}
           onClose={() => setSelectedProjectForModal(null)}
+          onOpenCollaboration={(project) => {
+            setActiveCollabProject(project);
+            setShowCollaborationSpace(true);
+            setSelectedProjectForModal(null);
+          }}
         />
       )}
       

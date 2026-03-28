@@ -41,7 +41,6 @@ router.delete("/dashboard/:userId/bookmarks/:projectId", dashboardController.rem
 // Application endpoints
 router.post("/applications/submit", dashboardController.submitApplication);
 router.patch("/applications/:applicationId/status", dashboardController.updateApplicationStatus);
-router.delete("/applications/:applicationId/withdraw", dashboardController.withdrawApplication);
 router.get("/applications/project/:projectId", dashboardController.getProjectApplications);
 
 // Project endpoints
@@ -87,7 +86,6 @@ router.get("/", (req, res) => {
       applications: {
         submit: "POST /api/applications/submit",
         updateStatus: "PATCH /api/applications/:applicationId/status",
-        withdraw: "DELETE /api/applications/:applicationId/withdraw",
         getProjectApplications: "GET /api/applications/project/:projectId",
       },
       projects: {
