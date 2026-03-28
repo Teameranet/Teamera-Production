@@ -144,7 +144,7 @@ User-centric application management system where each user has one document cont
     position: String, // Role applied for
     message: String, // Cover letter/application message
     skills: [String], // Skills relevant to the position
-    status: String, // "PENDING", "ACCEPTED", "REJECTED", "REMOVED", "INVITED"
+    status: String, // "PENDING", "ACCEPTED", "REJECTED", "REMOVED", "INVITED", "QUIT"
     
     // RESUME/ATTACHMENTS
     hasResume: Boolean,
@@ -230,12 +230,14 @@ User-centric application management system where each user has one document cont
     rejectedReceived: Number,
     removedReceived: Number, // Members removed from team
     invitedReceived: Number, // Members invited during project creation
+    quitReceived: Number, // Members who quit the project
     
     // Sent Statistics
     totalSent: Number,
     pendingSent: Number,
     acceptedSent: Number,
     rejectedSent: Number,
+    withdrawnSent: Number, // User withdrew application
     quitSent: Number, // User quit/left the project
     removedSent: Number, // User was removed from team
     invitedSent: Number // User was invited to join project
@@ -310,6 +312,17 @@ db.applications.createIndex({ "applications_sent.projectOwnerId": 1 })
    - **Re-application Allowed:** User can submit new application after being removed
    - This allows tracking of members who were accepted but later removed
    - Removed members can reapply to rejoin the project
+
+7. **On Team Member Quit:**
+   - When a user voluntarily leaves/quits a project
+   - Find the accepted or invited application for the member
+   - Update status to "QUIT" in both `applications_sent` and `applications_received`
+   - Set `quitAt` timestamp in both documents
+   - Add `quitReason` to both documents (optional)
+   - Update stats in both documents (increment quitReceived and quitSent)
+   - **Re-application Allowed:** User can submit new application after quitting
+   - QUIT status indicates voluntary departure (different from REMOVED which is involuntary)
+   - This allows tracking of members who left on their own terms
 
 ### Query Patterns
 
@@ -1442,7 +1455,7 @@ export const submitHackathonProject = (id, data) =>
    - Fully aligned with Application schema from SYSTEM_FLOW_DATABASE_SCHEMA.md
    - Comprehensive inline documentation of schema structure
    - Proper handling of applications_received and applications_sent arrays
-   - Correct status enums: PENDING, ACCEPTED, REJECTED, QUIT, REMOVED, INVITED
+   - Correct status enums: PENDING, ACCEPTED, REJECTED, WITHDRAWN, QUIT, REMOVED, INVITED
 
 2. **Two Main Tabs** 
    - Bookmarks Tab: Displays bookmarked projects
