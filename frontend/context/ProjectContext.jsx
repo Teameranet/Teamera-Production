@@ -658,7 +658,8 @@ export const ProjectProvider = ({ children }) => {
         ));
 
         // Refresh project to get updated team
-        const projectResponse = await fetch(`${apiBaseUrl}/api/projects/${application.projectId}`);
+        const appProjectId = application.projectId?._id || application.projectId;
+        const projectResponse = await fetch(`${apiBaseUrl}/api/projects/${appProjectId}`);
         const projectResult = await projectResponse.json();
 
         if (projectResult.success && projectResult.data) {
@@ -667,11 +668,11 @@ export const ProjectProvider = ({ children }) => {
             id: projectResult.data._id || projectResult.data.id
           };
 
-          setProjects(prev => prev.map(p =>
-            (p.id === application.projectId || p._id === application.projectId)
-              ? updatedProject
-              : p
-          ));
+          const projectIdToMatch = String(appProjectId);
+          setProjects(prev => prev.map(p => {
+            const pId = String(p.id || p._id);
+            return pId === projectIdToMatch ? updatedProject : p;
+          }));
         }
 
         return true;
@@ -880,11 +881,29 @@ export const ProjectProvider = ({ children }) => {
   // Leave a project the user is participating in
   const leaveProject = async (projectId, userId) => {
     try {
-      // Ensure we have valid IDs
-      const cleanProjectId = projectId?._id || projectId;
-      const cleanUserId = userId?._id || userId;
+      // Ensure we have valid IDs - extract string values more robustly
+      let cleanProjectId = projectId;
+      if (projectId && typeof projectId === 'object') {
+        cleanProjectId = projectId._id || projectId.id;
+      }
+      // Ensure it's a string
+      cleanProjectId = String(cleanProjectId);
+      
+      let cleanUserId = userId;
+      if (userId && typeof userId === 'object') {
+        cleanUserId = userId._id || userId.id;
+      }
+      // Ensure it's a string
+      cleanUserId = String(cleanUserId);
 
-      console.log('leaveProject called with:', { projectId: cleanProjectId, userId: cleanUserId });
+      console.log('leaveProject called with:', { 
+        originalProjectId: projectId,
+        cleanProjectId, 
+        cleanProjectIdType: typeof cleanProjectId,
+        originalUserId: userId,
+        cleanUserId,
+        cleanUserIdType: typeof cleanUserId
+      });
 
       // Find the project
       const project = projects.find(p => (p.id === cleanProjectId || p._id === cleanProjectId));
@@ -901,7 +920,9 @@ export const ProjectProvider = ({ children }) => {
         return false;
       }
 
-      console.log('Making API call to remove team member...');
+      console.log('Removing user from project team...');
+      
+      // Use direct team member removal endpoint
       const response = await fetch(`${apiBaseUrl}/api/projects/${cleanProjectId}/team/${cleanUserId}`, {
         method: 'DELETE',
         headers: {
@@ -913,7 +934,7 @@ export const ProjectProvider = ({ children }) => {
       console.log('API response:', result);
 
       if (result.success) {
-        console.log('Successfully removed from backend, updating local state...');
+        console.log('Successfully left project, updating local state...');
         
         // Update local state - filter out the user from team members
         setProjects(prev => prev.map(p => {
@@ -930,6 +951,9 @@ export const ProjectProvider = ({ children }) => {
           }
           return p;
         }));
+
+        // Refresh applications to get updated status
+        await fetchApplications();
 
         // Update user project mapping
         setUserProjectMap(prev => {

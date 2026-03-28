@@ -554,9 +554,12 @@ function Dashboard() {
                       <div className={`application-status status-${application.status.toLowerCase()}`}>
                         {application.status === 'PENDING' && <Clock size={16} />}
                         {application.status === 'ACCEPTED' && <CheckCircle size={16} />}
+                        {application.status === 'INVITED' && <CheckCircle size={16} />}
                         {(application.status === 'REJECTED' || application.status === 'QUIT') && <XCircle size={16} />}
                         {application.status === 'REMOVED' && <XCircle size={16} />}
-                        <span>{application.status}</span>
+                        <span>
+                          {application.status === 'QUIT' ? 'Quit' : application.status}
+                        </span>
                       </div>
                       
                       <div className="application-actions">

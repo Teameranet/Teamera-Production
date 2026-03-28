@@ -298,7 +298,7 @@ function CollaborationSpace({ onClose, activeProject = null, defaultTab = 'chat'
                 onClick={handleLeaveProject}
               >
                 <LogOut size={16} />
-                Leave Project
+                Quit Project
               </button>
             )
           )}

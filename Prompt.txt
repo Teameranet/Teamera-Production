@@ -496,3 +496,8 @@ Keep the  "Apply for this position" button button size unchanged
 - On that user (member) site show the pop message "You had Invided of Project Owner" on below the "Apply for this position" 
 - Give the link oper the" CollaborationSpace"
 - Display a clean SaaS-style message 
+
+-----------------------------------------------------------------------------
+When User (member) Leave the project on application section
+ On receives (project owner ) - display 'quit' instent of "Invite"
+ On Sent (member) -  display 'quit' instent of "Invite"

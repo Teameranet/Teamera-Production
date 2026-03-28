@@ -113,7 +113,6 @@ export const endpoints = {
     get: (userId) => `/api/applications/${userId}`,
     submit: '/api/applications/submit',
     updateStatus: (applicationId) => `/api/applications/${applicationId}/status`,
-    withdraw: (applicationId) => `/api/applications/${applicationId}/withdraw`,
     getProjectApplications: (projectId) => `/api/applications/project/${projectId}`,
   },
   // Contact endpoint

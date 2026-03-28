@@ -237,7 +237,6 @@ User-centric application management system where each user has one document cont
     pendingSent: Number,
     acceptedSent: Number,
     rejectedSent: Number,
-    withdrawnSent: Number, // User withdrew application
     quitSent: Number, // User quit/left the project
     removedSent: Number, // User was removed from team
     invitedSent: Number // User was invited to join project
@@ -1129,7 +1128,6 @@ db.hackathons.createIndex({ tags: 1 })
    - getSentApplications(userId, filters) // From applications_sent array
    - getApplicationsByProject(projectOwnerId, projectId, filters)
    - updateApplicationStatus(applicationId, applicantId, projectOwnerId, status, reviewData)
-   - withdrawApplication(applicationId, userId)
    - markApplicationAsRemoved(applicationId, applicantId, projectOwnerId, removalReason)
    - checkDuplicateApplication(applicantId, projectId)
    - getApplicationStats(userId)
@@ -1204,7 +1202,6 @@ db.hackathons.createIndex({ tags: 1 })
    - GET /api/applications/received - Get applications received by user
    - GET /api/applications/:id - Get application details
    - PATCH /api/applications/:id/status - Update application status (PENDING, ACCEPTED, REJECTED)
-   - DELETE /api/applications/:id - Withdraw application
    - GET /api/applications/stats - Get application statistics
    - Note: REMOVED status is set automatically when team member is removed via Project Controller
 
@@ -1409,7 +1406,6 @@ export const submitApplication = (data) => api.post('/applications', data)
 export const getApplications = (filters) => api.get('/applications', { params: filters })
 export const updateApplicationStatus = (id, status, notes) => 
   api.patch(`/applications/${id}/status`, { status, notes })
-export const withdrawApplication = (id) => api.delete(`/applications/${id}`)
 
 // Notification APIs -  IMPLEMENTED
 export const getNotifications = () => api.get('/notifications')
@@ -1455,7 +1451,7 @@ export const submitHackathonProject = (id, data) =>
    - Fully aligned with Application schema from SYSTEM_FLOW_DATABASE_SCHEMA.md
    - Comprehensive inline documentation of schema structure
    - Proper handling of applications_received and applications_sent arrays
-   - Correct status enums: PENDING, ACCEPTED, REJECTED, WITHDRAWN, QUIT, REMOVED, INVITED
+   - Correct status enums: PENDING, ACCEPTED, REJECTED, QUIT, REMOVED, INVITED
 
 2. **Two Main Tabs** 
    - Bookmarks Tab: Displays bookmarked projects
