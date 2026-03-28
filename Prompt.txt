@@ -493,10 +493,10 @@ Keep the  "Apply for this position" button button size unchanged
  to pop message give the Link of application (accept/reject)  to see the application  is reject or not
  Add the Logic 
 - If Project owner Invite the member while creating the Project 
-- On that user (member) site show the pop message "You had Invided of Project Owner" on below the "Apply for this position" 
+- On that user (member) site show the pop message "You had Invided by Project Owner for xyz Position" on below the "Apply for this position" 
 - Give the link oper the" CollaborationSpace"
 - Display a clean SaaS-style message 
-
+- Use a consistent, accessible color palette where each color clearly represents a function
 -----------------------------------------------------------------------------
 When User (member) Leave the project on application section
  On receives (project owner ) - display 'quit' instent of "Invite"

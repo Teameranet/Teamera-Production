@@ -922,8 +922,8 @@ export const ProjectProvider = ({ children }) => {
 
       console.log('Removing user from project team...');
       
-      // Use direct team member removal endpoint
-      const response = await fetch(`${apiBaseUrl}/api/projects/${cleanProjectId}/team/${cleanUserId}`, {
+      // Use direct team member removal endpoint with isQuit parameter
+      const response = await fetch(`${apiBaseUrl}/api/projects/${cleanProjectId}/team/${cleanUserId}?isQuit=true`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -477,8 +477,9 @@ const projectController = {
   // Remove team member from project
   removeTeamMember: asyncHandler(async (req, res) => {
     const { id, userId } = req.params;
+    const { isQuit } = req.query; // Check if this is a quit action from the member
 
-    console.log('Removing team member - ProjectId:', id, 'UserId:', userId);
+    console.log('Removing team member - ProjectId:', id, 'UserId:', userId, 'isQuit:', isQuit);
 
     const project = await Project.findById(id);
 
@@ -524,7 +525,9 @@ const projectController = {
     await project.save();
     console.log('Project saved successfully');
 
-    // Update application status to REMOVED for both member and owner
+    // Determine status and reason based on whether it's a quit or removal
+    const status = isQuit === 'true' ? 'QUIT' : 'REMOVED';
+    const removalReason = isQuit === 'true' ? 'Member quit the project' : 'Removed by project owner';
     const now = new Date();
 
     // Find the application for this project and user
@@ -540,36 +543,46 @@ const projectController = {
       );
 
       if (application) {
-        // Update member's applications_sent to REMOVED
+        // Update member's applications_sent with appropriate status
+        const updateFields = {
+          'applications_sent.$.status': status,
+          'applications_sent.$.statusUpdatedAt': now,
+          'applications_sent.$.removalReason': removalReason
+        };
+
+        if (isQuit === 'true') {
+          updateFields['applications_sent.$.quitAt'] = now;
+        } else {
+          updateFields['applications_sent.$.removedFromTeamAt'] = now;
+        }
+
         await Application.updateOne(
           {
             userId: userId,
             'applications_sent.applicationId': application.applicationId
           },
-          {
-            $set: {
-              'applications_sent.$.status': 'REMOVED',
-              'applications_sent.$.statusUpdatedAt': now,
-              'applications_sent.$.removedFromTeamAt': now,
-              'applications_sent.$.removalReason': 'Removed by project owner'
-            }
-          }
+          { $set: updateFields }
         );
 
-        // Update owner's applications_received to REMOVED
+        // Update owner's applications_received with appropriate status
+        const ownerUpdateFields = {
+          'applications_received.$.status': status,
+          'applications_received.$.statusUpdatedAt': now,
+          'applications_received.$.removalReason': removalReason
+        };
+
+        if (isQuit === 'true') {
+          ownerUpdateFields['applications_received.$.quitAt'] = now;
+        } else {
+          ownerUpdateFields['applications_received.$.removedFromTeamAt'] = now;
+        }
+
         await Application.updateOne(
           {
             userId: project.ownerId,
             'applications_received.applicationId': application.applicationId
           },
-          {
-            $set: {
-              'applications_received.$.status': 'REMOVED',
-              'applications_received.$.statusUpdatedAt': now,
-              'applications_received.$.removedFromTeamAt': now,
-              'applications_received.$.removalReason': 'Removed by project owner'
-            }
-          }
+          { $set: ownerUpdateFields }
         );
 
         // Update stats for both users
@@ -585,11 +598,11 @@ const projectController = {
           await updatedOwnerApp.save();
         }
 
-        console.log('Application status updated to REMOVED');
+        console.log(`Application status updated to ${status}`);
       }
     }
 
-    const response = successResponse(project, 'Team member removed successfully');
+    const response = successResponse(project, isQuit === 'true' ? 'Successfully quit project' : 'Team member removed successfully');
     res.json(response);
   }),
 

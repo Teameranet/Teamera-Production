@@ -558,7 +558,9 @@ function Dashboard() {
                         {(application.status === 'REJECTED' || application.status === 'QUIT') && <XCircle size={16} />}
                         {application.status === 'REMOVED' && <XCircle size={16} />}
                         <span>
-                          {application.status === 'QUIT' ? 'Quit' : application.status}
+                          {application.status === 'QUIT' ? 'Quit' : 
+                           application.status === 'REMOVED' ? 'Removed' :
+                           application.status.charAt(0) + application.status.slice(1).toLowerCase()}
                         </span>
                       </div>
                       
