@@ -42,6 +42,7 @@ router.delete("/dashboard/:userId/bookmarks/:projectId", dashboardController.rem
 router.post("/applications/submit", dashboardController.submitApplication);
 router.patch("/applications/:applicationId/status", dashboardController.updateApplicationStatus);
 router.get("/applications/project/:projectId", dashboardController.getProjectApplications);
+router.get("/applications/check", dashboardController.checkUserApplication);
 
 // Project endpoints
 router.get("/projects", projectController.getAllProjects);

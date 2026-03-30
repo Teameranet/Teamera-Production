@@ -490,10 +490,11 @@ Sent tab: View Project button + Resume button (if available) - NO Profile button
 Check if the user has already applied to this position before showing the application form
 Display a clean SaaS-style message below the "Apply for this position" button if they have a pending application
 Keep the  "Apply for this position" button button size unchanged
- to pop message give the Link of application (accept/reject)  to see the application  is reject or not
+ On pop message give the Link of application (accept/reject)  to see the application  is reject or not
+
  Add the Logic 
 - If Project owner Invite the member while creating the Project 
-- On that user (member) site show the pop message "You had Invided by Project Owner for xyz Position" on below the "Apply for this position" 
+- On that user (member) site show the pop message "You had Invided by Project Owner for 'xyz'    Position" on below the "Apply for this position" 
 - Give the link oper the" CollaborationSpace"
 - Display a clean SaaS-style message 
 - Use a consistent, accessible color palette where each color clearly represents a function
@@ -501,3 +502,41 @@ Keep the  "Apply for this position" button button size unchanged
 When User (member) Leave the project on application section
  On receives (project owner ) - display 'quit' instent of "Invite"
  On Sent (member) -  display 'quit' instent of "Invite"
+ ---------------------------------------------------------------------------------
+ Add this Feature & update Backend & DB
+- When a project owner invites a member while creating or editing a project, the invited member Show the pop message "You had Invided by Project Owner for 'xyz' Position" on below the "Apply for this position" 
+- Check if invitations matching the current position "Apply for this position" Show the pop message 'You have been invited by the Project Owner for the 'xyz' position' on below the "Apply for this position" 
+- if  invitations  Dose not match with Current or same position  Show the pop message 'You have been invited by the Project Owner for the 'xyz' position' on below the "position-card" 
+-------------------------------------------------------------------------------------------------
+# Project Application & Invitation Feature Requirements
+
+## 1. Implement Application Status Check Feature & update Backend & DB
+- Before showing the application form, check if the user has already applied to this position
+- If they have a pending or accepted application:
+- Show the pop message below the "Apply for this position" button if they have a pending or accept application
+- Keep the  "Apply for this position" button button size unchanged
+-  On pop message give the Link of application (accept/reject)  redircrt application -> send section to see the application  is reject or not
+-  Display a clean SaaS-style message
+
+## 2. Project Owner Invitation Flow
+When a project owner invites a member (either during project creation or editing):
+
+### For the Invited Member:
+- Show a notification message: "You have been invited by the Project Owner for the '[Position Name]' position"
+- Display this message below the "Apply for this position" button if the invitation matches the current position
+- If the invitation is for a different position, show the message below that position's card instead
+- Provide a link to open the CollaborationSpace
+- Use a clean SaaS-style design with a consistent, accessible color palette where each color clearly represents its function
+
+## 4. Backend & Database Updates Required
+- Add invitation tracking system
+- Store invitation details: project ID, invited user ID, position name, invitation status
+- Check for matching invitations when displaying position cards
+- Update application status logic to handle "quit" state
+- Implement notification system for invitation messages
+
+## 5. Position Matching Logic
+- When displaying a position card, check if there are any invitations for that specific position
+- If invitation matches current position → show message below "Apply for this position" button
+- If invitation is for a different position → show message top that specific position card
+- Each invitation message should clearly state the position name

@@ -645,6 +645,74 @@ export const getProjectApplications = async (req, res) => {
   }
 };
 
+// Check if user has already applied to a project position
+export const checkUserApplication = async (req, res) => {
+  try {
+    const { projectId, userId, position } = req.query;
+
+    if (!projectId || !userId || !position) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: projectId, userId, and position are required'
+      });
+    }
+
+    // Get user's application document
+    const userApplication = await Application.findOne({ userId });
+    
+    if (!userApplication) {
+      return res.json({
+        success: true,
+        data: {
+          hasApplied: false,
+          application: null
+        }
+      });
+    }
+
+    // Find application for this project and position
+    const existingApplication = userApplication.applications_sent.find(
+      app => app.projectId.toString() === projectId && 
+             app.position === position
+    );
+
+    if (!existingApplication) {
+      return res.json({
+        success: true,
+        data: {
+          hasApplied: false,
+          application: null
+        }
+      });
+    }
+
+    // Check if application is PENDING or ACCEPTED
+    const isActive = existingApplication.status === 'PENDING' || existingApplication.status === 'ACCEPTED';
+
+    res.json({
+      success: true,
+      data: {
+        hasApplied: isActive,
+        application: isActive ? {
+          applicationId: existingApplication.applicationId,
+          status: existingApplication.status,
+          position: existingApplication.position,
+          projectName: existingApplication.projectName,
+          appliedDate: existingApplication.appliedDate,
+          statusUpdatedAt: existingApplication.statusUpdatedAt
+        } : null
+      }
+    });
+  } catch (error) {
+    console.error('Error checking user application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking user application',
+      error: error.message
+    });
+  }
+};
+
 
 export default {
   getDashboard,
@@ -655,5 +723,6 @@ export default {
   getDashboardStats,
   getBookmarkedProjects,
   getApplications,
-  getProjectApplications
+  getProjectApplications,
+  checkUserApplication
 };

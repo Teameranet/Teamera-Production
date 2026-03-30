@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Users, MapPin, Calendar, IndianRupee, Upload, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
@@ -7,6 +8,7 @@ import UserAvatar from './UserAvatar';
 import './ProjectModal.css';
 
 function ProjectModal({ project, onClose }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
@@ -17,9 +19,36 @@ function ProjectModal({ project, onClose }) {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // 'success' or 'error'
+  const [existingApplications, setExistingApplications] = useState({}); // Track existing applications by position
   const { user } = useAuth();
   const { applyToProject } = useProjects();
   const { addApplicationNotification } = useNotifications();
+
+  // Check for existing applications when component mounts or user changes
+  useEffect(() => {
+    const checkExistingApplications = async () => {
+      if (!user || !project.openPositions) return;
+
+      const checks = {};
+      for (const position of project.openPositions) {
+        try {
+          const response = await fetch(
+            `/api/applications/check?projectId=${project._id || project.id}&userId=${user._id || user.id}&position=${encodeURIComponent(position.role)}`
+          );
+          const data = await response.json();
+          
+          if (data.success && data.data.hasApplied) {
+            checks[position.role] = data.data.application;
+          }
+        } catch (error) {
+          console.error('Error checking application:', error);
+        }
+      }
+      setExistingApplications(checks);
+    };
+
+    checkExistingApplications();
+  }, [user, project._id, project.id, project.openPositions]);
 
   // Function to create milestone data based on project stage
   // const getMilestonesByStage = (stage) => {
@@ -263,29 +292,60 @@ function ProjectModal({ project, onClose }) {
         return (
           <div className="tab-content">
             <div className="open-positions">
-              {(project.openPositions || []).map((position, index) => (
-                <div key={index} className="position-card">
-                  <div className="position-header">
-                    <h4>{position.role}</h4>
-                    <span className={`position-payment-status ${position.isPaid ? 'paid' : 'unpaid'}`}>
-                      {position.isPaid ? 'Paid' : 'Unpaid'}
-                    </span>
+              {(project.openPositions || []).map((position, index) => {
+                const existingApp = existingApplications[position.role];
+                const hasActiveApplication = !!existingApp;
+                
+                return (
+                  <div key={index} className="position-card">
+                    <div className="position-header">
+                      <h4>{position.role}</h4>
+                      <span className={`position-payment-status ${position.isPaid ? 'paid' : 'unpaid'}`}>
+                        {position.isPaid ? 'Paid' : 'Unpaid'}
+                      </span>
+                    </div>
+                    <div className="position-skills">
+                      {(position.skills || []).map((skill, skillIndex) => (
+                        <span key={skillIndex} className="skill-tag small">{skill}</span>
+                      ))}
+                    </div>
+                    {user && (
+                      <>
+                        <button
+                          className="apply-position-btn"
+                          onClick={() => handlePositionSelect(position)}
+                          disabled={hasActiveApplication}
+                        >
+                          Apply for this position
+                        </button>
+                        {hasActiveApplication && (
+                          <div className="application-status-message">
+                            <div className="status-icon">
+                              {existingApp.status === 'PENDING' ? '⏳' : '✓'}
+                            </div>
+                            <div className="status-content">
+                              <p className="status-text">
+                                {existingApp.status === 'PENDING' 
+                                  ? 'Your application is under review'
+                                  : 'You are part of this team'}
+                              </p>
+                              <button 
+                                className="view-application-link"
+                                onClick={() => {
+                                  onClose();
+                                  navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } });
+                                }}
+                              >
+                                View application status →
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                  <div className="position-skills">
-                    {(position.skills || []).map((skill, skillIndex) => (
-                      <span key={skillIndex} className="skill-tag small">{skill}</span>
-                    ))}
-                  </div>
-                  {user && (
-                    <button
-                      className="apply-position-btn"
-                      onClick={() => handlePositionSelect(position)}
-                    >
-                      Apply for this position
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
               {(!project.openPositions || project.openPositions.length === 0) && (
                 <div className="no-positions">
                   <p>No open positions available at the moment.</p>
