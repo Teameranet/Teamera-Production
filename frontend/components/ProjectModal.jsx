@@ -37,8 +37,13 @@ function ProjectModal({ project, onClose }) {
           );
           const data = await response.json();
           
-          if (data.success && data.data.hasApplied) {
-            checks[position.role] = data.data.application;
+          if (data.success) {
+            // Store both active application and previous application history
+            checks[position.role] = {
+              hasApplied: data.data.hasApplied,
+              application: data.data.application,
+              previousApplication: data.data.previousApplication
+            };
           }
         } catch (error) {
           console.error('Error checking application:', error);
@@ -293,8 +298,41 @@ function ProjectModal({ project, onClose }) {
           <div className="tab-content">
             <div className="open-positions">
               {(project.openPositions || []).map((position, index) => {
-                const existingApp = existingApplications[position.role];
-                const hasActiveApplication = !!existingApp;
+                const appData = existingApplications[position.role];
+                const hasActiveApplication = appData?.hasApplied || false;
+                const existingApp = appData?.application;
+                const previousApp = appData?.previousApplication;
+                
+                // Determine what message to show
+                let statusMessage = null;
+                let canApply = !hasActiveApplication;
+                
+                if (hasActiveApplication && existingApp) {
+                  // User has an active PENDING or ACCEPTED application
+                  statusMessage = {
+                    icon: existingApp.status === 'PENDING' ? '⏳' : '✓',
+                    text: existingApp.status === 'PENDING' 
+                      ? 'Your application is under review'
+                      : 'You are part of this team',
+                    showLink: true,
+                    isPrevious: false
+                  };
+                } else if (previousApp) {
+                  // User has a previous REJECTED, QUIT, or REMOVED application
+                  // They can reapply, but show them their history
+                  const statusTexts = {
+                    'REJECTED': 'Your previous application was not accepted. You can apply again.',
+                    'QUIT': 'You previously quit this position. You can reapply if interested.',
+                    'REMOVED': 'You were previously removed from this position. You can reapply.'
+                  };
+                  
+                  statusMessage = {
+                    icon: '🔄',
+                    text: statusTexts[previousApp.status] || 'You can apply for this position.',
+                    showLink: true,
+                    isPrevious: true
+                  };
+                }
                 
                 return (
                   <div key={index} className="position-card">
@@ -316,28 +354,29 @@ function ProjectModal({ project, onClose }) {
                           onClick={() => handlePositionSelect(position)}
                           disabled={hasActiveApplication}
                         >
-                          Apply for this position
+                          {previousApp && !hasActiveApplication ? 'Reapply for this position' : 'Apply for this position'}
                         </button>
-                        {hasActiveApplication && (
-                          <div className="application-status-message">
+                        {/* Always show status message if there's any application history */}
+                        {statusMessage && (
+                          <div className={`application-status-message ${statusMessage.isPrevious ? 'previous' : ''}`}>
                             <div className="status-icon">
-                              {existingApp.status === 'PENDING' ? '⏳' : '✓'}
+                              {statusMessage.icon}
                             </div>
                             <div className="status-content">
                               <p className="status-text">
-                                {existingApp.status === 'PENDING' 
-                                  ? 'Your application is under review'
-                                  : 'You are part of this team'}
+                                {statusMessage.text}
                               </p>
-                              <button 
-                                className="view-application-link"
-                                onClick={() => {
-                                  onClose();
-                                  navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } });
-                                }}
-                              >
-                                View application status →
-                              </button>
+                              {statusMessage.showLink && (
+                                <button 
+                                  className="view-application-link"
+                                  onClick={() => {
+                                    onClose();
+                                    navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } });
+                                  }}
+                                >
+                                  View application history →
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}

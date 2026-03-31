@@ -169,6 +169,54 @@ const projectController = {
         .json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
     }
 
+    // CRITICAL FIX: Detect if teamMembers actually changed
+    // Only process team member changes if members were genuinely added/removed
+    // This prevents accepted users from being removed during simple project updates
+    let membersActuallyChanged = false;
+    
+    if (updateData.teamMembers !== undefined) {
+      // Extract and normalize member IDs from original project
+      const originalMemberIds = originalProject.teamMembers
+        .map(m => {
+          if (!m.id) return null;
+          // Handle both populated and unpopulated IDs
+          const id = typeof m.id === 'object' ? (m.id._id || m.id.toString()) : m.id.toString();
+          return id;
+        })
+        .filter(Boolean)
+        .sort();
+      
+      // Extract and normalize member IDs from update data
+      const newMemberIds = updateData.teamMembers
+        .map(m => {
+          if (!m.id) return null;
+          // Handle both populated and unpopulated IDs
+          const id = typeof m.id === 'object' ? (m.id._id || m.id.toString()) : m.id.toString();
+          return id;
+        })
+        .filter(Boolean)
+        .sort();
+      
+      // Compare sorted arrays to detect real changes
+      membersActuallyChanged = JSON.stringify(originalMemberIds) !== JSON.stringify(newMemberIds);
+      
+      if (!membersActuallyChanged) {
+        // CRITICAL: Preserve original team members completely - this is just a detail update
+        // Do NOT update teamMembers field at all to prevent any relationship breakage
+        // This ensures accepted users remain in the project when only name/position/etc are updated
+        delete updateData.teamMembers;
+        console.log('Team members unchanged - preserving original team structure to prevent relationship breakage');
+      } else {
+        console.log('Team members changed - processing additions/removals:', {
+          original: originalMemberIds,
+          new: newMemberIds
+        });
+      }
+    } else {
+      // If teamMembers is not in the update at all, this is a safe partial update
+      console.log('Team members not included in update - safe partial update of other fields');
+    }
+
     const updatedProject = await Project.findByIdAndUpdate(
       id,
       { $set: updateData },
@@ -177,8 +225,8 @@ const projectController = {
       .populate('ownerId', 'name email')
       .populate('teamMembers.id', 'name email');
 
-    // Check for newly added team members and removed team members
-    if (updateData.teamMembers) {
+    // Only process team member changes if members ACTUALLY changed
+    if (membersActuallyChanged && updateData.teamMembers) {
       const originalMemberIds = originalProject.teamMembers
         .filter(m => m.id && m.role !== 'Founder')
         .map(m => m.id.toString());
@@ -348,6 +396,135 @@ const projectController = {
       }
     }
 
+    // CRITICAL FIX: Sync project name and stage to applications
+    // This keeps application data current WITHOUT touching status or membership fields
+    // Only updates display fields like projectName and projectStage
+    if (updateData.title || updateData.stage) {
+      try {
+        const updateFields = {};
+        
+        if (updateData.title) {
+          updateFields['applications_received.$[elem].projectName'] = updateData.title;
+          updateFields['applications_sent.$[elem].projectName'] = updateData.title;
+        }
+        
+        if (updateData.stage) {
+          updateFields['applications_received.$[elem].projectStage'] = updateData.stage;
+          updateFields['applications_sent.$[elem].projectStage'] = updateData.stage;
+        }
+
+        // CRITICAL: Only update display fields, never touch status fields
+        // This ensures ACCEPTED/INVITED users maintain their status regardless of project updates
+        await Application.updateMany(
+          { 'applications_received.projectId': id },
+          { $set: updateFields },
+          { arrayFilters: [{ 'elem.projectId': id }] }
+        );
+
+        await Application.updateMany(
+          { 'applications_sent.projectId': id },
+          { $set: updateFields },
+          { arrayFilters: [{ 'elem.projectId': id }] }
+        );
+
+        console.log('Project details synced to applications (display fields only, status preserved)');
+      } catch (error) {
+        console.error('Error syncing project details to applications:', error);
+        // Don't fail the request, just log the error
+      }
+    }
+
+    // CRITICAL FIX: Sync position name changes to applications
+    // When openPositions role names change, update all applications with old position names
+    if (updateData.openPositions && originalProject.openPositions) {
+      try {
+        // Simple approach: Compare positions by index
+        // If a position at the same index has a different role name, it's likely a rename
+        const positionNameChanges = {};
+        
+        const minLength = Math.min(originalProject.openPositions.length, updateData.openPositions.length);
+        
+        for (let i = 0; i < minLength; i++) {
+          const oldPos = originalProject.openPositions[i];
+          const newPos = updateData.openPositions[i];
+          
+          // If role name changed at same index, consider it a rename
+          if (oldPos.role && newPos.role && oldPos.role !== newPos.role) {
+            // Additional check: skills should be similar (at least 50% overlap)
+            let isSimilar = true;
+            if (oldPos.skills && newPos.skills && oldPos.skills.length > 0 && newPos.skills.length > 0) {
+              const oldSkillsSet = new Set(oldPos.skills.map(s => s.toLowerCase()));
+              const newSkillsSet = new Set(newPos.skills.map(s => s.toLowerCase()));
+              const intersection = [...oldSkillsSet].filter(s => newSkillsSet.has(s));
+              const similarity = intersection.length / Math.max(oldSkillsSet.size, newSkillsSet.size);
+              isSimilar = similarity >= 0.3; // At least 30% similarity
+            }
+            
+            if (isSimilar) {
+              positionNameChanges[oldPos.role] = newPos.role;
+            }
+          }
+        }
+
+        // Update position names in applications if any were renamed
+        for (const [oldPositionName, newPositionName] of Object.entries(positionNameChanges)) {
+          // Update applications_received
+          await Application.updateMany(
+            { 
+              'applications_received.projectId': id,
+              'applications_received.position': oldPositionName
+            },
+            { 
+              $set: { 'applications_received.$[elem].position': newPositionName }
+            },
+            { 
+              arrayFilters: [{ 
+                'elem.projectId': id,
+                'elem.position': oldPositionName
+              }]
+            }
+          );
+
+          // Update applications_sent
+          await Application.updateMany(
+            { 
+              'applications_sent.projectId': id,
+              'applications_sent.position': oldPositionName
+            },
+            { 
+              $set: { 'applications_sent.$[elem].position': newPositionName }
+            },
+            { 
+              arrayFilters: [{ 
+                'elem.projectId': id,
+                'elem.position': oldPositionName
+              }]
+            }
+          );
+
+          // Update teamMembers role if they match the old position name
+          await Project.updateOne(
+            { _id: id },
+            { 
+              $set: { 
+                'teamMembers.$[member].role': newPositionName
+              }
+            },
+            {
+              arrayFilters: [{
+                'member.role': oldPositionName
+              }]
+            }
+          );
+
+          console.log(`Position name synced: "${oldPositionName}" → "${newPositionName}"`);
+        }
+      } catch (error) {
+        console.error('Error syncing position name changes:', error);
+        // Don't fail the request, just log the error
+      }
+    }
+
     const response = successResponse(updatedProject, 'Project updated successfully');
     res.json(response);
   }),
@@ -381,14 +558,53 @@ const projectController = {
       .populate('teamMembers.id', 'name email')
       .sort({ createdAt: -1 });
 
-    // Find projects where user is a team member
-    const participatingProjects = await Project.find({
+    // CRITICAL FIX: Find projects where user is participating
+    // User is participating if:
+    // 1. They are in teamMembers array, OR
+    // 2. They have an ACCEPTED or INVITED application (both indicate membership)
+    // This ensures users don't lose visibility to projects during updates
+    
+    // Get projects where user is a team member
+    const teamMemberProjects = await Project.find({
       'teamMembers.id': userId,
       ownerId: { $ne: userId }
     })
       .populate('ownerId', 'name email')
       .populate('teamMembers.id', 'name email')
       .sort({ createdAt: -1 });
+
+    // Get projects where user has ACCEPTED or INVITED applications
+    const userApplications = await Application.findOne({ userId });
+    const participatingProjectIds = [];
+    
+    if (userApplications && userApplications.applications_sent) {
+      userApplications.applications_sent.forEach(app => {
+        // Include both ACCEPTED and INVITED status - both mean user is part of the project
+        if ((app.status === 'ACCEPTED' || app.status === 'INVITED') && app.projectId) {
+          participatingProjectIds.push(app.projectId.toString());
+        }
+      });
+    }
+
+    // Get projects with accepted/invited applications (excluding already found team member projects)
+    const teamMemberProjectIds = teamMemberProjects.map(p => p._id.toString());
+    const additionalProjectIds = participatingProjectIds.filter(
+      id => !teamMemberProjectIds.includes(id)
+    );
+
+    let acceptedApplicationProjects = [];
+    if (additionalProjectIds.length > 0) {
+      acceptedApplicationProjects = await Project.find({
+        _id: { $in: additionalProjectIds },
+        ownerId: { $ne: userId }
+      })
+        .populate('ownerId', 'name email')
+        .populate('teamMembers.id', 'name email')
+        .sort({ createdAt: -1 });
+    }
+
+    // Combine both lists - user sees project if they're in teamMembers OR have accepted/invited status
+    const participatingProjects = [...teamMemberProjects, ...acceptedApplicationProjects];
 
     const response = successResponse(
       {

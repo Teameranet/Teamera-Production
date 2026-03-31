@@ -665,41 +665,65 @@ export const checkUserApplication = async (req, res) => {
         success: true,
         data: {
           hasApplied: false,
-          application: null
+          application: null,
+          previousApplication: null
         }
       });
     }
 
-    // Find application for this project and position
-    const existingApplication = userApplication.applications_sent.find(
+    // Find ALL applications for this project and position (including historical ones)
+    const allApplications = userApplication.applications_sent.filter(
       app => app.projectId.toString() === projectId && 
              app.position === position
     );
 
-    if (!existingApplication) {
+    if (allApplications.length === 0) {
       return res.json({
         success: true,
         data: {
           hasApplied: false,
-          application: null
+          application: null,
+          previousApplication: null
         }
       });
     }
 
-    // Check if application is PENDING or ACCEPTED
-    const isActive = existingApplication.status === 'PENDING' || existingApplication.status === 'ACCEPTED';
+    // Sort by appliedDate to get the most recent application
+    allApplications.sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate));
+    const mostRecentApplication = allApplications[0];
+
+    // Check if the most recent application is PENDING or ACCEPTED (active)
+    const isActive = mostRecentApplication.status === 'PENDING' || mostRecentApplication.status === 'ACCEPTED';
+
+    // Check if there's a previous application history (REJECTED, QUIT, or REMOVED)
+    const hasPreviousHistory = mostRecentApplication.status === 'REJECTED' || 
+                               mostRecentApplication.status === 'QUIT' || 
+                               mostRecentApplication.status === 'REMOVED';
 
     res.json({
       success: true,
       data: {
         hasApplied: isActive,
         application: isActive ? {
-          applicationId: existingApplication.applicationId,
-          status: existingApplication.status,
-          position: existingApplication.position,
-          projectName: existingApplication.projectName,
-          appliedDate: existingApplication.appliedDate,
-          statusUpdatedAt: existingApplication.statusUpdatedAt
+          applicationId: mostRecentApplication.applicationId,
+          status: mostRecentApplication.status,
+          position: mostRecentApplication.position,
+          projectName: mostRecentApplication.projectName,
+          appliedDate: mostRecentApplication.appliedDate,
+          statusUpdatedAt: mostRecentApplication.statusUpdatedAt
+        } : null,
+        // Include previous application history for UI to show appropriate messages
+        previousApplication: hasPreviousHistory ? {
+          applicationId: mostRecentApplication.applicationId,
+          status: mostRecentApplication.status,
+          position: mostRecentApplication.position,
+          projectName: mostRecentApplication.projectName,
+          appliedDate: mostRecentApplication.appliedDate,
+          statusUpdatedAt: mostRecentApplication.statusUpdatedAt,
+          rejectionReason: mostRecentApplication.rejectionReason || '',
+          removalReason: mostRecentApplication.removalReason || '',
+          quitAt: mostRecentApplication.quitAt || null,
+          removedFromTeamAt: mostRecentApplication.removedFromTeamAt || null
         } : null
       }
     });

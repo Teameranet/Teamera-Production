@@ -710,6 +710,24 @@
   animation: slideIn 0.3s ease-out;
 }
 
+/* Previous application status (REJECTED, QUIT, REMOVED) */
+.application-status-message.previous {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #fcd34d;
+}
+
+.application-status-message.previous .status-text {
+  color: #78350f;
+}
+
+.application-status-message.previous .view-application-link {
+  color: #b45309;
+}
+
+.application-status-message.previous .view-application-link:hover {
+  color: #92400e;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
