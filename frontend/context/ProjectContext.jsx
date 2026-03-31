@@ -290,64 +290,80 @@ export const ProjectProvider = ({ children }) => {
       const originalProject = projects[projectIndex];
       const founder = originalProject.teamMembers.find(member => member.role === "Founder");
 
-      // Create updated project object
+      // CRITICAL FIX: Only send fields that are actually being updated
+      // Do NOT send teamMembers unless they are explicitly being changed
+      // This prevents breaking user-project relationships during simple detail updates
       const updatedData = {
-        ...projectData,
+        title: projectData.title,
+        description: projectData.description,
+        stage: projectData.stage,
+        industry: projectData.industry,
+        funding: projectData.funding,
+        openPositions: projectData.openPositions,
+        requiredSkills: projectData.requiredSkills,
         ownerId: originalProject.ownerId
       };
 
-      // Ensure the founder remains in the team members list
-      if (founder) {
-        // Extract founder ID for comparison
-        const founderId = typeof founder.id === 'string' ? founder.id : 
-                         typeof founder._id === 'string' ? founder._id :
-                         founder.id?._id || founder.id?.toString() || 
-                         founder._id?.toString() || null;
-        
-        // Check if founder is already in the team members (by ID or email)
-        const founderExists = updatedData.teamMembers?.some(member => {
-          const memberId = typeof member.id === 'string' ? member.id : 
-                          typeof member._id === 'string' ? member._id :
-                          member.id?._id || member.id?.toString() || 
-                          member._id?.toString() || null;
+      // Only include teamMembers if they were explicitly changed in the edit
+      // This is determined by checking if projectData explicitly includes teamMembers
+      // and if those members differ from the original
+      if (projectData.teamMembers !== undefined) {
+        // Ensure the founder remains in the team members list
+        if (founder) {
+          // Extract founder ID for comparison
+          const founderId = typeof founder.id === 'string' ? founder.id : 
+                           typeof founder._id === 'string' ? founder._id :
+                           founder.id?._id || founder.id?.toString() || 
+                           founder._id?.toString() || null;
           
-          const isSameById = memberId && founderId && memberId === founderId;
-          const isSameByEmail = member.email && founder.email && 
-                               member.email.toLowerCase() === founder.email.toLowerCase();
-          const isSameByRole = member.role === "Founder";
-          
-          return isSameById || isSameByEmail || isSameByRole;
-        }) ?? false;
+          // Check if founder is already in the team members (by ID or email)
+          const founderExists = projectData.teamMembers?.some(member => {
+            const memberId = typeof member.id === 'string' ? member.id : 
+                            typeof member._id === 'string' ? member._id :
+                            member.id?._id || member.id?.toString() || 
+                            member._id?.toString() || null;
+            
+            const isSameById = memberId && founderId && memberId === founderId;
+            const isSameByEmail = member.email && founder.email && 
+                                 member.email.toLowerCase() === founder.email.toLowerCase();
+            const isSameByRole = member.role === "Founder";
+            
+            return isSameById || isSameByEmail || isSameByRole;
+          }) ?? false;
 
-        if (!founderExists) {
-          // Add founder to the beginning of the team members array with properly extracted ID
-          updatedData.teamMembers = [
-            {
-              id: founderId,
-              name: founder.name,
-              role: "Founder",
-              email: founder.email || ''
-            },
-            ...(updatedData.teamMembers || [])
-          ];
+          if (!founderExists) {
+            // Add founder to the beginning of the team members array with properly extracted ID
+            projectData.teamMembers = [
+              {
+                id: founderId,
+                name: founder.name,
+                role: "Founder",
+                email: founder.email || ''
+              },
+              ...(projectData.teamMembers || [])
+            ];
+          }
+          
+          // Final deduplication: Remove any duplicate founders by role
+          const founderCount = projectData.teamMembers.filter(m => m.role === "Founder").length;
+          if (founderCount > 1) {
+            console.warn('Multiple founders detected, removing duplicates');
+            let founderAdded = false;
+            projectData.teamMembers = projectData.teamMembers.filter(member => {
+              if (member.role === "Founder") {
+                if (!founderAdded) {
+                  founderAdded = true;
+                  return true; // Keep the first founder
+                }
+                return false; // Remove subsequent founders
+              }
+              return true; // Keep non-founder members
+            });
+          }
         }
         
-        // Final deduplication: Remove any duplicate founders by role
-        const founderCount = updatedData.teamMembers.filter(m => m.role === "Founder").length;
-        if (founderCount > 1) {
-          console.warn('Multiple founders detected, removing duplicates');
-          let founderAdded = false;
-          updatedData.teamMembers = updatedData.teamMembers.filter(member => {
-            if (member.role === "Founder") {
-              if (!founderAdded) {
-                founderAdded = true;
-                return true; // Keep the first founder
-              }
-              return false; // Remove subsequent founders
-            }
-            return true; // Keep non-founder members
-          });
-        }
+        // Only add teamMembers to update if they were provided
+        updatedData.teamMembers = projectData.teamMembers;
       }
 
       const response = await fetch(`${apiBaseUrl}/api/projects/${projectId}`, {
@@ -760,8 +776,33 @@ export const ProjectProvider = ({ children }) => {
   };
 
   // Get projects for a specific user
-  const getUserProjects = (userId) => {
-    // First try to get from local state
+  const getUserProjects = async (userId) => {
+    try {
+      // CRITICAL FIX: Use backend API which determines participation based on application status
+      // This is the SINGLE SOURCE OF TRUTH for participation
+      // Backend checks for ACCEPTED or INVITED status in applications_sent
+      const response = await fetch(`${apiBaseUrl}/api/projects/user/${userId}`);
+      const result = await response.json();
+
+      if (result.success) {
+        return {
+          owned: result.data.owned || [],
+          participating: result.data.participating || []
+        };
+      } else {
+        console.error('Failed to fetch user projects:', result.message);
+        // Fallback to local state filtering (less reliable)
+        return getUserProjectsFromLocalState(userId);
+      }
+    } catch (error) {
+      console.error('Error fetching user projects:', error);
+      // Fallback to local state filtering
+      return getUserProjectsFromLocalState(userId);
+    }
+  };
+
+  // Fallback function to get projects from local state
+  const getUserProjectsFromLocalState = (userId) => {
     const owned = projects.filter(project =>
       (project.ownerId === userId || project.ownerId?._id === userId || project.ownerId?.toString() === userId)
     );

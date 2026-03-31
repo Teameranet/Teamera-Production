@@ -53,13 +53,17 @@ function Profile() {
   ];
 
   // useEffect to load user projects when user is available
-  // function: useEffect, add API call to fetch user projects here if needed
   useEffect(() => {
-    if (user && user.id) {
-      // Here you can add API call to fetch user projects from backend
-      const projects = getUserProjects(user.id);
-      setUserProjects(projects);
-    }
+    const loadUserProjects = async () => {
+      if (user && user.id) {
+        // CRITICAL FIX: Use async/await to fetch projects from backend API
+        // Backend determines participation based on application status (ACCEPTED/INVITED)
+        const projects = await getUserProjects(user.id);
+        setUserProjects(projects);
+      }
+    };
+    
+    loadUserProjects();
   }, [user, getUserProjects]);
 
   // Handle project stage change

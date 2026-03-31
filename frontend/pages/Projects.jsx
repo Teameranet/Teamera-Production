@@ -20,7 +20,19 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
   const skills = ['React', 'Node.js', 'Python', 'UI/UX Design', 'Marketing', 'Sales', 'Data Science'];
 
   // Get user's owned projects
-  const userProjects = user ? getUserProjects(user.id) : { owned: [], participating: [] };
+  const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
+  
+  // CRITICAL FIX: Fetch user projects from backend API on mount
+  useEffect(() => {
+    const loadUserProjects = async () => {
+      if (user && user.id) {
+        const projects = await getUserProjects(user.id);
+        setUserProjects(projects);
+      }
+    };
+    
+    loadUserProjects();
+  }, [user, getUserProjects]);
   
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

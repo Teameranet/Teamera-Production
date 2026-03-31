@@ -308,55 +308,83 @@ function CreateProjectModal({ onClose, projectToEdit }) {
 
     // Create project data object
     const projectData = {
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      industry: formData.industry,
+      stage: formData.stage,
+      funding: formData.funding,
+      timeline: formData.timeline,
       openPositions: formData.openPositions.filter(pos => pos.role.trim() !== '')
     };
 
     if (isEditMode) {
-      // When editing, use the correct project ID (could be id or _id)
+      // CRITICAL FIX: When editing, check if team members actually changed
+      // Only send teamMembers if they were modified in the form
+      // This prevents breaking user-project relationships during simple detail updates
       const projectId = projectToEdit.id || projectToEdit._id;
       
-      // Find the founder from the original project
-      const founder = projectToEdit.teamMembers.find(member => member.role === "Founder");
+      // Get original team members (excluding founder)
+      const originalTeamMembers = projectToEdit.teamMembers
+        .filter(member => member.role !== "Founder")
+        .map(member => {
+          const memberId = typeof member.id === 'string' ? member.id : 
+                          typeof member._id === 'string' ? member._id :
+                          member.id?._id || member.id?.toString() || 
+                          member._id?.toString() || null;
+          return {
+            id: memberId,
+            name: member.name,
+            role: member.role,
+            email: member.email || ''
+          };
+        });
       
-      if (founder) {
-        // Extract founder ID for comparison
-        const founderId = typeof founder.id === 'string' ? founder.id : 
-                         typeof founder._id === 'string' ? founder._id :
-                         founder.id?._id || founder.id?.toString() || 
-                         founder._id?.toString() || null;
+      // Compare original vs current team members
+      const originalIds = originalTeamMembers.map(m => m.id).filter(Boolean).sort();
+      const currentIds = processedTeamMembers.map(m => m.id).filter(Boolean).sort();
+      const teamMembersChanged = JSON.stringify(originalIds) !== JSON.stringify(currentIds);
+      
+      // Only include teamMembers in update if they actually changed
+      if (teamMembersChanged) {
+        console.log('Team members changed - including in update');
         
-        // Remove any duplicate founder entries from processedTeamMembers
-        const teamMembersWithoutFounder = processedTeamMembers.filter(member => {
-          // Filter out if this member is the founder (by ID or email)
-          const isDuplicateById = member.id && founderId && member.id === founderId;
-          const isDuplicateByEmail = member.email && founder.email && 
-                                     member.email.toLowerCase() === founder.email.toLowerCase();
-          return !isDuplicateById && !isDuplicateByEmail;
-        });
+        // Find the founder from the original project
+        const founder = projectToEdit.teamMembers.find(member => member.role === "Founder");
         
-        // Add founder at the beginning
-        const teamMembersWithFounder = [
-          {
-            id: founderId,
-            name: founder.name,
-            role: "Founder",
-            email: founder.email || ''
-          },
-          ...teamMembersWithoutFounder
-        ];
-        
-        editProject(projectId, {
-          ...projectData,
-          teamMembers: teamMembersWithFounder,
-        });
+        if (founder) {
+          const founderId = typeof founder.id === 'string' ? founder.id : 
+                           typeof founder._id === 'string' ? founder._id :
+                           founder.id?._id || founder.id?.toString() || 
+                           founder._id?.toString() || null;
+          
+          // Remove any duplicate founder entries from processedTeamMembers
+          const teamMembersWithoutFounder = processedTeamMembers.filter(member => {
+            const isDuplicateById = member.id && founderId && member.id === founderId;
+            const isDuplicateByEmail = member.email && founder.email && 
+                                       member.email.toLowerCase() === founder.email.toLowerCase();
+            return !isDuplicateById && !isDuplicateByEmail;
+          });
+          
+          // Add founder at the beginning
+          projectData.teamMembers = [
+            {
+              id: founderId,
+              name: founder.name,
+              role: "Founder",
+              email: founder.email || ''
+            },
+            ...teamMembersWithoutFounder
+          ];
+        } else {
+          projectData.teamMembers = processedTeamMembers;
+        }
       } else {
-        // No founder found, just use processed members
-        editProject(projectId, {
-          ...projectData,
-          teamMembers: processedTeamMembers,
-        });
+        console.log('Team members unchanged - excluding from update to preserve relationships');
+        // Do NOT include teamMembers in the update
+        // This prevents the backend from processing team member changes
       }
+      
+      editProject(projectId, projectData);
     } else {
       // For new projects, add the current user as a founder
       projectData.teamMembers = [
