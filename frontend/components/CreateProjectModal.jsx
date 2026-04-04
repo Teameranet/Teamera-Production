@@ -371,9 +371,10 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         });
       
       // Compare original vs current team members
-      const originalIds = originalTeamMembers.map(m => m.id).filter(Boolean).sort();
-      const currentIds = processedTeamMembers.map(m => m.id).filter(Boolean).sort();
-      const teamMembersChanged = JSON.stringify(originalIds) !== JSON.stringify(currentIds);
+      // Compare original vs current team members (including roles to detect role changes)
+      const originalRep = originalTeamMembers.map(m => `${m.id}-${m.role}`).sort();
+      const currentRep = processedTeamMembers.map(m => `${m.id}-${m.role}`).sort();
+      const teamMembersChanged = JSON.stringify(originalRep) !== JSON.stringify(currentRep);
       
       // Only include teamMembers in update if they actually changed
       if (teamMembersChanged) {

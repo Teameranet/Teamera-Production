@@ -36,10 +36,10 @@ function ProjectModal({ project, onClose }) {
       for (const position of project.openPositions) {
         try {
           const response = await fetch(
-            `/api/applications/check?projectId=${project._id || project.id}&userId=${user._id || user.id}&position=${encodeURIComponent(position.role)}`
+            `/api/applications/check?projectId=${project._id || project.id}&userId=${user._id || user.id}&position=${encodeURIComponent(position.role)}&positionId=${position._id || position.id || ''}`
           );
           const data = await response.json();
-          
+
           if (data.success) {
             // Store both active application and previous application history
             checks[position.role] = {
@@ -58,67 +58,6 @@ function ProjectModal({ project, onClose }) {
     checkExistingApplications();
   }, [user, project._id, project.id, project.openPositions]);
 
-  // Function to create milestone data based on project stage
-  // const getMilestonesByStage = (stage) => {
-  //   const allMilestones = [
-  //     {
-  //       id: 'ideation',
-  //       title: 'Project Ideation',
-  //       description: 'Initial concept and market research completed',
-  //       stage: 'Ideation Stage'
-  //     },
-  //     {
-  //       id: 'validation',
-  //       title: 'Idea Validation',
-  //       description: 'Concept validation and initial user feedback',
-  //       stage: 'Idea Validation'
-  //     },
-  //     {
-  //       id: 'mvp',
-  //       title: 'MVP Development',
-  //       description: 'Building the minimum viable product',
-  //       stage: 'MVP Development'
-  //     },
-  //     {
-  //       id: 'testing',
-  //       title: 'Beta Testing',
-  //       description: 'User testing and feedback collection',
-  //       stage: 'Beta Testing'
-  //     },
-  //     {
-  //       id: 'market',
-  //       title: 'Market Ready',
-  //       description: 'Product launched to market',
-  //       stage: 'Market Ready'
-  //     },
-  //     {
-  //       id: 'scaling',
-  //       title: 'Scaling',
-  //       description: 'Growing user base and expanding features',
-  //       stage: 'Scaling'
-  //     }
-  //   ];
-
-  //   // Get the current stage index
-  //   const stageIndex = allMilestones.findIndex(milestone => milestone.stage === stage);
-
-  //   // If stage not found, return all milestones as upcoming
-  //   if (stageIndex === -1) {
-  //     return allMilestones.map(milestone => ({ ...milestone, status: 'upcoming' }));
-  //   }
-
-  //   // Return milestones with appropriate status
-  //   return allMilestones.map((milestone, index) => {
-  //     if (index < stageIndex) {
-  //       return { ...milestone, status: 'completed' };
-  //     } else if (index === stageIndex) {
-  //       return { ...milestone, status: 'current' };
-  //     } else {
-  //       return { ...milestone, status: 'upcoming' };
-  //     }
-  //   });
-  // };
-
   const handleApplicationSubmit = async (e) => {
     e.preventDefault();
     if (!user || !selectedPosition) return;
@@ -132,6 +71,7 @@ function ProjectModal({ project, onClose }) {
       resume: applicationData.resume,
       resumeUrl: applicationData.resume ? URL.createObjectURL(applicationData.resume) : null,
       position: selectedPosition.role,
+      positionId: selectedPosition._id || selectedPosition.id, // Include positionId
       projectName: project.title,
       skills: selectedPosition.skills || [],
       userDetails: {
@@ -272,12 +212,12 @@ function ProjectModal({ project, onClose }) {
             <div className="team-members">
               {(project.teamMembers || []).map((member, index) => {
                 // Safely extract ID - handle cases where id might be an object
-                const memberId = typeof member.id === 'string' ? member.id : 
-                                 typeof member._id === 'string' ? member._id :
-                                 member.id?._id || member.id?.toString() || 
-                                 member._id?.toString() || 
-                                 `${member.name}-${member.role}-${index}`;
-                
+                const memberId = typeof member.id === 'string' ? member.id :
+                  typeof member._id === 'string' ? member._id :
+                    member.id?._id || member.id?.toString() ||
+                    member._id?.toString() ||
+                    `${member.name}-${member.role}-${index}`;
+
                 return (
                   <div key={memberId} className="team-member-card">
                     <UserAvatar
@@ -305,16 +245,16 @@ function ProjectModal({ project, onClose }) {
                 const hasActiveApplication = appData?.hasApplied || false;
                 const existingApp = appData?.application;
                 const previousApp = appData?.previousApplication;
-                
+
                 // Determine what message to show
                 let statusMessage = null;
                 let canApply = !hasActiveApplication;
-                
+
                 if (hasActiveApplication && existingApp) {
                   // User has an active PENDING or ACCEPTED application
                   statusMessage = {
                     icon: existingApp.status === 'PENDING' ? '⏳' : '✓',
-                    text: existingApp.status === 'PENDING' 
+                    text: existingApp.status === 'PENDING'
                       ? 'Your application is under review'
                       : 'You are part of this team',
                     showLink: true,
@@ -328,7 +268,7 @@ function ProjectModal({ project, onClose }) {
                     'QUIT': 'You previously quit this position. You can reapply if interested.',
                     'REMOVED': 'You were previously removed from this position. You can reapply.'
                   };
-                  
+
                   statusMessage = {
                     icon: '🔄',
                     text: statusTexts[previousApp.status] || 'You can apply for this position.',
@@ -336,7 +276,7 @@ function ProjectModal({ project, onClose }) {
                     isPrevious: true
                   };
                 }
-                
+
                 return (
                   <div key={index} className="position-card">
                     <div className="position-header">
@@ -359,9 +299,9 @@ function ProjectModal({ project, onClose }) {
                         >
                           {previousApp && !hasActiveApplication ? 'Reapply for this position' : 'Apply for this position'}
                         </button>
-                        
 
-                        
+
+
                         {/* Always show status message if there's any application history */}
                         {statusMessage && (
                           <div className={`application-status-message ${statusMessage.isPrevious ? 'previous' : ''}`}>
@@ -373,7 +313,7 @@ function ProjectModal({ project, onClose }) {
                                 {statusMessage.text}
                               </p>
                               {statusMessage.showLink && (
-                                <button 
+                                <button
                                   className="view-application-link"
                                   onClick={() => {
                                     onClose();

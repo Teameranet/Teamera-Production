@@ -154,7 +154,8 @@ export const submitApplication = async (req, res) => {
       skills,
       hasResume,
       resumeUrl,
-      resumeFileName
+      resumeFileName,
+      positionId
     } = req.body;
 
     // Validate required fields
@@ -268,6 +269,7 @@ export const submitApplication = async (req, res) => {
       projectStage: projectStage || project.stage || '',
       projectIndustry: projectIndustry || project.industry || '',
       position,
+      positionId: positionId || '',
       message: message || '',
       skills: skills || [],
       status: 'PENDING',
@@ -300,6 +302,7 @@ export const submitApplication = async (req, res) => {
       projectName,
       projectStage: projectStage || project.stage || '',
       position,
+      positionId: positionId || '',
       message: message || '',
       skills: skills || [],
       status: 'PENDING',
@@ -452,6 +455,7 @@ export const updateApplicationStatus = async (req, res) => {
           id: application.applicantId,
           name: application.applicantName,
           role: application.position,
+          positionId: application.positionId,
           email: application.applicantEmail,
           avatar: application.applicantAvatar || '',
           applicantColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
@@ -644,12 +648,12 @@ export const getProjectApplications = async (req, res) => {
 // Check if user has already applied to a project position
 export const checkUserApplication = async (req, res) => {
   try {
-    const { projectId, userId, position } = req.query;
+    const { projectId, userId, position, positionId } = req.query;
 
-    if (!projectId || !userId || !position) {
+    if (!projectId || !userId || (!position && !positionId)) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required parameters: projectId, userId, and position are required'
+        message: 'Missing required parameters: projectId, userId, and either position or positionId are required'
       });
     }
 
@@ -670,7 +674,7 @@ export const checkUserApplication = async (req, res) => {
     // Find ALL applications for this project and position (including historical ones)
     const allApplications = userApplication.applications_sent.filter(
       app => app.projectId.toString() === projectId && 
-             app.position === position
+             (positionId ? app.positionId === positionId : app.position === position)
     );
 
     if (allApplications.length === 0) {
