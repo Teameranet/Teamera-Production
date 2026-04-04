@@ -713,6 +713,24 @@
   animation: slideIn 0.3s ease-out;
 }
 
+/* Team member status message */
+.application-status-message.team-member {
+  background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%);
+  border: 1px solid #93c5fd;
+}
+
+.application-status-message.team-member .status-text {
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.application-status-message .status-subtext {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+
 /* Previous application status (REJECTED, QUIT, REMOVED) */
 .application-status-message.previous {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);

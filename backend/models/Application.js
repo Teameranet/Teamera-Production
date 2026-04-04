@@ -72,6 +72,10 @@ const applicationSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    positionId: {
+      type: String,
+      required: false
+    },
     message: {
       type: String,
       default: ''
@@ -196,6 +200,10 @@ const applicationSchema = new mongoose.Schema({
     position: {
       type: String,
       required: true
+    },
+    positionId: {
+      type: String,
+      required: false
     },
     message: {
       type: String,

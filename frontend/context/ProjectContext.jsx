@@ -494,6 +494,7 @@ export const ProjectProvider = ({ children }) => {
         projectStage: project.stage || '',
         projectIndustry: project.industry || '',
         position: applicationData.position,
+        positionId: applicationData.positionId,
         applicantId: userId,
         applicantName: user.name,
         applicantEmail: user.email,
@@ -532,6 +533,7 @@ export const ProjectProvider = ({ children }) => {
           applicantAvatar: user.avatar || 'U',
           applicantColor: applicationData.applicantColor || '#4f46e5',
           position: applicationData.position,
+          positionId: applicationData.positionId,
           skills: applicationData.skills || [],
           projectId: projectId,
           projectName: project.title,
@@ -591,15 +593,7 @@ export const ProjectProvider = ({ children }) => {
 
     console.log('Found project at index:', projectIndex, 'Current team members:', projects[projectIndex].teamMembers.length);
 
-    // Check if user is already a team member
-    const isAlreadyMember = projects[projectIndex].teamMembers.some(
-      member => member.id === userData.id
-    );
 
-    if (isAlreadyMember) {
-      console.log('User is already a team member');
-      return false;
-    }
 
     // Add user to the project's team members
     const updatedProjects = [...projects];

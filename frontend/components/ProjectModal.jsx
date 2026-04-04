@@ -20,9 +20,12 @@ function ProjectModal({ project, onClose }) {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // 'success' or 'error'
   const [existingApplications, setExistingApplications] = useState({}); // Track existing applications by position
+
   const { user } = useAuth();
   const { applyToProject } = useProjects();
   const { addApplicationNotification } = useNotifications();
+
+
 
   // Check for existing applications when component mounts or user changes
   useEffect(() => {
@@ -356,6 +359,9 @@ function ProjectModal({ project, onClose }) {
                         >
                           {previousApp && !hasActiveApplication ? 'Reapply for this position' : 'Apply for this position'}
                         </button>
+                        
+
+                        
                         {/* Always show status message if there's any application history */}
                         {statusMessage && (
                           <div className={`application-status-message ${statusMessage.isPrevious ? 'previous' : ''}`}>

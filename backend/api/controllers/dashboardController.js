@@ -219,6 +219,8 @@ export const submitApplication = async (req, res) => {
       });
     }
 
+
+
     // Check if user already applied to this project for this position
     // Only block if there's a PENDING or ACCEPTED application
     // Allow re-application if previous was REJECTED, QUIT, or REMOVED
@@ -446,21 +448,15 @@ export const updateApplicationStatus = async (req, res) => {
     if (status === 'ACCEPTED') {
       const project = await Project.findById(application.projectId);
       if (project) {
-        const isAlreadyMember = project.teamMembers.some(
-          member => member.id && member.id.toString() === application.applicantId.toString()
-        );
-
-        if (!isAlreadyMember) {
-          project.teamMembers.push({
-            id: application.applicantId,
-            name: application.applicantName,
-            role: application.position,
-            email: application.applicantEmail,
-            avatar: application.applicantAvatar || '',
-            applicantColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
-          });
-          await project.save();
-        }
+        project.teamMembers.push({
+          id: application.applicantId,
+          name: application.applicantName,
+          role: application.position,
+          email: application.applicantEmail,
+          avatar: application.applicantAvatar || '',
+          applicantColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
+        });
+        await project.save();
       }
     }
 

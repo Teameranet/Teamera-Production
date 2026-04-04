@@ -38,18 +38,18 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         .filter(member => member.role !== "Founder")
         .map(member => {
           // Extract ID - handle cases where id might be an object (populated) or string
-          const memberId = typeof member.id === 'string' ? member.id : 
-                          typeof member._id === 'string' ? member._id :
-                          member.id?._id || member.id?.toString() || 
-                          member._id?.toString() || null;
+          const memberId = typeof member.id === 'object' 
+            ? (member.id._id || member.id.toString()) 
+            : (typeof member._id === 'object' ? (member._id._id || member._id.toString()) : (member.id || member._id));
           
           return {
             name: member.name,
             position: member.role,
+            positionId: member.positionId, // CRITICAL: Preserve position ID for syncing
             email: member.email || '',
             id: memberId,
             verified: true, // Existing members are already verified
-            tempId: memberId || `temp-${Date.now()}-${Math.random()}` // Use id or generate tempId
+            tempId: memberId || `temp-${Date.now()}-${Math.random()}` 
           };
         });
       
@@ -125,12 +125,35 @@ function CreateProjectModal({ onClose, projectToEdit }) {
 
   // Handle change for a specific open position
   const handlePositionChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      openPositions: prev.openPositions.map((pos, i) =>
+    setFormData(prev => {
+      const oldRole = prev.openPositions[index].role;
+      const positionId = prev.openPositions[index]._id || prev.openPositions[index].id;
+      
+      const newOpenPositions = prev.openPositions.map((pos, i) =>
         i === index ? { ...pos, [field]: value } : pos
-      )
-    }));
+      );
+      
+      // If the role name was changed, sync it to team members holding this position
+      let newTeamMembers = prev.teamMembers;
+      if (field === 'role' && oldRole && value !== oldRole) {
+        newTeamMembers = prev.teamMembers.map(member => {
+          // Match by positionId (most reliable) or role name
+          const isMatch = (positionId && member.positionId === positionId) || 
+                         (!member.isCustom && member.position === oldRole);
+          
+          if (isMatch) {
+            return { ...member, position: value };
+          }
+          return member;
+        });
+      }
+      
+      return {
+        ...prev,
+        openPositions: newOpenPositions,
+        teamMembers: newTeamMembers
+      };
+    });
   };
 
   // Handle toggling a skill for a position
@@ -310,6 +333,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         ...(member.id && typeof member.id === 'string' && member.id.length === 24 ? { id: member.id } : {}),
         name: member.name,
         role: member.position, // Map position to role
+        positionId: member.positionId, // Include positionId
         email: member.email || '' // Include email
       }));
 
@@ -584,12 +608,16 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         );
 
       case 'members':
-        // Get valid roles from open positions defined in step 2
-        const availableRoles = Array.from(new Set(
-          formData.openPositions
-            .map(pos => pos.role)
-            .filter(role => role && role.trim() !== '')
-        ));
+        // Get valid positions from open positions defined in step 2
+        const availablePositions = formData.openPositions
+          .filter(pos => pos.role && pos.role.trim() !== '')
+          .map(pos => ({
+            role: pos.role,
+            id: pos._id || pos.id || null
+          }));
+        
+        // Helper to check if a position is in availablePositions
+        const isKnownPosition = (role) => availablePositions.some(p => p.role === role);
 
         return (
           <div className="step-content">
@@ -657,22 +685,25 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                         />
                         <div className="position-input-group">
                           <select
-                            value={member.isCustom ? 'Custom position' : (availableRoles.includes(member.position) ? member.position : '')}
+                            value={member.isCustom ? 'Custom position' : (isKnownPosition(member.position) ? member.position : '')}
                             onChange={(e) => {
                               const val = e.target.value;
                               if (val === 'Custom position') {
                                 handleTeamMemberChange(index, 'isCustom', true);
                                 handleTeamMemberChange(index, 'position', '');
+                                handleTeamMemberChange(index, 'positionId', null);
                               } else {
+                                const posObj = availablePositions.find(p => p.role === val);
                                 handleTeamMemberChange(index, 'isCustom', false);
                                 handleTeamMemberChange(index, 'position', val);
+                                handleTeamMemberChange(index, 'positionId', posObj ? posObj.id : null);
                               }
                             }}
                             required
                           >
                             <option value="">Select Position *</option>
-                            {availableRoles.map(role => (
-                              <option key={role} value={role}>{role}</option>
+                            {availablePositions.map(pos => (
+                              <option key={pos.id || pos.role} value={pos.role}>{pos.role}</option>
                             ))}
                             <option value="Custom position">Custom position</option>
                           </select>
