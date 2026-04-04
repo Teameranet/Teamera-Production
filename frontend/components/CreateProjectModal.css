@@ -511,6 +511,25 @@
   margin: 0;
 }
 
+/* Ensure both name input and position group take equal space in the row */
+.member-details .form-row > input,
+.member-details .form-row > .position-input-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.position-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.position-input-group select,
+.position-input-group input {
+  width: 100% !important;
+  display: block;
+}
+
 /* Remove member button */
 .remove-member-btn {
   background: #fca5a5;

@@ -63,7 +63,13 @@ function CreateProjectModal({ onClose, projectToEdit }) {
           : [{ role: '', skills: [], isPaid: false }],
         funding: projectToEdit.funding || '',
         timeline: projectToEdit.timeline || '',
-        teamMembers: teamMembersWithoutFounder || []
+        teamMembers: teamMembersWithoutFounder.map(member => {
+          const availableRoles = projectToEdit.openPositions?.map(p => p.role) || [];
+          return {
+            ...member,
+            isCustom: member.position && !availableRoles.includes(member.position)
+          };
+        })
       });
     }
   }, [projectToEdit]);
@@ -185,6 +191,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         name: '', 
         position: '', 
         email: '', 
+        isCustom: false,
         verified: false,
         tempId: `temp-${Date.now()}-${Math.random()}` // Unique temporary ID
       }]
@@ -577,6 +584,13 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         );
 
       case 'members':
+        // Get valid roles from open positions defined in step 2
+        const availableRoles = Array.from(new Set(
+          formData.openPositions
+            .map(pos => pos.role)
+            .filter(role => role && role.trim() !== '')
+        ));
+
         return (
           <div className="step-content">
             <div className="form-group">
@@ -641,20 +655,45 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                           placeholder="Member name"
                           className="verified-input"
                         />
-                        <input
-                          type="text"
-                          value={member.position}
-                          onChange={(e) => handleTeamMemberChange(index, 'position', e.target.value)}
-                          placeholder="Position/Role *"
-                          required
-                        />
+                        <div className="position-input-group">
+                          <select
+                            value={member.isCustom ? 'Custom position' : (availableRoles.includes(member.position) ? member.position : '')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === 'Custom position') {
+                                handleTeamMemberChange(index, 'isCustom', true);
+                                handleTeamMemberChange(index, 'position', '');
+                              } else {
+                                handleTeamMemberChange(index, 'isCustom', false);
+                                handleTeamMemberChange(index, 'position', val);
+                              }
+                            }}
+                            required
+                          >
+                            <option value="">Select Position *</option>
+                            {availableRoles.map(role => (
+                              <option key={role} value={role}>{role}</option>
+                            ))}
+                            <option value="Custom position">Custom position</option>
+                          </select>
+                          
+                          {member.isCustom && (
+                            <input
+                              type="text"
+                              value={member.position}
+                              onChange={(e) => handleTeamMemberChange(index, 'position', e.target.value)}
+                              placeholder="Enter custom position"
+                              required
+                            />
+                          )}
+                        </div>
                       </div>
                     )}
                     
                     {member.verified && (!member.position || member.position.trim() === '') && (
                       <div className="verification-warning">
                         <AlertCircle size={14} />
-                        <span>Please enter a position/role for this member</span>
+                        <span>Please select or enter a position/role for this member</span>
                       </div>
                     )}
                     
