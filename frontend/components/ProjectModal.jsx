@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Users, MapPin, Calendar, Briefcase, Upload, Send } from 'lucide-react';
+import { X, Users, MapPin, Calendar, Briefcase, Upload, Send, Clock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -107,25 +107,33 @@ function ProjectModal({ project, onClose }) {
     if (result.success) {
       // Add application notification for the project owner only
       if (project.ownerId) {
-        console.log(`Sending notification to project owner ${project.ownerId} for project "${project.title}" from applicant "${user.name}"`);
         addApplicationNotification(project.ownerId, project.title, user.name);
-      } else {
-        console.warn(`No ownerId found for project "${project.title}". Notification not sent.`);
       }
 
-      // Show success toast notification
-      setToastMessage('Your application has been sent successfully!');
+      // Optimistically update existingApplications so the status banner renders immediately
+      const appliedRole = selectedPosition.role;
+      setExistingApplications(prev => ({
+        ...prev,
+        [appliedRole]: {
+          hasApplied: true,
+          application: {
+            status: 'PENDING',
+            position: appliedRole,
+            message: applicationData.message,
+          },
+          previousApplication: prev[appliedRole]?.previousApplication || null,
+        }
+      }));
+
+      // Hide form and show inline success message — do NOT close the modal
+      setShowApplicationForm(false);
+      setApplicationData({ message: '', resume: null });
+      setSelectedPosition(null);
+      setToastMessage('Application submitted! You can track it in Dashboard → Applications → Sent.');
       setToastType('success');
       setShowToast(true);
 
-      // Hide toast and redirect after delay
-      setTimeout(() => {
-        setShowToast(false);
-        setShowApplicationForm(false);
-        setApplicationData({ message: '', resume: null });
-        setSelectedPosition(null);
-        onClose(); // Redirect back to projects
-      }, 2000);
+      setTimeout(() => setShowToast(false), 6000);
     } else {
       // Show error toast notification
       setToastMessage(result.message || 'Failed to submit application. Please try again.');
@@ -315,25 +323,37 @@ function ProjectModal({ project, onClose }) {
                 if (hasActiveApplication && existingApp) {
                   // User has an active PENDING, ACCEPTED, or INVITED application
                   const statusMap = {
-                    PENDING: { icon: '⏳', text: 'Your application is under review' },
-                    ACCEPTED: { icon: '✓', text: 'You are part of this team' },
-                    // Use position.role (live from project prop) so renames reflect immediately
-                    INVITED: { icon: '🎉', text: `You have been invited by the Founder for the '${position.role}' position` }
+                    PENDING:  { icon: <Clock size={15} />,        text: 'Your application is under review' },
+                    ACCEPTED: { icon: <CheckCircle size={15} />,  text: 'You are part of this team' },
+                    INVITED:  { icon: '🎉', text: `You have been invited by the Founder for the '${position.role}' position` }
                   };
                   const s = statusMap[existingApp.status] || statusMap.PENDING;
                   statusMessage = { icon: s.icon, text: s.text, showLink: true, isPrevious: false };
                 } else if (previousApp) {
                   // User has a previous REJECTED, QUIT, or REMOVED application
-                  // They can reapply, but show them their history
-                  const statusTexts = {
-                    'REJECTED': 'Your previous application was not accepted. You can apply again.',
-                    'QUIT': 'You previously quit this position. You can reapply if interested.',
-                    'REMOVED': 'You were previously removed from this position. You can reapply.'
+                  const statusMap = {
+                    'REJECTED': {
+                      icon: '✕',
+                      text: 'Your previous application was not accepted. You can apply again.',
+                      variant: 'rejected'
+                    },
+                    'QUIT': {
+                      icon: '↩',
+                      text: 'You previously left this position. You can reapply if interested.',
+                      variant: 'quit'
+                    },
+                    'REMOVED': {
+                      icon: '⊘',
+                      text: 'You were removed from this position. You can reapply.',
+                      variant: 'removed'
+                    },
                   };
+                  const s = statusMap[previousApp.status] || { icon: '🔄', text: 'You can apply for this position.', variant: 'previous' };
 
                   statusMessage = {
-                    icon: '🔄',
-                    text: statusTexts[previousApp.status] || 'You can apply for this position.',
+                    icon: s.icon,
+                    text: s.text,
+                    variant: s.variant,
                     showLink: true,
                     isPrevious: true
                   };
@@ -367,7 +387,7 @@ function ProjectModal({ project, onClose }) {
 
                         {/* Always show status message if there's any application history */}
                         {statusMessage && (
-                          <div className={`application-status-message ${statusMessage.isPrevious ? 'previous' : ''}`}>
+                          <div className={`application-status-message ${statusMessage.variant || (statusMessage.isPrevious ? 'previous' : '')}`}>
                             <div className="status-icon">
                               {statusMessage.icon}
                             </div>
@@ -551,7 +571,17 @@ function ProjectModal({ project, onClose }) {
           <div className={`toast-notification ${toastType}`}>
             <div className="toast-content">
               <div className="toast-icon">{toastType === 'success' ? '✓' : '✕'}</div>
-              <div className="toast-message">{toastMessage}</div>
+              <div className="toast-message">
+                {toastMessage}
+                {toastType === 'success' && (
+                  <button
+                    className="toast-link"
+                    onClick={() => { onClose(); navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } }); }}
+                  >
+                    View My Applications →
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
