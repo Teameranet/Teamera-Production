@@ -112,3 +112,22 @@ Update the & show the correct Number in MongoDB
 - Implemented  the bookmark functionality add a function to load bookmarks from the DB  when the user logs in 
 
 -The bookmark functionality allows users to save/bookmark projects they're interested in. All bookmark data is stored in MongoDB within the `dashboards` collection.
+----------------------------------------------------------------------------
+- Update the 'openPositions' add 'openPositions' id as like 'teamMembers'
+
+- add that 'openPositions' to application collection
+
+- Update the frontend & Backend & DB as per that
+---------------------------------------------------------------------------
+Now the Issue is  
+Once a user is Accepted, & update the project details
+Project visibility is break after:
+Project name changes
+Position name changes
+Any project updates
+---------------------------------------------------------------------------
+Now the Issue is 
+- It Creating Dublicat member After project details updated & member positions name is also not updateing 
+Fix this issues
+-  when project owner update the Positions name Update the member positions name on real time
+- don’t Create Dublicat member
