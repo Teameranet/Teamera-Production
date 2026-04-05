@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Users, MapPin, Calendar, IndianRupee, Upload, Send } from 'lucide-react';
+import { X, Users, MapPin, Calendar, Briefcase, Upload, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -206,10 +206,10 @@ function ProjectModal({ project, onClose }) {
                   </div>
                 </div>
                 <div className="stat-item">
-                  <IndianRupee size={20} />
+                  <Briefcase size={20} />
                   <div>
-                    <span className="stat-value">{project.funding}</span>
-                    <span className="stat-label">Funding</span>
+                    <span className="stat-value">{project.openPositions?.length || 0}</span>
+                    <span className="stat-label">Open Positions</span>
                   </div>
                 </div>
                 <div className="stat-item">

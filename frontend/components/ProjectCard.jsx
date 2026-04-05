@@ -1,4 +1,4 @@
-import { Users, MapPin, IndianRupee, Bookmark, Share2, Edit, Trash2, LogOut } from 'lucide-react';
+import { Users, MapPin, Briefcase, Bookmark, Share2, Edit, Trash2, LogOut } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import UserAvatar from './UserAvatar';
 import './ProjectCard.css';
@@ -90,8 +90,8 @@ function ProjectCard({ project, onClick, isOwned, isParticipating, onEdit, onDel
           <span>{project.industry}</span>
         </div>
         <div className="meta-item">
-          <IndianRupee size={18} />
-          <span>{project.funding}</span>
+          <Briefcase size={18} />
+          <span>{Array.isArray(project.openPositions) ? project.openPositions.length : 0} open positions</span>
         </div>
       </div>
       
@@ -116,9 +116,6 @@ function ProjectCard({ project, onClick, isOwned, isParticipating, onEdit, onDel
             <div className="founder-name">{founder?.name || 'Unknown'}</div>
             <div className="founder-role">{founder?.role || 'Member'}</div>
           </div>
-        </div>
-        <div className="open-positions">
-          <span>{typeof project.openPositions === 'number' ? project.openPositions : (Array.isArray(project.openPositions) ? project.openPositions.length : 0)} open positions</span>
         </div>
       </div>
       

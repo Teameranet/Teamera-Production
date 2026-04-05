@@ -441,7 +441,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         return formData.teamMembers.length === 0 || 
                formData.teamMembers.every(m => m.verified && m.position && m.position.trim() !== '');
       case 3:
-        return formData.funding && formData.timeline;
+        return formData.timeline && formData.timeline.trim() !== '';
       default:
         return false;
     }
@@ -763,16 +763,6 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         return (
           <div className="step-content">
             <div className="form-group">
-              <label>Funding Goal *</label>
-              <input
-                type="text"
-                value={formData.funding}
-                onChange={(e) => handleInputChange('funding', e.target.value)}
-                placeholder="e.g., ₹25,00,000"
-              />
-            </div>
-
-            <div className="form-group">
               <label>Project Timeline *</label>
               <input
                 type="text"
@@ -790,7 +780,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                 <div className="preview-meta">
                   <span>Industry: {formData.industry}</span>
                   <span>Stage: {formData.stage}</span>
-                  <span>Funding: {formData.funding}</span>
+                  <span>Timeline: {formData.timeline}</span>
                   <span>Team: {formData.teamMembers.length + 1} members</span>
                 </div>
                 <div className="preview-skills">
