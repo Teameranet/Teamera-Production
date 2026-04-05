@@ -220,6 +220,28 @@
   gap: 1rem;
 }
 
+/* Invitation banner shown above open positions */
+.invitation-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+  border: 1.5px solid #6366f1;
+  border-radius: 10px;
+  color: #3730a3;
+  font-size: 0.9rem;
+}
+
+.invitation-banner-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.invitation-banner-text strong {
+  color: #4f46e5;
+}
+
 .position-card {
   padding: 1.5rem;
   border: 2px solid #e5e7eb;

@@ -692,8 +692,8 @@ export const checkUserApplication = async (req, res) => {
     allApplications.sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate));
     const mostRecentApplication = allApplications[0];
 
-    // Check if the most recent application is PENDING or ACCEPTED (active)
-    const isActive = mostRecentApplication.status === 'PENDING' || mostRecentApplication.status === 'ACCEPTED';
+    // Check if the most recent application is PENDING, ACCEPTED, or INVITED (active)
+    const isActive = mostRecentApplication.status === 'PENDING' || mostRecentApplication.status === 'ACCEPTED' || mostRecentApplication.status === 'INVITED';
 
     // Check if there's a previous application history (REJECTED, QUIT, or REMOVED)
     const hasPreviousHistory = mostRecentApplication.status === 'REJECTED' || 
@@ -738,6 +738,49 @@ export const checkUserApplication = async (req, res) => {
 };
 
 
+// Get all INVITED applications for a user on a specific project
+// Used by ProjectModal to show invitation banners (including custom positions)
+export const getProjectInvitations = async (req, res) => {
+  try {
+    const { projectId, userId } = req.query;
+
+    if (!projectId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: projectId and userId'
+      });
+    }
+
+    const userApplication = await Application.findOne({ userId });
+
+    if (!userApplication) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const invitations = userApplication.applications_sent
+      .filter(app =>
+        app.projectId.toString() === projectId &&
+        app.status === 'INVITED'
+      )
+      .map(app => ({
+        applicationId: app.applicationId,
+        position: app.position,
+        positionId: app.positionId || null,
+        projectOwnerName: app.projectOwnerName,
+        appliedDate: app.appliedDate
+      }));
+
+    res.json({ success: true, data: invitations });
+  } catch (error) {
+    console.error('Error fetching project invitations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching project invitations',
+      error: error.message
+    });
+  }
+};
+
 export default {
   getDashboard,
   addBookmark,
@@ -748,5 +791,6 @@ export default {
   getBookmarkedProjects,
   getApplications,
   getProjectApplications,
-  checkUserApplication
+  checkUserApplication,
+  getProjectInvitations
 };

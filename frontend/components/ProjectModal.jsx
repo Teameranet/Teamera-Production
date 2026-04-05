@@ -20,6 +20,7 @@ function ProjectModal({ project, onClose }) {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // 'success' or 'error'
   const [existingApplications, setExistingApplications] = useState({}); // Track existing applications by position
+  const [invitations, setInvitations] = useState([]); // Track INVITED status for this project
 
   const { user } = useAuth();
   const { applyToProject } = useProjects();
@@ -27,21 +28,38 @@ function ProjectModal({ project, onClose }) {
 
 
 
-  // Check for existing applications when component mounts or user changes
+  // Check for existing applications + fetch invitations (including custom positions) on mount
   useEffect(() => {
     const checkExistingApplications = async () => {
-      if (!user || !project.openPositions) return;
+      if (!user) return;
 
+      const projectId = project._id || project.id;
+      const userId = user._id || user.id;
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+      // 1. Fetch all INVITED records for this user+project in one shot
+      //    This covers both open-position invites AND custom-position invites
+      try {
+        const invRes = await fetch(
+          `${apiBaseUrl}/api/applications/invitations?projectId=${projectId}&userId=${userId}`
+        );
+        const invData = await invRes.json();
+        if (invData.success) {
+          setInvitations(invData.data); // [{ applicationId, position, positionId, projectOwnerName }]
+        }
+      } catch (error) {
+        console.error('Error fetching invitations:', error);
+      }
+
+      // 2. Check per-position application status for the open-positions list UI
       const checks = {};
-      for (const position of project.openPositions) {
+      for (const position of (project.openPositions || [])) {
         try {
           const response = await fetch(
-            `/api/applications/check?projectId=${project._id || project.id}&userId=${user._id || user.id}&position=${encodeURIComponent(position.role)}&positionId=${position._id || position.id || ''}`
+            `${apiBaseUrl}/api/applications/check?projectId=${projectId}&userId=${userId}&position=${encodeURIComponent(position.role)}&positionId=${position._id || position.id || ''}`
           );
           const data = await response.json();
-
           if (data.success) {
-            // Store both active application and previous application history
             checks[position.role] = {
               hasApplied: data.data.hasApplied,
               application: data.data.application,
@@ -254,6 +272,32 @@ function ProjectModal({ project, onClose }) {
         return (
           <div className="tab-content">
             <div className="open-positions">
+              {/* Invitation banners — shown for custom positions not listed in openPositions */}
+              {invitations
+                .filter(inv => !(project.openPositions || []).some(
+                  p => (p._id || p.id)?.toString() === inv.positionId?.toString() || p.role === inv.position
+                ))
+                .map((inv) => {
+                  // Resolve the live position name for this invitation:
+                  // 1. Check project.teamMembers for the invited user's current role (handles custom position renames)
+                  // 2. Fall back to the stored inv.position name
+                  const userId = user?._id || user?.id;
+                  const teamMember = (project.teamMembers || []).find(m => {
+                    const memberId = m.id?._id || m.id || m._id;
+                    return String(memberId) === String(userId);
+                  });
+                  const displayName = teamMember ? teamMember.role : inv.position;
+
+                  return (
+                    <div key={inv.applicationId} className="invitation-banner">
+                      <span className="invitation-banner-icon">🎉</span>
+                      <span className="invitation-banner-text">
+                        You have been invited by the Founder for the <strong>'{displayName}'</strong> position
+                      </span>
+                    </div>
+                  );
+                })
+              }
               {(project.openPositions || []).map((position, index) => {
                 const appData = existingApplications[position.role];
                 const hasActiveApplication = appData?.hasApplied || false;
@@ -269,15 +313,15 @@ function ProjectModal({ project, onClose }) {
                 let canApply = !hasActiveApplication;
 
                 if (hasActiveApplication && existingApp) {
-                  // User has an active PENDING or ACCEPTED application
-                  statusMessage = {
-                    icon: existingApp.status === 'PENDING' ? '⏳' : '✓',
-                    text: existingApp.status === 'PENDING'
-                      ? 'Your application is under review'
-                      : 'You are part of this team',
-                    showLink: true,
-                    isPrevious: false
+                  // User has an active PENDING, ACCEPTED, or INVITED application
+                  const statusMap = {
+                    PENDING: { icon: '⏳', text: 'Your application is under review' },
+                    ACCEPTED: { icon: '✓', text: 'You are part of this team' },
+                    // Use position.role (live from project prop) so renames reflect immediately
+                    INVITED: { icon: '🎉', text: `You have been invited by the Founder for the '${position.role}' position` }
                   };
+                  const s = statusMap[existingApp.status] || statusMap.PENDING;
+                  statusMessage = { icon: s.icon, text: s.text, showLink: true, isPrevious: false };
                 } else if (previousApp) {
                   // User has a previous REJECTED, QUIT, or REMOVED application
                   // They can reapply, but show them their history
