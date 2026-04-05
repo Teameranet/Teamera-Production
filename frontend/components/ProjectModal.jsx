@@ -237,6 +237,20 @@ function ProjectModal({ project, onClose }) {
         );
 
       case 'positions':
+        // Check if the user is already a team member of this project (any position)
+        const isTeamMember = user && (project.teamMembers || []).some(member => {
+          const memberId = member.id?._id || member.id || member._id;
+          const userId = user._id || user.id;
+          return String(memberId) === String(userId);
+        });
+
+        // Also check if any position has an ACCEPTED application status
+        const hasAcceptedApplication = Object.values(existingApplications).some(
+          appData => appData?.hasApplied && appData?.application?.status === 'ACCEPTED'
+        );
+
+        const userIsOnTeam = isTeamMember || hasAcceptedApplication;
+
         return (
           <div className="tab-content">
             <div className="open-positions">
@@ -245,6 +259,10 @@ function ProjectModal({ project, onClose }) {
                 const hasActiveApplication = appData?.hasApplied || false;
                 const existingApp = appData?.application;
                 const previousApp = appData?.previousApplication;
+
+                // If user is on the team via another position, disable this button too
+                const isThisPositionAccepted = existingApp?.status === 'ACCEPTED';
+                const disabledByTeamMembership = userIsOnTeam && !isThisPositionAccepted && !hasActiveApplication;
 
                 // Determine what message to show
                 let statusMessage = null;
@@ -295,7 +313,8 @@ function ProjectModal({ project, onClose }) {
                         <button
                           className="apply-position-btn"
                           onClick={() => handlePositionSelect(position)}
-                          disabled={hasActiveApplication}
+                          disabled={hasActiveApplication || disabledByTeamMembership}
+                          title={disabledByTeamMembership ? 'You are already part of this team' : ''}
                         >
                           {previousApp && !hasActiveApplication ? 'Reapply for this position' : 'Apply for this position'}
                         </button>
