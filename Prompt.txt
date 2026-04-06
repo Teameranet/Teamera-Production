@@ -513,3 +513,80 @@ Implement the invited member experience and supporting backend logic with a clea
 - If Project Owner change the position of team member  Update on real time & Display on 'project modal'
 - Update application status logic to handle "Remove/quit" state
 - Design the message using a clean SaaS-style UI
+
+------------------------------------------------------------------------------------------------
+Redesign CollaborationSpace as a Full Page
+Objective: Convert the CollaborationSpace modal component into a dedicated full-page component that maintains all current tab functionality while providing a more spacious, immersive collaboration experience.
+
+Current State:
+
+CollaborationSpace is currently a modal overlay component with 4 tabs: Chat, Tasks, Files, and Team
+It displays a project selector dropdown at the top
+Each tab renders different content (ChatTab, TasksTab, FilesTab, TeamTab)
+Includes modals for inviting members and creating tasks
+Manages file uploads and task creation with localStorage persistence
+Requirements:
+
+Page Structure:
+
+Convert from modal to full-page layout
+Remove modal overlay and modal styling
+Create a responsive page layout with header, sidebar, and main content area
+Maintain the close button functionality (navigate back or redirect to previous page)
+Header Section:
+
+Display "Collaboration Space" title
+Show currently selected project name prominently
+Include user profile/avatar in top-right corner
+Add breadcrumb navigation (e.g., Dashboard > Projects > [Project Name])
+Sidebar Navigation:
+
+Move project selector to a sidebar or top navigation area
+Display list of user's projects with visual indicators
+Show project status/activity indicators
+Allow quick project switching without page reload
+Tab Navigation:
+
+Convert horizontal tab buttons to a more prominent navigation bar
+Maintain all 4 tabs: Chat, Tasks, Files, Team
+Add icons and labels for each tab
+Show active tab indicator/highlight
+Consider adding tab badges (e.g., unread message count, pending tasks count)
+Main Content Area:
+
+Expand content area to use full available space
+Maintain scrollable content for each tab
+Improve spacing and padding for better readability
+Add subtle background or card-based layout for content sections
+Contextual Actions:
+
+Move action buttons (Invite Members, New Task, Upload Files) to a toolbar or action bar
+Show/hide actions based on selected tab and user permissions
+Add quick action buttons for common tasks
+Modals & Overlays:
+
+Keep existing modals (Invite Members, Create Task) but style them for full-page context
+Ensure modals are properly centered and accessible
+Maintain all form functionality and validation
+Responsive Design:
+
+Ensure layout works on desktop, tablet, and mobile
+Consider collapsible sidebar for smaller screens
+Stack navigation elements appropriately on mobile
+State Management:
+
+Preserve all existing state management logic
+Maintain localStorage persistence for tasks and files
+Keep project context and user authentication checks
+Navigation Integration:
+
+Create a new route (e.g., /collaboration/:projectId) for the page
+Implement proper navigation from existing components
+Add back/exit functionality that returns to previous page or dashboard
+Deliverables:
+
+New full-page component (e.g., CollaborationPage.jsx)
+Updated routing configuration
+New CSS file with full-page styling
+Maintain all existing functionality from the modal version
+Ensure no breaking changes to child components (ChatTab, TasksTab, FilesTab, TeamTab)

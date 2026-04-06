@@ -458,7 +458,7 @@ Bookmarked project click → opens CollaborationSpace (wrong)
 
 ---
 
-### 🔴 PROMPT-01 — Add Route Protection to Dashboard and Profile
+###  PROMPT-01 — Add Route Protection to Dashboard and Profile
 
 **Files:** `frontend/App.jsx`, `frontend/components/ProtectedRoute.jsx` (new)
 
@@ -489,7 +489,7 @@ Remove any similar manual checks from Dashboard.jsx.
 
 ---
 
-### 🔴 PROMPT-02 — Add "My Projects" Tab to Dashboard as Default Tab
+###  PROMPT-02 — Add "My Projects" Tab to Dashboard as Default Tab
 
 **Files:** `frontend/pages/Dashboard.jsx`, `frontend/pages/Dashboard.css`
 
@@ -669,7 +669,7 @@ Community should remain in the Footer as well — just add it to the Navbar too 
 
 ---
 
-### 🟠 PROMPT-05 — Fix Applying to a Project (Do Not Close Modal)
+###  PROMPT-05 — Fix Applying to a Project (Do Not Close Modal)
 
 **Files:** `frontend/components/ProjectModal.jsx`
 
@@ -693,7 +693,7 @@ Fix:
 
 ---
 
-### 🟠 PROMPT-06 — Fix Accept Application — Remove Auto-Open of CollaborationSpace
+###  PROMPT-06 — Fix Accept Application — Remove Auto-Open of CollaborationSpace
 
 **Files:** `frontend/pages/Dashboard.jsx`
 
@@ -729,7 +729,7 @@ Fix:
 
 ---
 
-### 🟠 PROMPT-07 — Fix Bookmarked Projects Click — Open ProjectModal Not CollaborationSpace
+###  PROMPT-07 — Fix Bookmarked Projects Click — Open ProjectModal Not CollaborationSpace
 
 **Files:** `frontend/pages/Dashboard.jsx`
 
