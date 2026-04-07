@@ -925,6 +925,32 @@
   font-weight: 500;
 }
 
+.toast-action-btn {
+  background: white;
+  color: #10b981;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: all 0.2s ease;
+}
+
+.toast-action-btn:hover {
+  background: #f0fdf4;
+  transform: scale(1.05);
+}
+
+.toast-notification.error .toast-action-btn {
+  color: #f87171;
+}
+
+.toast-notification.error .toast-action-btn:hover {
+  background: #fef2f2;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;

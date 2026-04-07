@@ -64,8 +64,6 @@ function Dashboard() {
   const [showCollaborationSpace, setShowCollaborationSpace] = useState(false);
   // State to track the active project in collaboration space
   const [activeCollabProject, setActiveCollabProject] = useState(null);
-  // State to track pending collaboration space opening
-  const [pendingCollabProjectId, setPendingCollabProjectId] = useState(null);
 
   // Handle navigation from notifications
   useEffect(() => {
@@ -81,24 +79,6 @@ function Dashboard() {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
-
-  // Handle pending collaboration space opening
-  useEffect(() => {
-    if (pendingCollabProjectId) {
-      console.log('Looking for project with ID:', pendingCollabProjectId);
-      console.log('Available projects:', projects.map(p => ({ id: p.id, title: p.title, teamMembers: p.teamMembers.length })));
-      
-      const updatedProject = projects.find(p => p.id === pendingCollabProjectId);
-      if (updatedProject) {
-        console.log('Found updated project:', updatedProject.title, 'with', updatedProject.teamMembers.length, 'team members');
-        setActiveCollabProject(updatedProject);
-        setShowCollaborationSpace(true);
-        setPendingCollabProjectId(null); // Clear the pending state
-      } else {
-        console.log('Project not found yet, waiting for state update...');
-      }
-    }
-  }, [pendingCollabProjectId, projects]);
 
   // Refresh applications when switching to applications tab
   useEffect(() => {
@@ -163,20 +143,27 @@ function Dashboard() {
         application.position
       );
       
-      // Show success toast
+      // Find the project object to pass to the action function
+      const acceptedProject = projects.find(p => p.id === application.projectId);
+
+      // Show success toast with action
       setToast({
         show: true,
-        message: `${application.applicantName} has been added to the project`,
-        type: 'success'
+        message: `Application accepted! Open Collaboration Space?`,
+        type: 'success',
+        actionLabel: 'Open Workspace',
+        actionFn: () => { 
+          if (acceptedProject) {
+            setActiveCollabProject(acceptedProject); 
+            setShowCollaborationSpace(true); 
+          }
+        }
       });
-      
-      // Set pending collaboration space opening
-      setPendingCollabProjectId(application.projectId);
       
       // Hide toast after delay
       setTimeout(() => {
         setToast({ show: false, message: '', type: '' });
-      }, 3000);
+      }, 5000); // Increased timeout to give time for action button
     } else {
       // Show error toast
       setToast({
@@ -634,6 +621,11 @@ function Dashboard() {
               {toast.type === 'success' ? '✓' : '✕'}
             </div>
             <div className="toast-message">{toast.message}</div>
+            {toast.actionFn && (
+              <button className="toast-action-btn" onClick={toast.actionFn}>
+                {toast.actionLabel}
+              </button>
+            )}
           </div>
         </div>
       )}
