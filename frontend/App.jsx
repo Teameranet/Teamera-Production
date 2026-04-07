@@ -128,13 +128,13 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <ProjectProvider>
-        <NotificationProvider>
+      <NotificationProvider>
+        <ProjectProvider>
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <AppContent />
           </Router>
-        </NotificationProvider>
-      </ProjectProvider>
+        </ProjectProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

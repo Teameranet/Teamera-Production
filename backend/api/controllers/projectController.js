@@ -1,6 +1,7 @@
 import Project from '../../models/Project.js';
 import User from '../../models/User.js';
 import Application from '../../models/Application.js';
+import { createNotification } from './notificationController.js';
 import {
   successResponse,
   errorResponse,
@@ -149,6 +150,19 @@ const projectController = {
             doc.updateStats();
             return doc.save();
           });
+
+          // Notify invited member
+          await createNotification({
+            recipientId: member.id,
+            type: 'INVITATION_RECEIVED',
+            message: `${newProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+            projectId: newProject._id,
+            projectName: newProject.title,
+            positionName: member.role,
+            actorName: owner.name,
+            navigationPath: '/dashboard',
+            navigationState: { tab: 'applications', subTab: 'sent' }
+          });
         } catch (error) {
           console.error('Error creating invitation record:', error);
           // Continue with other members even if one fails
@@ -278,6 +292,24 @@ const projectController = {
                 ownerApp.updateStats();
                 await ownerApp.save();
               }
+            }
+
+            // Notify removed member
+            const removedMemberApp = await Application.findOne({ userId });
+            const removedApp = removedMemberApp?.applications_sent.find(
+              a => a.projectId.toString() === id && a.status === 'REMOVED'
+            );
+            if (removedApp) {
+              await createNotification({
+                recipientId: userId,
+                type: 'MEMBER_REMOVED',
+                message: `${originalProject.title}: You have been removed from the ${removedApp.position} role.`,
+                projectId: id,
+                projectName: originalProject.title,
+                positionName: removedApp.position,
+                navigationPath: '/dashboard',
+                navigationState: { tab: 'applications', subTab: 'sent' }
+              });
             }
           } catch (err) {
             console.error(`Error during member removal sync for user ${userId}:`, err);
@@ -473,6 +505,19 @@ const projectController = {
               },
               { upsert: true, new: true }
             ).then(doc => { doc.updateStats(); return doc.save(); });
+
+            // Notify invited member
+            await createNotification({
+              recipientId: member.id,
+              type: 'INVITATION_RECEIVED',
+              message: `${updatedProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+              projectId: updatedProject._id,
+              projectName: updatedProject.title,
+              positionName: member.role,
+              actorName: owner.name,
+              navigationPath: '/dashboard',
+              navigationState: { tab: 'applications', subTab: 'sent' }
+            });
           } catch (error) {
             console.error('Error creating invitation record:', error);
           }
@@ -885,6 +930,36 @@ const projectController = {
         }
 
         console.log(`Application status updated to ${status}`);
+
+        // Send notification based on action type
+        if (isQuit === 'true') {
+          // Notify project owner that a member quit
+          const memberUser = await User.findById(userId);
+          const memberName = memberUser?.name || application.applicantName || 'A member';
+          await createNotification({
+            recipientId: project.ownerId,
+            type: 'MEMBER_QUIT',
+            message: `${memberName} has left the ${application.position} role in ${project.title}.`,
+            projectId: project._id,
+            projectName: project.title,
+            positionName: application.position,
+            actorName: memberName,
+            navigationPath: '/dashboard',
+            navigationState: { tab: 'applications', subTab: 'received' }
+          });
+        } else {
+          // Notify the removed member
+          await createNotification({
+            recipientId: userId,
+            type: 'MEMBER_REMOVED',
+            message: `${project.title}: You have been removed from the ${application.position} role.`,
+            projectId: project._id,
+            projectName: project.title,
+            positionName: application.position,
+            navigationPath: '/dashboard',
+            navigationState: { tab: 'applications', subTab: 'sent' }
+          });
+        }
       }
     }
 

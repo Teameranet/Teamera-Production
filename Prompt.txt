@@ -514,7 +514,33 @@ Implement the invited member experience and supporting backend logic with a clea
 - Update application status logic to handle "Remove/quit" state
 - Design the message using a clean SaaS-style UI
 
-------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------
+Implement the feature of notification modal flow for project actions with backend API to frontend ( Dont change the css of notification modal ):
+- When the project owner performs actions like Accept, Reject, or Remove a member, send the notification only to the affected project member
+- When a project member quits the project, send the notification only to the project owner
+- When a new application is received, notify the project owner only
+- When the project owner invites a member, send the notification only to the invited user
+
+Notification Message Formats
+1. New Application Received (to project owner):
+"[Project Name]: New application received for [Position Name]."
+
+2. Application Accepted (to member):
+"[Project Name]: Your application for [Position Name] has been accepted."
+
+3. Application Rejected (to member):
+"[Project Name]: Your application for [Position Name] has been rejected."
+
+4. Member Removed (to member):
+"[Project Name]: You have been removed from the [Position Name] role."
+
+5. Member Quit (to project owner):
+"[Member Name] has left the [Position Name] role in [Project Name]."
+
+6. Invitation Received (to member):
+"[Project Name]: You have been invited to join as [Position Name] by [Project Owner Name] ."
+
+-----------------------------------------------------------------------------------------------
 Redesign CollaborationSpace as a Full Page
 Objective: Convert the CollaborationSpace modal component into a dedicated full-page component that maintains all current tab functionality while providing a more spacious, immersive collaboration experience.
 

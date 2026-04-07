@@ -2,6 +2,7 @@ import Dashboard from '../../models/Dashboard.js';
 import Application from '../../models/Application.js';
 import User from '../../models/User.js';
 import Project from '../../models/Project.js';
+import { createNotification } from './notificationController.js';
 
 // Get dashboard data for a user
 export const getDashboard = async (req, res) => {
@@ -338,6 +339,19 @@ export const submitApplication = async (req, res) => {
       project.save()
     ]);
 
+    // Notify project owner of new application
+    await createNotification({
+      recipientId: projectOwnerId,
+      type: 'NEW_APPLICATION',
+      message: `${projectName}: New application received for ${position}.`,
+      projectId,
+      projectName,
+      positionName: position,
+      actorName: applicant.name,
+      navigationPath: '/dashboard',
+      navigationState: { tab: 'applications', subTab: 'received' }
+    });
+
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully',
@@ -462,6 +476,42 @@ export const updateApplicationStatus = async (req, res) => {
         });
         await project.save();
       }
+    }
+
+    // Send notification to the affected member
+    if (status === 'ACCEPTED') {
+      await createNotification({
+        recipientId: application.applicantId,
+        type: 'APPLICATION_ACCEPTED',
+        message: `${application.projectName}: Your application for ${application.position} has been accepted.`,
+        projectId: application.projectId,
+        projectName: application.projectName,
+        positionName: application.position,
+        navigationPath: '/dashboard',
+        navigationState: { tab: 'applications', subTab: 'sent' }
+      });
+    } else if (status === 'REJECTED') {
+      await createNotification({
+        recipientId: application.applicantId,
+        type: 'APPLICATION_REJECTED',
+        message: `${application.projectName}: Your application for ${application.position} has been rejected.`,
+        projectId: application.projectId,
+        projectName: application.projectName,
+        positionName: application.position,
+        navigationPath: '/dashboard',
+        navigationState: { tab: 'applications', subTab: 'sent' }
+      });
+    } else if (status === 'REMOVED') {
+      await createNotification({
+        recipientId: application.applicantId,
+        type: 'MEMBER_REMOVED',
+        message: `${application.projectName}: You have been removed from the ${application.position} role.`,
+        projectId: application.projectId,
+        projectName: application.projectName,
+        positionName: application.position,
+        navigationPath: '/dashboard',
+        navigationState: { tab: 'applications', subTab: 'sent' }
+      });
     }
 
     res.status(200).json({

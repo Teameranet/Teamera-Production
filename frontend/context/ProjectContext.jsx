@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useNotifications } from './NotificationContext';
 
 const ProjectContext = createContext();
 
@@ -24,6 +25,7 @@ export const ProjectProvider = ({ children }) => {
   const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const { fetchNotifications } = useNotifications();
   
   // Function to fetch applications (can be called anytime)
   const fetchApplications = async () => {
@@ -267,6 +269,9 @@ export const ProjectProvider = ({ children }) => {
           });
         }
 
+        // Refresh notifications for the owner (invited members will see theirs on next load)
+        if (founderId) fetchNotifications(founderId);
+
         return newProject;
       } else {
         console.error('Failed to create project:', result.message);
@@ -501,7 +506,7 @@ export const ProjectProvider = ({ children }) => {
         applicantAvatar: user.avatar || '',
         applicantTitle: user.title || '',
         applicantLocation: user.location || '',
-        projectOwnerId: project.ownerId || project.ownerId?._id,
+        projectOwnerId: project.ownerId?._id || project.ownerId,
         projectOwnerName: project.teamMembers?.find(m => m.role === 'Founder')?.name || 'Project Owner',
         projectOwnerEmail: project.teamMembers?.find(m => m.role === 'Founder')?.email || '',
         projectOwnerAvatar: project.teamMembers?.find(m => m.role === 'Founder')?.avatar || '',
@@ -560,6 +565,9 @@ export const ProjectProvider = ({ children }) => {
             ? { ...p, applications: (p.applications || 0) + 1 }
             : p
         ));
+
+        // Refresh notifications for current user (applicant)
+        fetchNotifications(userId);
 
         return { success: true };
       } else {
@@ -685,6 +693,13 @@ export const ProjectProvider = ({ children }) => {
           }));
         }
 
+        // Refresh notifications for current user (owner)
+        const savedUser = localStorage.getItem('teamera_user');
+        if (savedUser) {
+          const u = JSON.parse(savedUser);
+          fetchNotifications(u.id || u._id);
+        }
+
         return true;
       } else {
         console.error('Failed to accept application:', result.message);
@@ -736,6 +751,13 @@ export const ProjectProvider = ({ children }) => {
             ? { ...app, status: 'REJECTED' }
             : app
         ));
+
+        // Refresh notifications for current user (owner)
+        const savedUser = localStorage.getItem('teamera_user');
+        if (savedUser) {
+          const u = JSON.parse(savedUser);
+          fetchNotifications(u.id || u._id);
+        }
 
         return true;
       } else {
@@ -989,6 +1011,9 @@ export const ProjectProvider = ({ children }) => {
 
         // Refresh applications to get updated status
         await fetchApplications();
+
+        // Refresh notifications for current user (member who quit)
+        fetchNotifications(cleanUserId);
 
         // Update user project mapping
         setUserProjectMap(prev => {
