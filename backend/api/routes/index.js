@@ -4,6 +4,7 @@ import contactController from "../controllers/contactController.js";
 import userController from "../controllers/userController.js";
 import dashboardController from "../controllers/dashboardController.js";
 import projectController from "../controllers/projectController.js";
+import { streamNotifications, getNotifications, markAsRead, markAllAsRead, deleteNotification } from "../controllers/notificationController.js";
 import { logger } from "../../middleware/auth.js";
 import { validateRegistration } from "../../middleware/validation.js";
 
@@ -37,19 +38,32 @@ router.get("/dashboard/:userId/bookmarks", dashboardController.getBookmarkedProj
 router.get("/dashboard/:userId/applications", dashboardController.getApplications);
 router.post("/dashboard/:userId/bookmarks", dashboardController.addBookmark);
 router.delete("/dashboard/:userId/bookmarks/:projectId", dashboardController.removeBookmark);
-router.post("/dashboard/:userId/applications", dashboardController.addApplication);
-router.put("/dashboard/:userId/applications/:applicationId", dashboardController.updateApplicationStatus);
+
+// Application endpoints
+router.post("/applications/submit", dashboardController.submitApplication);
+router.patch("/applications/:applicationId/status", dashboardController.updateApplicationStatus);
+router.get("/applications/project/:projectId", dashboardController.getProjectApplications);
+router.get("/applications/check", dashboardController.checkUserApplication);
+router.get("/applications/invitations", dashboardController.getProjectInvitations);
+
+// Notification endpoints — stream MUST be before /:userId to avoid param collision
+router.get("/notifications/:userId/stream", streamNotifications);
+router.get("/notifications/:userId", getNotifications);
+router.patch("/notifications/:notificationId/read", markAsRead);
+router.patch("/notifications/:userId/read-all", markAllAsRead);
+router.delete("/notifications/:notificationId", deleteNotification);
 
 // Project endpoints
 router.get("/projects", projectController.getAllProjects);
-router.get("/projects/:id", projectController.getProjectById);
 router.post("/projects", projectController.createProject);
-router.put("/projects/:id", projectController.updateProject);
-router.delete("/projects/:id", projectController.deleteProject);
 router.get("/projects/user/:userId", projectController.getUserProjects);
+router.post("/projects/:id/apply", projectController.incrementApplicationCount);
 router.put("/projects/:id/stage", projectController.updateProjectStage);
 router.post("/projects/:id/team", projectController.addTeamMember);
 router.delete("/projects/:id/team/:userId", projectController.removeTeamMember);
+router.get("/projects/:id", projectController.getProjectById);
+router.put("/projects/:id", projectController.updateProject);
+router.delete("/projects/:id", projectController.deleteProject);
 
 // API info endpoint
 router.get("/", (req, res) => {
@@ -59,39 +73,11 @@ router.get("/", (req, res) => {
     endpoints: {
       hello: "GET /api/hello",
       contact: "POST /api/contact",
-      users: {
-        login: "POST /api/users/login",
-        verifyEmail: "POST /api/users/verify-email",
-        getAll: "GET /api/users",
-        getById: "GET /api/users/:id",
-        getProjects: "GET /api/users/:id/projects",
-        getProfile: "GET /api/users/:id/profile",
-        create: "POST /api/users",
-        update: "PUT /api/users/:id",
-        updateProfile: "PUT /api/users/:id/profile",
-        delete: "DELETE /api/users/:id",
-      },
-      dashboard: {
-        get: "GET /api/dashboard/:userId",
-        getStats: "GET /api/dashboard/:userId/stats",
-        getBookmarks: "GET /api/dashboard/:userId/bookmarks",
-        getApplications: "GET /api/dashboard/:userId/applications",
-        addBookmark: "POST /api/dashboard/:userId/bookmarks",
-        removeBookmark: "DELETE /api/dashboard/:userId/bookmarks/:projectId",
-        addApplication: "POST /api/dashboard/:userId/applications",
-        updateApplicationStatus: "PUT /api/dashboard/:userId/applications/:applicationId",
-      },
-      projects: {
-        getAll: "GET /api/projects",
-        getById: "GET /api/projects/:id",
-        create: "POST /api/projects",
-        update: "PUT /api/projects/:id",
-        delete: "DELETE /api/projects/:id",
-        getUserProjects: "GET /api/projects/user/:userId",
-        updateStage: "PUT /api/projects/:id/stage",
-        addTeamMember: "POST /api/projects/:id/team",
-        removeTeamMember: "DELETE /api/projects/:id/team/:userId",
-      },
+      users: "GET /api/users",
+      dashboard: "GET /api/dashboard/:userId",
+      applications: "POST /api/applications/submit",
+      notifications: "GET /api/notifications/:userId",
+      projects: "GET /api/projects",
     },
     timestamp: new Date().toISOString(),
   });

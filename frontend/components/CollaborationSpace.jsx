@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, MessageCircle, FileText, CheckSquare, Copy, User, Users, Plus, Upload, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
+import { useNotifications } from '../context/NotificationContext';
 import ChatTab from './tabs/ChatTab';
 import TasksTab from './tabs/TasksTab';
 import FilesTab from './tabs/FilesTab';
@@ -17,6 +18,7 @@ function CollaborationSpace({ onClose, activeProject = null, defaultTab = 'chat'
   const [isUploading, setIsUploading] = useState(false);
   const { user } = useAuth();
   const { projects, leaveProject } = useProjects();
+  const { showToast } = useNotifications();
   const contentRef = useRef(null);
 
   // Filter projects where user is a team member (no limit)
@@ -235,27 +237,56 @@ function CollaborationSpace({ onClose, activeProject = null, defaultTab = 'chat'
     try {
       // Get user ID from the project's team members
       const currentMember = selectedProject.teamMembers.find(member => member.name === user.name);
-      const userId = currentMember?.id || user.id;
+      
+      // Extract the actual ID string, handling both ObjectId objects and strings
+      let userId = null;
+      if (currentMember?.id) {
+        // If id is an object with _id property (populated reference)
+        if (typeof currentMember.id === 'object' && currentMember.id._id) {
+          userId = currentMember.id._id;
+        } else {
+          // If id is already a string
+          userId = currentMember.id;
+        }
+      } else if (user.id) {
+        userId = user.id;
+      } else if (user._id) {
+        userId = user._id;
+      }
 
       if (!userId) {
-        alert('Unable to determine user ID. Please try again.');
+        console.error('Unable to determine user ID', { currentMember, user });
+        showToast({
+          type: 'error',
+          title: 'Unable to leave project',
+          description: 'Could not determine your user ID. Please try again.',
+        });
         return;
       }
 
-      // Call the leaveProject function from ProjectContext
       const success = await leaveProject(selectedProject.id || selectedProject._id, userId);
 
       if (success) {
-        alert('You have successfully left the project.');
-        
-        // Reset selected project
+        showToast({
+          type: 'warning',
+          title: 'Left project',
+          description: `You have successfully left '${selectedProject.title}'.`,
+        });
         setSelectedProject(null);
       } else {
-        alert('Failed to leave project. You may be the project owner or an error occurred.');
+        showToast({
+          type: 'error',
+          title: 'Failed to leave project',
+          description: 'You may be the project owner, or an error occurred.',
+        });
       }
     } catch (error) {
       console.error('Error leaving project:', error);
-      alert('Failed to leave project. Please try again.');
+      showToast({
+        type: 'error',
+        title: 'Failed to leave project',
+        description: 'An unexpected error occurred. Please try again.',
+      });
     }
   };
 
@@ -280,7 +311,7 @@ function CollaborationSpace({ onClose, activeProject = null, defaultTab = 'chat'
                 onClick={handleLeaveProject}
               >
                 <LogOut size={16} />
-                Leave Project
+                Quit Project
               </button>
             )
           )}

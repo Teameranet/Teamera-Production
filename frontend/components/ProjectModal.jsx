@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Users, MapPin, Calendar, IndianRupee, Upload, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Users, MapPin, Calendar, Briefcase, Upload, Send, Clock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -7,6 +8,7 @@ import UserAvatar from './UserAvatar';
 import './ProjectModal.css';
 
 function ProjectModal({ project, onClose }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
@@ -14,77 +16,68 @@ function ProjectModal({ project, onClose }) {
     message: '',
     resume: null
   });
-  const [showToast, setShowToast] = useState(false);
+  const [existingApplications, setExistingApplications] = useState({});
+  const [invitations, setInvitations] = useState([]);
+
   const { user } = useAuth();
   const { applyToProject } = useProjects();
-  const { addApplicationNotification } = useNotifications();
+  const { addApplicationNotification, showToast } = useNotifications();
 
-  // Function to create milestone data based on project stage
-  // const getMilestonesByStage = (stage) => {
-  //   const allMilestones = [
-  //     {
-  //       id: 'ideation',
-  //       title: 'Project Ideation',
-  //       description: 'Initial concept and market research completed',
-  //       stage: 'Ideation Stage'
-  //     },
-  //     {
-  //       id: 'validation',
-  //       title: 'Idea Validation',
-  //       description: 'Concept validation and initial user feedback',
-  //       stage: 'Idea Validation'
-  //     },
-  //     {
-  //       id: 'mvp',
-  //       title: 'MVP Development',
-  //       description: 'Building the minimum viable product',
-  //       stage: 'MVP Development'
-  //     },
-  //     {
-  //       id: 'testing',
-  //       title: 'Beta Testing',
-  //       description: 'User testing and feedback collection',
-  //       stage: 'Beta Testing'
-  //     },
-  //     {
-  //       id: 'market',
-  //       title: 'Market Ready',
-  //       description: 'Product launched to market',
-  //       stage: 'Market Ready'
-  //     },
-  //     {
-  //       id: 'scaling',
-  //       title: 'Scaling',
-  //       description: 'Growing user base and expanding features',
-  //       stage: 'Scaling'
-  //     }
-  //   ];
 
-  //   // Get the current stage index
-  //   const stageIndex = allMilestones.findIndex(milestone => milestone.stage === stage);
 
-  //   // If stage not found, return all milestones as upcoming
-  //   if (stageIndex === -1) {
-  //     return allMilestones.map(milestone => ({ ...milestone, status: 'upcoming' }));
-  //   }
+  // Check for existing applications + fetch invitations (including custom positions) on mount
+  useEffect(() => {
+    const checkExistingApplications = async () => {
+      if (!user) return;
 
-  //   // Return milestones with appropriate status
-  //   return allMilestones.map((milestone, index) => {
-  //     if (index < stageIndex) {
-  //       return { ...milestone, status: 'completed' };
-  //     } else if (index === stageIndex) {
-  //       return { ...milestone, status: 'current' };
-  //     } else {
-  //       return { ...milestone, status: 'upcoming' };
-  //     }
-  //   });
-  // };
+      const projectId = project._id || project.id;
+      const userId = user._id || user.id;
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  const handleApplicationSubmit = (e) => {
+      // 1. Fetch all INVITED records for this user+project in one shot
+      //    This covers both open-position invites AND custom-position invites
+      try {
+        const invRes = await fetch(
+          `${apiBaseUrl}/api/applications/invitations?projectId=${projectId}&userId=${userId}`
+        );
+        const invData = await invRes.json();
+        if (invData.success) {
+          setInvitations(invData.data); // [{ applicationId, position, positionId, projectOwnerName }]
+        }
+      } catch (error) {
+        console.error('Error fetching invitations:', error);
+      }
+
+      // 2. Check per-position application status for the open-positions list UI
+      const checks = {};
+      for (const position of (project.openPositions || [])) {
+        try {
+          const response = await fetch(
+            `${apiBaseUrl}/api/applications/check?projectId=${projectId}&userId=${userId}&position=${encodeURIComponent(position.role)}&positionId=${position._id || position.id || ''}`
+          );
+          const data = await response.json();
+          if (data.success) {
+            checks[position.role] = {
+              hasApplied: data.data.hasApplied,
+              application: data.data.application,
+              previousApplication: data.data.previousApplication
+            };
+          }
+        } catch (error) {
+          console.error('Error checking application:', error);
+        }
+      }
+      setExistingApplications(checks);
+    };
+
+    checkExistingApplications();
+  }, [user, project._id, project.id, project.openPositions]);
+
+  const handleApplicationSubmit = async (e) => {
     e.preventDefault();
     if (!user || !selectedPosition) return;
 
-    applyToProject(project.id, {
+    const result = await applyToProject(project.id, {
       userId: user.id,
       applicantName: user.name,
       applicantAvatar: user.name ? user.name.charAt(0) : 'U',
@@ -93,6 +86,7 @@ function ProjectModal({ project, onClose }) {
       resume: applicationData.resume,
       resumeUrl: applicationData.resume ? URL.createObjectURL(applicationData.resume) : null,
       position: selectedPosition.role,
+      positionId: selectedPosition._id || selectedPosition.id, // Include positionId
       projectName: project.title,
       skills: selectedPosition.skills || [],
       userDetails: {
@@ -107,25 +101,46 @@ function ProjectModal({ project, onClose }) {
       }
     });
 
-    // Add application notification for the project owner only
-    if (project.ownerId) {
-      console.log(`Sending notification to project owner ${project.ownerId} for project "${project.title}" from applicant "${user.name}"`);
-      addApplicationNotification(project.ownerId, project.title, user.name);
-    } else {
-      console.warn(`No ownerId found for project "${project.title}". Notification not sent.`);
-    }
+    if (result.success) {
+      // Add application notification for the project owner only
+      if (project.ownerId) {
+        addApplicationNotification(project.ownerId, project.title, user.name);
+      }
 
-    // Show toast notification
-    setShowToast(true);
+      // Optimistically update existingApplications so the status banner renders immediately
+      const appliedRole = selectedPosition.role;
+      setExistingApplications(prev => ({
+        ...prev,
+        [appliedRole]: {
+          hasApplied: true,
+          application: {
+            status: 'PENDING',
+            position: appliedRole,
+            message: applicationData.message,
+          },
+          previousApplication: prev[appliedRole]?.previousApplication || null,
+        }
+      }));
 
-    // Hide toast and redirect after delay
-    setTimeout(() => {
-      setShowToast(false);
       setShowApplicationForm(false);
       setApplicationData({ message: '', resume: null });
       setSelectedPosition(null);
-      onClose(); // Redirect back to projects
-    }, 2000);
+      showToast({
+        type: 'success',
+        title: 'Application submitted',
+        description: `You applied for '${selectedPosition.role}' on '${project.title}'. Track it in Dashboard → Applications → Sent.`,
+        action: {
+          label: 'View My Applications',
+          onClick: () => { onClose(); navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } }); }
+        }
+      });
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Application failed',
+        description: result.message || 'Failed to submit application. Please try again.',
+      });
+    }
   };
 
   const handlePositionSelect = (position) => {
@@ -195,10 +210,10 @@ function ProjectModal({ project, onClose }) {
                   </div>
                 </div>
                 <div className="stat-item">
-                  <IndianRupee size={20} />
+                  <Briefcase size={20} />
                   <div>
-                    <span className="stat-value">{project.funding}</span>
-                    <span className="stat-label">Funding</span>
+                    <span className="stat-value">{project.openPositions?.length || 0}</span>
+                    <span className="stat-label">Open Positions</span>
                   </div>
                 </div>
                 <div className="stat-item">
@@ -219,12 +234,12 @@ function ProjectModal({ project, onClose }) {
             <div className="team-members">
               {(project.teamMembers || []).map((member, index) => {
                 // Safely extract ID - handle cases where id might be an object
-                const memberId = typeof member.id === 'string' ? member.id : 
-                                 typeof member._id === 'string' ? member._id :
-                                 member.id?._id || member.id?.toString() || 
-                                 member._id?.toString() || 
-                                 `${member.name}-${member.role}-${index}`;
-                
+                const memberId = typeof member.id === 'string' ? member.id :
+                  typeof member._id === 'string' ? member._id :
+                    member.id?._id || member.id?.toString() ||
+                    member._id?.toString() ||
+                    `${member.name}-${member.role}-${index}`;
+
                 return (
                   <div key={memberId} className="team-member-card">
                     <UserAvatar
@@ -244,32 +259,157 @@ function ProjectModal({ project, onClose }) {
         );
 
       case 'positions':
+        // Check if the user is already a team member of this project (any position)
+        const isTeamMember = user && (project.teamMembers || []).some(member => {
+          const memberId = member.id?._id || member.id || member._id;
+          const userId = user._id || user.id;
+          return String(memberId) === String(userId);
+        });
+
+        // Also check if any position has an ACCEPTED application status
+        const hasAcceptedApplication = Object.values(existingApplications).some(
+          appData => appData?.hasApplied && appData?.application?.status === 'ACCEPTED'
+        );
+
+        const userIsOnTeam = isTeamMember || hasAcceptedApplication;
+
         return (
           <div className="tab-content">
             <div className="open-positions">
-              {(project.openPositions || []).map((position, index) => (
-                <div key={index} className="position-card">
-                  <div className="position-header">
-                    <h4>{position.role}</h4>
-                    <span className={`position-payment-status ${position.isPaid ? 'paid' : 'unpaid'}`}>
-                      {position.isPaid ? 'Paid' : 'Unpaid'}
-                    </span>
+              {/* Invitation banners — shown for custom positions not listed in openPositions */}
+              {invitations
+                .filter(inv => !(project.openPositions || []).some(
+                  p => (p._id || p.id)?.toString() === inv.positionId?.toString() || p.role === inv.position
+                ))
+                .map((inv) => {
+                  // Resolve the live position name for this invitation:
+                  // 1. Check project.teamMembers for the invited user's current role (handles custom position renames)
+                  // 2. Fall back to the stored inv.position name
+                  const userId = user?._id || user?.id;
+                  const teamMember = (project.teamMembers || []).find(m => {
+                    const memberId = m.id?._id || m.id || m._id;
+                    return String(memberId) === String(userId);
+                  });
+                  const displayName = teamMember ? teamMember.role : inv.position;
+
+                  return (
+                    <div key={inv.applicationId} className="invitation-banner">
+                      <span className="invitation-banner-icon">🎉</span>
+                      <span className="invitation-banner-text">
+                        You have been invited by the Founder for the <strong>'{displayName}'</strong> position
+                      </span>
+                    </div>
+                  );
+                })
+              }
+              {(project.openPositions || []).map((position, index) => {
+                const appData = existingApplications[position.role];
+                const hasActiveApplication = appData?.hasApplied || false;
+                const existingApp = appData?.application;
+                const previousApp = appData?.previousApplication;
+
+                // If user is on the team via another position, disable this button too
+                const isThisPositionAccepted = existingApp?.status === 'ACCEPTED';
+                const disabledByTeamMembership = userIsOnTeam && !isThisPositionAccepted && !hasActiveApplication;
+
+                // Determine what message to show
+                let statusMessage = null;
+                let canApply = !hasActiveApplication;
+
+                if (hasActiveApplication && existingApp) {
+                  // User has an active PENDING, ACCEPTED, or INVITED application
+                  const statusMap = {
+                    PENDING:  { icon: <Clock size={15} />,        text: 'Your application is under review' },
+                    ACCEPTED: { icon: <CheckCircle size={15} />,  text: 'You are part of this team' },
+                    INVITED:  { icon: '🎉', text: `You have been invited by the Founder for the '${position.role}' position` }
+                  };
+                  const s = statusMap[existingApp.status] || statusMap.PENDING;
+                  statusMessage = { icon: s.icon, text: s.text, showLink: true, isPrevious: false };
+                } else if (previousApp) {
+                  // User has a previous REJECTED, QUIT, or REMOVED application
+                  const statusMap = {
+                    'REJECTED': {
+                      icon: '✕',
+                      text: 'Your previous application was not accepted. You can apply again.',
+                      variant: 'rejected'
+                    },
+                    'QUIT': {
+                      icon: '↩',
+                      text: 'You previously left this position. You can reapply if interested.',
+                      variant: 'quit'
+                    },
+                    'REMOVED': {
+                      icon: '⊘',
+                      text: 'You were removed from this position. You can reapply.',
+                      variant: 'removed'
+                    },
+                  };
+                  const s = statusMap[previousApp.status] || { icon: '🔄', text: 'You can apply for this position.', variant: 'previous' };
+
+                  statusMessage = {
+                    icon: s.icon,
+                    text: s.text,
+                    variant: s.variant,
+                    showLink: true,
+                    isPrevious: true
+                  };
+                }
+
+                return (
+                  <div key={index} className="position-card">
+                    <div className="position-header">
+                      <h4>{position.role}</h4>
+                      <span className={`position-payment-status ${position.isPaid ? 'paid' : 'unpaid'}`}>
+                        {position.isPaid ? 'Paid' : 'Unpaid'}
+                      </span>
+                    </div>
+                    <div className="position-skills">
+                      {(position.skills || []).map((skill, skillIndex) => (
+                        <span key={skillIndex} className="skill-tag small">{skill}</span>
+                      ))}
+                    </div>
+                    {user && (
+                      <>
+                        <button
+                          className="apply-position-btn"
+                          onClick={() => handlePositionSelect(position)}
+                          disabled={hasActiveApplication || disabledByTeamMembership}
+                          title={disabledByTeamMembership ? 'You are already part of this team' : ''}
+                        >
+                          {previousApp && !hasActiveApplication ? 'Reapply for this position' : 'Apply for this position'}
+                        </button>
+
+
+
+                        {/* Always show status message if there's any application history */}
+                        {statusMessage && (
+                          <div className={`application-status-message ${statusMessage.variant || (statusMessage.isPrevious ? 'previous' : '')}`}>
+                            <div className="status-icon">
+                              {statusMessage.icon}
+                            </div>
+                            <div className="status-content">
+                              <p className="status-text">
+                                {statusMessage.text}
+                              </p>
+                              {statusMessage.showLink && (
+                                <button
+                                  className="view-application-link"
+                                  onClick={() => {
+                                    onClose();
+                                    navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } });
+                                  }}
+                                >
+                                  View application history →
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                  <div className="position-skills">
-                    {(position.skills || []).map((skill, skillIndex) => (
-                      <span key={skillIndex} className="skill-tag small">{skill}</span>
-                    ))}
-                  </div>
-                  {user && (
-                    <button
-                      className="apply-position-btn"
-                      onClick={() => handlePositionSelect(position)}
-                    >
-                      Apply for this position
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
               {(!project.openPositions || project.openPositions.length === 0) && (
                 <div className="no-positions">
                   <p>No open positions available at the moment.</p>
@@ -422,15 +562,6 @@ function ProjectModal({ project, onClose }) {
           </div>
         )}
 
-        {/* Toast notification */}
-        {showToast && (
-          <div className="toast-notification">
-            <div className="toast-content">
-              <div className="toast-icon">✓</div>
-              <div className="toast-message">Your application has been sent</div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -54,6 +54,15 @@ class ApiClient {
     });
   }
 
+  // PATCH request
+  patch(endpoint, data, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   // DELETE request
   delete(endpoint, options = {}) {
     return this.request(endpoint, { ...options, method: 'DELETE' });
@@ -98,8 +107,14 @@ export const endpoints = {
     getApplications: (userId) => `/api/dashboard/${userId}/applications`,
     addBookmark: (userId) => `/api/dashboard/${userId}/bookmarks`,
     removeBookmark: (userId, projectId) => `/api/dashboard/${userId}/bookmarks/${projectId}`,
-    addApplication: (userId) => `/api/dashboard/${userId}/applications`,
-    updateApplicationStatus: (userId, applicationId) => `/api/dashboard/${userId}/applications/${applicationId}`,
+  },
+  // Application endpoints
+  applications: {
+    get: (userId) => `/api/applications/${userId}`,
+    submit: '/api/applications/submit',
+    updateStatus: (applicationId) => `/api/applications/${applicationId}/status`,
+    getProjectApplications: (projectId) => `/api/applications/project/${projectId}`,
+    checkUserApplication: (projectId, userId, position) => `/api/applications/check?projectId=${projectId}&userId=${userId}&position=${encodeURIComponent(position)}`,
   },
   // Contact endpoint
   contact: '/api/contact',

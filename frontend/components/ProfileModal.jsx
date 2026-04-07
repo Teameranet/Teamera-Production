@@ -31,6 +31,22 @@ function ProfileModal({ user, onClose }) {
   // If no user is provided, return null
   if (!user) return null;
 
+  // Show loading state
+  if (user.loading) {
+    return (
+      <div className="profile-modal-overlay" onClick={onClose}>
+        <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="close-btn" onClick={onClose}>
+            <X size={24} />
+          </button>
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <p>Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-modal-overlay" onClick={onClose}>
       <div className="profile-modal" onClick={(e) => e.stopPropagation()}>

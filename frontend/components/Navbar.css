@@ -376,28 +376,10 @@
 
   .create-project-btn.mobile,
   .auth-btn.mobile,
-  .notification-btn.mobile ,
+  .notification-btn.mobile,
   .collaboration-btn.mobile {
     width: 100%;
     justify-content: center;
-  }
-
-  .collaboration-btn.mobile {
-    background: #10b981;
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-  }
-
-  .collaboration-btn.mobile:hover {
-    background: #059669;
   }
 
   .mobile-profile-link {

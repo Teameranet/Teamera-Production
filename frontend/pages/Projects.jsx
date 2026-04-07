@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, Plus, ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import ProjectCard from '../components/ProjectCard';
 import './Projects.css';
 
@@ -14,13 +15,26 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
   const [showOwnedProjects, setShowOwnedProjects] = useState(true);
   const { projects, loading, deleteProject, getUserProjects } = useProjects();
   const { user } = useAuth();
+  const { showToast } = useNotifications();
 
   const industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'E-commerce', 'Entertainment'];
   const stages = ['Idea Validation', 'MVP Development', 'Beta Testing', 'Market Ready', 'Scaling'];
   const skills = ['React', 'Node.js', 'Python', 'UI/UX Design', 'Marketing', 'Sales', 'Data Science'];
 
   // Get user's owned projects
-  const userProjects = user ? getUserProjects(user.id) : { owned: [], participating: [] };
+  const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
+  
+  // CRITICAL FIX: Fetch user projects from backend API on mount
+  useEffect(() => {
+    const loadUserProjects = async () => {
+      if (user && user.id) {
+        const projects = await getUserProjects(user.id);
+        setUserProjects(projects);
+      }
+    };
+    
+    loadUserProjects();
+  }, [user, getUserProjects]);
   
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -49,9 +63,22 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
   };
 
   const handleDeleteProject = (projectId, e) => {
-    e.stopPropagation(); // Prevent card click event
+    e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this project?')) {
-      deleteProject(projectId);
+      const success = deleteProject(projectId);
+      if (success !== false) {
+        showToast({
+          type: 'success',
+          title: 'Project deleted',
+          description: 'Your project has been permanently deleted.',
+        });
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Failed to delete project',
+          description: 'Something went wrong. Please try again.',
+        });
+      }
     }
   };
 

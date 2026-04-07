@@ -531,6 +531,13 @@
   color: #6b7280;
 }
 
+.applicant-location {
+  font-size: 0.85rem;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
 .application-details {
   display: flex;
   flex-direction: column;
@@ -604,9 +611,24 @@
   color: #059669;
 }
 
+.status-invited {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
 .status-rejected {
   background: #fee2e2;
   color: #dc2626;
+}
+
+.status-quit {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-removed {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .application-actions {
@@ -615,7 +637,7 @@
   gap: 0.75rem;
 }
 
-.view-profile-btn, .message-btn, .resume-btn {
+.view-profile-btn, .view-project-btn, .message-btn, .resume-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -636,6 +658,15 @@
 
 .view-profile-btn:hover {
   background: #e5e7eb;
+}
+
+.view-project-btn {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.view-project-btn:hover {
+  background: #bfdbfe;
 }
 
 .message-btn {
@@ -892,6 +923,32 @@
 .toast-message {
   font-size: 14px;
   font-weight: 500;
+}
+
+.toast-action-btn {
+  background: white;
+  color: #10b981;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: all 0.2s ease;
+}
+
+.toast-action-btn:hover {
+  background: #f0fdf4;
+  transform: scale(1.05);
+}
+
+.toast-notification.error .toast-action-btn {
+  color: #f87171;
+}
+
+.toast-notification.error .toast-action-btn:hover {
+  background: #fef2f2;
 }
 
 @keyframes slideUp {

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Edit, MapPin, Calendar, Mail, Github as GitHub, Linkedin, Globe, User, Briefcase, Award, Settings, Eye, Plus, X, Check, ChevronDown, Users, Clock, Map, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
+import { useNotifications } from '../context/NotificationContext';
 import ProjectCard from '../components/ProjectCard';
 import ProjectModal from '../components/ProjectModal';
 import CreateProjectModal from '../components/CreateProjectModal';
@@ -13,6 +14,7 @@ function Profile() {
   // Auth and project context hooks
   const { user, updateProfile, setUser, profileUpdateTrigger } = useAuth();
   const { getUserProjects, updateProjectStage, editProject, deleteProject, leaveProject } = useProjects();
+  const { showToast } = useNotifications();
 
   // Function to map experience to skill level
   const mapExperienceToSkillLevel = (experience) => {
@@ -53,13 +55,17 @@ function Profile() {
   ];
 
   // useEffect to load user projects when user is available
-  // function: useEffect, add API call to fetch user projects here if needed
   useEffect(() => {
-    if (user && user.id) {
-      // Here you can add API call to fetch user projects from backend
-      const projects = getUserProjects(user.id);
-      setUserProjects(projects);
-    }
+    const loadUserProjects = async () => {
+      if (user && user.id) {
+        // CRITICAL FIX: Use async/await to fetch projects from backend API
+        // Backend determines participation based on application status (ACCEPTED/INVITED)
+        const projects = await getUserProjects(user.id);
+        setUserProjects(projects);
+      }
+    };
+    
+    loadUserProjects();
   }, [user, getUserProjects]);
 
   // Handle project stage change
@@ -92,19 +98,25 @@ function Profile() {
   // function: handleDeleteProject, add API call to delete project here
   const handleDeleteProject = (projectId) => {
     if (window.confirm('Are you sure you want to delete this project?')) {
-      // Use the project ID (could be either id or _id from MongoDB)
       const success = deleteProject(projectId);
       if (success) {
-        // Update local state after successful deletion
         setUserProjects(prev => ({
           ...prev,
-          owned: prev.owned.filter(project => 
+          owned: prev.owned.filter(project =>
             project.id !== projectId && project._id !== projectId
           )
         }));
-        console.log("Project deleted successfully:", projectId);
+        showToast({
+          type: 'success',
+          title: 'Project deleted',
+          description: 'Your project has been permanently deleted.',
+        });
       } else {
-        console.error("Failed to delete project:", projectId);
+        showToast({
+          type: 'error',
+          title: 'Failed to delete project',
+          description: 'Something went wrong. Please try again.',
+        });
       }
     }
   };
@@ -113,19 +125,25 @@ function Profile() {
   // function: handleLeaveProject, add API call to leave project here
   const handleLeaveProject = (projectId) => {
     if (window.confirm('Are you sure you want to leave this project?')) {
-      // Add API call to leave project in backend here
       const success = leaveProject(projectId, user.id || user._id);
       if (success) {
-        // Update local state after successfully leaving
         setUserProjects(prev => ({
           ...prev,
-          participating: prev.participating.filter(project => 
+          participating: prev.participating.filter(project =>
             project.id !== projectId && project._id !== projectId
           )
         }));
-        console.log("Project left successfully:", projectId);
+        showToast({
+          type: 'warning',
+          title: 'Left project',
+          description: 'You have successfully left the project.',
+        });
       } else {
-        console.error("Failed to leave project:", projectId);
+        showToast({
+          type: 'error',
+          title: 'Failed to leave project',
+          description: 'Something went wrong. Please try again.',
+        });
       }
     }
   };
@@ -386,17 +404,27 @@ function Profile() {
       const result = await updateProfile(profileData);
       
       if (result.success) {
-        // Update local user state
         setUser(result.user);
         setIsEditing(false);
-        console.log('Profile updated successfully');
+        showToast({
+          type: 'success',
+          title: 'Profile updated',
+          description: 'Your profile changes have been saved successfully.',
+        });
       } else {
-        console.error('Failed to update profile:', result.error);
-        alert(`Failed to update profile: ${result.error || 'Unknown error'}`);
+        showToast({
+          type: 'error',
+          title: 'Failed to update profile',
+          description: result.error || 'Something went wrong. Please try again.',
+        });
       }
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert(`An error occurred while saving your profile: ${error.message}`);
+      showToast({
+        type: 'error',
+        title: 'Unexpected error',
+        description: error.message || 'An error occurred while saving your profile.',
+      });
     }
   };
 

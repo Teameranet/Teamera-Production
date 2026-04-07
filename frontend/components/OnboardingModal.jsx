@@ -60,13 +60,26 @@ function OnboardingModal({ onClose }) {
 
   const handleComplete = async () => {
     try {
-      // Format skills as objects with name and level only
+      // Map experience to skill level
+      const mapExperienceToSkillLevel = (experience) => {
+        switch(experience) {
+          case '0-1': return 'BEGINNER';
+          case '2-3': return 'INTERMEDIATE';
+          case '4-6': return 'ADVANCED';
+          case '7+': return 'EXPERT';
+          default: return 'BEGINNER';
+        }
+      };
+
+      const skillLevel = mapExperienceToSkillLevel(formData.experience);
+
+      // Format skills as objects with name and level based on experience
       const formattedSkills = formData.skills.map(skill => ({
         name: skill,
-        level: 'BEGINNER'
+        level: skillLevel
       }));
 
-      // Prepare profile data with formatted skills
+      // Prepare profile data with formatted skills and experience
       const profileData = {
         ...formData,
         skills: formattedSkills

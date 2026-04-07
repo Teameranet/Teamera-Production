@@ -36,14 +36,22 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       // Format team members, excluding the founder
       const teamMembersWithoutFounder = projectToEdit.teamMembers
         .filter(member => member.role !== "Founder")
-        .map(member => ({
-          name: member.name,
-          position: member.role,
-          email: member.email || '',
-          id: member.id,
-          verified: true, // Existing members are already verified
-          tempId: member.id || `temp-${Date.now()}-${Math.random()}` // Use id or generate tempId
-        }));
+        .map(member => {
+          // Extract ID - handle cases where id might be an object (populated) or string
+          const memberId = typeof member.id === 'object' 
+            ? (member.id._id || member.id.toString()) 
+            : (typeof member._id === 'object' ? (member._id._id || member._id.toString()) : (member.id || member._id));
+          
+          return {
+            name: member.name,
+            position: member.role,
+            positionId: member.positionId, // CRITICAL: Preserve position ID for syncing
+            email: member.email || '',
+            id: memberId,
+            verified: true, // Existing members are already verified
+            tempId: memberId || `temp-${Date.now()}-${Math.random()}` 
+          };
+        });
       
       setFormData({
         title: projectToEdit.title || '',
@@ -55,7 +63,13 @@ function CreateProjectModal({ onClose, projectToEdit }) {
           : [{ role: '', skills: [], isPaid: false }],
         funding: projectToEdit.funding || '',
         timeline: projectToEdit.timeline || '',
-        teamMembers: teamMembersWithoutFounder || []
+        teamMembers: teamMembersWithoutFounder.map(member => {
+          const availableRoles = projectToEdit.openPositions?.map(p => p.role) || [];
+          return {
+            ...member,
+            isCustom: member.position && !availableRoles.includes(member.position)
+          };
+        })
       });
     }
   }, [projectToEdit]);
@@ -111,12 +125,35 @@ function CreateProjectModal({ onClose, projectToEdit }) {
 
   // Handle change for a specific open position
   const handlePositionChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      openPositions: prev.openPositions.map((pos, i) =>
+    setFormData(prev => {
+      const oldRole = prev.openPositions[index].role;
+      const positionId = prev.openPositions[index]._id || prev.openPositions[index].id;
+      
+      const newOpenPositions = prev.openPositions.map((pos, i) =>
         i === index ? { ...pos, [field]: value } : pos
-      )
-    }));
+      );
+      
+      // If the role name was changed, sync it to team members holding this position
+      let newTeamMembers = prev.teamMembers;
+      if (field === 'role' && oldRole && value !== oldRole) {
+        newTeamMembers = prev.teamMembers.map(member => {
+          // Match by positionId (most reliable) or role name
+          const isMatch = (positionId && member.positionId === positionId) || 
+                         (!member.isCustom && member.position === oldRole);
+          
+          if (isMatch) {
+            return { ...member, position: value };
+          }
+          return member;
+        });
+      }
+      
+      return {
+        ...prev,
+        openPositions: newOpenPositions,
+        teamMembers: newTeamMembers
+      };
+    });
   };
 
   // Handle toggling a skill for a position
@@ -177,6 +214,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         name: '', 
         position: '', 
         email: '', 
+        isCustom: false,
         verified: false,
         tempId: `temp-${Date.now()}-${Math.random()}` // Unique temporary ID
       }]
@@ -200,6 +238,18 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       return;
     }
 
+    // Check if this is the project owner in edit mode
+    if (isEditMode && projectToEdit) {
+      const founder = projectToEdit.teamMembers.find(m => m.role === "Founder");
+      if (founder && founder.email && 
+          member.email.trim().toLowerCase() === founder.email.toLowerCase()) {
+        alert('This is the project owner. The owner is automatically included in the team.');
+        // Remove this team member entry
+        removeTeamMember(index);
+        return;
+      }
+    }
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/verify-email`, {
         method: 'POST',
@@ -212,6 +262,13 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        // Check if this user is the current logged-in user (for new projects)
+        if (!isEditMode && user && (data.data._id === user.id || data.data._id === user._id)) {
+          alert('You are the project owner and will be automatically added as the founder.');
+          removeTeamMember(index);
+          return;
+        }
+        
         // User found - update member with verified data
         setFormData(prev => ({
           ...prev,
@@ -270,28 +327,96 @@ function CreateProjectModal({ onClose, projectToEdit }) {
 
     // Process team members for submission
     const processedTeamMembers = formData.teamMembers
-      .filter(member => member.name.trim() !== '')
+      .filter(member => member.name.trim() !== '' && member.position && member.position.trim() !== '')
       .map(member => ({
         // Only include id if it's a valid MongoDB ObjectId (24 hex characters) or existing user ID
         ...(member.id && typeof member.id === 'string' && member.id.length === 24 ? { id: member.id } : {}),
         name: member.name,
         role: member.position, // Map position to role
+        positionId: member.positionId, // Include positionId
         email: member.email || '' // Include email
       }));
 
     // Create project data object
     const projectData = {
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      industry: formData.industry,
+      stage: formData.stage,
+      funding: formData.funding,
+      timeline: formData.timeline,
       openPositions: formData.openPositions.filter(pos => pos.role.trim() !== '')
     };
 
     if (isEditMode) {
-      // When editing, use the correct project ID (could be id or _id)
+      // CRITICAL FIX: When editing, check if team members actually changed
+      // Only send teamMembers if they were modified in the form
+      // This prevents breaking user-project relationships during simple detail updates
       const projectId = projectToEdit.id || projectToEdit._id;
-      editProject(projectId, {
-        ...projectData,
-        teamMembers: processedTeamMembers,
-      });
+      
+      // Get original team members (excluding founder)
+      const originalTeamMembers = projectToEdit.teamMembers
+        .filter(member => member.role !== "Founder")
+        .map(member => {
+          const memberId = typeof member.id === 'string' ? member.id : 
+                          typeof member._id === 'string' ? member._id :
+                          member.id?._id || member.id?.toString() || 
+                          member._id?.toString() || null;
+          return {
+            id: memberId,
+            name: member.name,
+            role: member.role,
+            email: member.email || ''
+          };
+        });
+      
+      // Compare original vs current team members
+      // Compare original vs current team members (including roles to detect role changes)
+      const originalRep = originalTeamMembers.map(m => `${m.id}-${m.role}`).sort();
+      const currentRep = processedTeamMembers.map(m => `${m.id}-${m.role}`).sort();
+      const teamMembersChanged = JSON.stringify(originalRep) !== JSON.stringify(currentRep);
+      
+      // Only include teamMembers in update if they actually changed
+      if (teamMembersChanged) {
+        console.log('Team members changed - including in update');
+        
+        // Find the founder from the original project
+        const founder = projectToEdit.teamMembers.find(member => member.role === "Founder");
+        
+        if (founder) {
+          const founderId = typeof founder.id === 'string' ? founder.id : 
+                           typeof founder._id === 'string' ? founder._id :
+                           founder.id?._id || founder.id?.toString() || 
+                           founder._id?.toString() || null;
+          
+          // Remove any duplicate founder entries from processedTeamMembers
+          const teamMembersWithoutFounder = processedTeamMembers.filter(member => {
+            const isDuplicateById = member.id && founderId && member.id === founderId;
+            const isDuplicateByEmail = member.email && founder.email && 
+                                       member.email.toLowerCase() === founder.email.toLowerCase();
+            return !isDuplicateById && !isDuplicateByEmail;
+          });
+          
+          // Add founder at the beginning
+          projectData.teamMembers = [
+            {
+              id: founderId,
+              name: founder.name,
+              role: "Founder",
+              email: founder.email || ''
+            },
+            ...teamMembersWithoutFounder
+          ];
+        } else {
+          projectData.teamMembers = processedTeamMembers;
+        }
+      } else {
+        console.log('Team members unchanged - excluding from update to preserve relationships');
+        // Do NOT include teamMembers in the update
+        // This prevents the backend from processing team member changes
+      }
+      
+      editProject(projectId, projectData);
     } else {
       // For new projects, add the current user as a founder
       projectData.teamMembers = [
@@ -312,10 +437,11 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       case 1:
         return formData.openPositions.some(pos => pos.role.trim() !== '');
       case 2:
-        // All team members must be verified if any are added
-        return formData.teamMembers.length === 0 || formData.teamMembers.every(m => m.verified);
+        // All team members must be verified and have a position if any are added
+        return formData.teamMembers.length === 0 || 
+               formData.teamMembers.every(m => m.verified && m.position && m.position.trim() !== '');
       case 3:
-        return formData.funding && formData.timeline;
+        return formData.timeline && formData.timeline.trim() !== '';
       default:
         return false;
     }
@@ -483,6 +609,17 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         );
 
       case 'members':
+        // Get valid positions from open positions defined in step 2
+        const availablePositions = formData.openPositions
+          .filter(pos => pos.role && pos.role.trim() !== '')
+          .map(pos => ({
+            role: pos.role,
+            id: pos._id || pos.id || null
+          }));
+        
+        // Helper to check if a position is in availablePositions
+        const isKnownPosition = (role) => availablePositions.some(p => p.role === role);
+
         return (
           <div className="step-content">
             <div className="form-group">
@@ -547,12 +684,48 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                           placeholder="Member name"
                           className="verified-input"
                         />
-                        <input
-                          type="text"
-                          value={member.position}
-                          onChange={(e) => handleTeamMemberChange(index, 'position', e.target.value)}
-                          placeholder="Position/Role"
-                        />
+                        <div className="position-input-group">
+                          <select
+                            value={member.isCustom ? 'Custom position' : (isKnownPosition(member.position) ? member.position : '')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === 'Custom position') {
+                                handleTeamMemberChange(index, 'isCustom', true);
+                                handleTeamMemberChange(index, 'position', '');
+                                handleTeamMemberChange(index, 'positionId', null);
+                              } else {
+                                const posObj = availablePositions.find(p => p.role === val);
+                                handleTeamMemberChange(index, 'isCustom', false);
+                                handleTeamMemberChange(index, 'position', val);
+                                handleTeamMemberChange(index, 'positionId', posObj ? posObj.id : null);
+                              }
+                            }}
+                            required
+                          >
+                            <option value="">Select Position *</option>
+                            {availablePositions.map(pos => (
+                              <option key={pos.id || pos.role} value={pos.role}>{pos.role}</option>
+                            ))}
+                            <option value="Custom position">Custom position</option>
+                          </select>
+                          
+                          {member.isCustom && (
+                            <input
+                              type="text"
+                              value={member.position}
+                              onChange={(e) => handleTeamMemberChange(index, 'position', e.target.value)}
+                              placeholder="Enter custom position"
+                              required
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {member.verified && (!member.position || member.position.trim() === '') && (
+                      <div className="verification-warning">
+                        <AlertCircle size={14} />
+                        <span>Please select or enter a position/role for this member</span>
                       </div>
                     )}
                     
@@ -590,16 +763,6 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         return (
           <div className="step-content">
             <div className="form-group">
-              <label>Funding Goal *</label>
-              <input
-                type="text"
-                value={formData.funding}
-                onChange={(e) => handleInputChange('funding', e.target.value)}
-                placeholder="e.g., ₹25,00,000"
-              />
-            </div>
-
-            <div className="form-group">
               <label>Project Timeline *</label>
               <input
                 type="text"
@@ -617,7 +780,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                 <div className="preview-meta">
                   <span>Industry: {formData.industry}</span>
                   <span>Stage: {formData.stage}</span>
-                  <span>Funding: {formData.funding}</span>
+                  <span>Timeline: {formData.timeline}</span>
                   <span>Team: {formData.teamMembers.length + 1} members</span>
                 </div>
                 <div className="preview-skills">
