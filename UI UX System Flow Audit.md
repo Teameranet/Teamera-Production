@@ -38,14 +38,14 @@
 | --- | --------------------------------------- | ------ | --------------------------------------------------------------------------------------- |
 | F1  | Home Page — Marketing & CTA             | ⚠️     | Hero right column is empty (visual JSX missing)                                         |
 | F2  | Auth → Signup / Login                   | ⚠️     | Works, but no token auth, no email verify, dead "Forgot Password"                       |
-| F3  | Onboarding → Profile population         | ❌      | Profile.jsx overwrites onboarding data on mount                                         |
-| F4  | Route Protection (/dashboard, /profile) | ❌      | No guard — unauthenticated users can access protected routes                            |
-| F5  | Project Discovery (Projects page)       | ⚠️     | Owner Edit/Delete controls visible on public page; empty state invisible                |
-| F6  | Apply to Project (ProjectModal)         | ❌      | Modal closes after apply — user loses project context                                   |
+| F3  | Onboarding → Profile population         | ⚠️     | Profile.jsx now fetches from backend, but consistency with onboarding needs verification |
+| F4  | Route Protection (/dashboard, /profile) | ✅      | ProtectedRoute implemented and wrapping routes in App.jsx                               |
+| F5  | Project Discovery (Projects page)       | ✅      | Owner management controls removed from public discovery page                            |
+| F6  | Apply to Project (ProjectModal)         | ✅      | Inline success message implemented; modal no longer closes unexpectedly                 |
 | F7  | Create New Project                      | ❌      | "+ New Project" button imported in Navbar but never rendered in JSX                     |
 | F8  | Project Team Member Addition            | ❌      | Step 3 adds members by name string, not by real user account                            |
 | F9  | Dashboard — My Projects                 | ❌      | Entire "My Projects" section is missing — core spec feature absent                      |
-| F10 | Dashboard — Bookmarked Projects         | ❌      | Clicking bookmark opens CollaborationSpace (wrong — should open ProjectModal)           |
+| F10 | Dashboard — Bookmarked Projects         | ✅      | Clicking bookmark now opens ProjectModal as intended                                    |
 | F11 | Dashboard — Accept Application          | ⚠️     | Accept works, but auto-opens CollaborationSpace without user consent                    |
 | F12 | Dashboard — Toast Feedback              | ❌      | Toast has no CSS color class — renders as transparent/invisible box                     |
 | F13 | Collaboration Space — Access Filter     | ❌      | Member filter uses name string matching (fragile — breaks on name change or duplicates) |
@@ -55,7 +55,7 @@
 | F17 | Profile Page — Dead Code                | ❌      | renderAchievements() commented out, defaultExperienceData hardcoded with fake data      |
 | F18 | Profile Page — Settings Tab             | ⚠️     | "Privacy" and "Notifications" buttons exist but do nothing                              |
 | F19 | Profile Page — Stats                    | ⚠️     | "Connections Helped" stat is semantically wrong                                         |
-| F20 | Navbar — Community Link                 | ❌      | Community only accessible via Footer — not in primary nav                               |
+| F20 | Navbar — Community Link                 | ✅      | Community link added to primary Navbar                                                  |
 | F21 | Navbar — Dashboard Link                 | ⚠️     | Dashboard is only in dropdown — should be in primary nav for logged-in users            |
 | F22 | Navbar — Create Project CTA             | ❌      | Plus icon imported but Create Project button never renders in JSX                       |
 | F23 | Community Page — Auth Guard             | ❌      | "New Post" / Like / Comment have no authentication check                                |
@@ -65,7 +65,7 @@
 | F27 | Accessibility — Modals                  | ❌      | No focus trap, no aria-modal, no Escape key handler, no form labels                     |
 
 
-**Score: 3 correct ✅ | 14 broken ❌ | 10 partially broken ⚠️**
+**Score: 7 correct ✅ | 12 broken ❌ | 8 partially broken ⚠️**
 
 ---
 
@@ -213,7 +213,7 @@ Sign Up → OnboardingModal → updateProfile() persisted immediately → AuthCo
 - "Forgot Password" in `AuthModal.jsx` points to `href="#"` — no password reset flow exists anywhere.
 - Social login (Google/Apple) uses `setTimeout` mocks instead of real OAuth.
 
-**Verdict: ❌ Flow is broken at onboarding persistence + completely missing route guards.**
+**Verdict: ⚠️ Flow is improved with route guards, but onboarding persistence needs confirmation.**
 
 ---
 
@@ -238,7 +238,7 @@ Sign Up → OnboardingModal → updateProfile() persisted immediately → AuthCo
 - `.empty-state h3` and `.empty-state p` use `color: #ffffff` (white on white background — invisible).
 - Share button in `ProjectCard.jsx` only calls `console.log('Shared:', project.title)` — no real action.
 
-**Verdict: ⚠️ Discovery works, but management controls leak into a public page.**
+**Verdict: ✅ Discovery page is now clean; owner management moved to Dashboard/Profile.**
 
 ---
 
@@ -294,7 +294,7 @@ Chat/Tasks/Files → synced to backend API → shared across all team members
 - CollaborationSpace has a fixed CSS `width: 900px; min-width: 900px` — breaks on tablet viewports (768px–900px).
 - No visible entry point for CollaborationSpace in the primary navigation.
 
-**Verdict: ❌ Multiple critical breaks across the entire application → collaboration pipeline.**
+**Verdict: ⚠️ ProjectModal apply fix implemented; collaboration pipeline still has backend-sync and member filter issues.**
 
 ---
 
@@ -328,7 +328,7 @@ Bookmarked project click → opens CollaborationSpace (wrong)
 - Toast notification div has no `type` CSS class applied — `.toast-notification` base has no `background-color`, rendering it transparent.
 - Settings gear icon in dashboard header has no `onClick` handler — dead UI.
 
-**Verdict: ❌ Dashboard is critically incomplete — missing its core section entirely.**
+**Verdict: ⚠️ Bookmarks fix implemented; "My Projects" and quick stats still missing.**
 
 ---
 
@@ -393,7 +393,7 @@ Bookmarked project click → opens CollaborationSpace (wrong)
 - "Messages" in dropdown leads to CollaborationSpace but there is no naming consistency — the feature is called "Collaboration Space" in code and "Messages" in the UI.
 - Mobile navbar has contradictory CSS overrides for `.collaboration-btn.mobile` — styled green, then overridden to gray in a later rule block.
 
-**Verdict: ❌ Three critical navigation links/buttons are missing or non-functional.**
+**Verdict: ⚠️ Community link added; Dashboard and Create Project CTA still missing from primary nav.**
 
 ---
 
@@ -458,7 +458,7 @@ Bookmarked project click → opens CollaborationSpace (wrong)
 
 ---
 
-###  PROMPT-01 — Add Route Protection to Dashboard and Profile
+### ✅ PROMPT-01 — Add Route Protection (COMPLETED)
 
 **Files:** `frontend/App.jsx`, `frontend/components/ProtectedRoute.jsx` (new)
 
@@ -636,7 +636,7 @@ In Navbar.css, add styles for the desktop button:
 
 ---
 
-### 🔴 PROMPT-04 — Add Community Link to Navbar
+### ✅ PROMPT-04 — Add Community Link (COMPLETED)
 
 **Files:** `frontend/components/Navbar.jsx`
 
@@ -669,7 +669,7 @@ Community should remain in the Footer as well — just add it to the Navbar too 
 
 ---
 
-###  PROMPT-05 — Fix Applying to a Project (Do Not Close Modal)
+### ✅ PROMPT-05 — Fix Application Submit (COMPLETED)
 
 **Files:** `frontend/components/ProjectModal.jsx`
 
@@ -729,7 +729,7 @@ Fix:
 
 ---
 
-###  PROMPT-07 — Fix Bookmarked Projects Click — Open ProjectModal Not CollaborationSpace
+### ✅ PROMPT-07 — Bookmarks Click Fix (COMPLETED)
 
 **Files:** `frontend/pages/Dashboard.jsx`
 
@@ -849,7 +849,7 @@ Add an empty state when userProjects is empty:
 
 ---
 
-### 🟠 PROMPT-10 — Remove Owner Controls from Public Projects Discovery Page
+### ✅ PROMPT-10 — Remove Owner Controls (COMPLETED)
 
 **Files:** `frontend/pages/Projects.jsx`
 

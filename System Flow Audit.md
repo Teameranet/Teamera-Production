@@ -29,13 +29,13 @@ Management actions (Edit, Delete, Stage, Leave) appear on both the Profile page 
 discovery page. The Dashboard is missing its primary section (My Projects). The result: users
 cannot find where to manage their work, and the same action exists in 3 wrong places.
 
-### ROOT CAUSE B — No Route Protection + No Auth Guards on Actions
+### ROOT CAUSE B — Route Protection & Auth Guards (PARTIALLY RESOLVED)
 
-/dashboard and /profile are publicly accessible with no redirect. Community posts, Hackathon
-registration, and Like/Comment actions fire for unauthenticated users. The backend has a full
-JWT authenticate() middleware that is never applied to any route.
+/dashboard and /profile are now protected via ProtectedRoute. However, some action buttons 
+(Community posts, Hackathon registration) still lack explicit auth checks for unauthenticated users. 
+The backend JWT middleware application is also pending.
 
-### ROOT CAUSE C — Collaboration Data Is Not Shared
+### ROOT CAUSE C — Collaboration Data Is Not Shared (PENDING)
 
 The entire CollaborationSpace (Chat, Tasks, Files) stores data in localStorage only. This means
 team members each see their own isolated copy. The "collaboration" feature does not collaborate.
@@ -104,18 +104,18 @@ CollaborationSpace: All data in localStorage. Must move to backend API.
 
 ## 3. CORRECT NAVIGATION
 
-### Current Navbar (Logged In) — BROKEN
+### Current Navbar (Logged In) — PARTIALLY FIXED
 
 ```
-[Logo]  [Home] [Projects] [Hackathons]                    [Bell] [Avatar]
+[Logo]  [Home] [Projects] [Hackathons] [Community]        [Bell] [Avatar]
                                                                   └── My Profile
                                                                   └── Dashboard
-                                                                  └── Messages
+                                                                  └── My Workspace
                                                                   └── Sign Out
 ```
 
-Problems: Community missing. "+ New Project" button never rendered. Dashboard only in dropdown.
-"Messages" label inconsistent with "Collaboration Space" in code.
+Improvements: Community link added. "Messages" renamed to "My Workspace".
+Problems: "+ New Project" button never rendered in desktop view. Dashboard still only in dropdown.
 
 ### Correct Navbar (Logged In)
 
@@ -136,21 +136,12 @@ Problems: Community missing. "+ New Project" button never rendered. Dashboard on
 
 ### Fix Instructions for Navbar.jsx
 
-PROMPT — Fix Navbar Navigation:
+PROMPT — Fix Navbar Navigation (PARTIALLY COMPLETED):
 
 ```
-In frontend/components/Navbar.jsx, make these 4 changes:
+In frontend/components/Navbar.jsx, make these 3 changes:
 
-1. Add Community link to the desktop nav menu (after Hackathons):
-   <li className="nav-item">
-     <Link to="/community" className={`nav-link ${location.pathname === '/community' ? 'active' : ''}`}>
-       Community
-     </Link>
-   </li>
-
-2. Add the same Community link to the mobile nav menu in the same position.
-
-3. Render the "+ New Project" button in the desktop nav (it is imported but never rendered).
+1. Render the "+ New Project" button in the desktop nav (it is imported but never rendered).
    Add this BEFORE the notification bell, only when user is logged in:
    {user && (
      <button className="create-project-btn" onClick={onCreateProject}>
@@ -159,38 +150,21 @@ In frontend/components/Navbar.jsx, make these 4 changes:
      </button>
    )}
 
-4. Rename "Messages" in the user dropdown to "My Workspace" for naming consistency.
+2. Add the same "+ New Project" button to the mobile nav menu.
 
-5. Remove the duplicate/conflicting CSS rules for .collaboration-btn.mobile in Navbar.css.
+3. Add Dashboard link to the primary desktop and mobile nav menus for logged-in users.
+
+4. Remove the duplicate/conflicting CSS rules for .collaboration-btn.mobile in Navbar.css.
    Keep only one rule block for that selector.
 ```
 
-### Route Protection Fix
+### Route Protection Fix (COMPLETED)
 
 PROMPT — Add Protected Routes:
 
 ```
-Create frontend/components/ProtectedRoute.jsx:
-
-  import { Navigate } from 'react-router-dom';
-  import { useAuth } from '../context/AuthContext';
-
-  export default function ProtectedRoute({ children }) {
-    const { user, loading } = useAuth();
-    if (loading) return null;
-    if (!user) return <Navigate to="/" replace />;
-    return children;
-  }
-
-In frontend/App.jsx, wrap /dashboard and /profile:
-  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-
-Also: when a logged-out user clicks "Join Teamera" and successfully logs in,
-redirect them to /dashboard instead of staying on the home page.
-In AuthContext.jsx login() function, add:
-  navigate('/dashboard');
-(import useNavigate from react-router-dom inside AuthContext or pass navigate as a callback)
+ProtectedRoute.jsx has been created and routes in App.jsx are now wrapped.
+Redirect after login to /dashboard is also functional.
 ```
 
 ---
@@ -201,7 +175,7 @@ Each fix below is a self-contained human prompt. Execute in order.
 
 ---
 
-### FIX-01 — Dashboard: Add "My Projects" Tab (CRITICAL — Core Feature Missing)
+### FIX-01 — Dashboard: Add "My Projects" Tab (PENDING)
 
 File: frontend/pages/Dashboard.jsx, frontend/pages/Dashboard.css
 
@@ -241,31 +215,17 @@ Step 8 — Keep Applications tab as third position.
 
 ---
 
-### FIX-02 — Dashboard: Fix Bookmarked Project Click (Opens Wrong Component)
+### FIX-02 — Dashboard: Fix Bookmarked Project Click (COMPLETED)
 
 File: frontend/pages/Dashboard.jsx
 
 ```
-In Dashboard.jsx, find where bookmarked project cards are rendered and clicked.
-Currently clicking a bookmarked project opens CollaborationSpace. This is wrong.
-
-Fix: When a bookmarked project card is clicked, call setSelectedProject(project) to open
-ProjectModal — the same way Projects.jsx handles project clicks.
-
-You will need to add local state:
-  const [selectedProject, setSelectedProject] = useState(null);
-
-And render ProjectModal conditionally:
-  {selectedProject && (
-    <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />
-  )}
-
-Remove any code that opens CollaborationSpace from a bookmark card click.
+Status: Fixed. Bookmarked projects now open ProjectModal instead of CollaborationSpace.
 ```
 
 ---
 
-### FIX-03 — Dashboard: Fix Accept Application Auto-Opening CollaborationSpace
+### FIX-03 — Dashboard: Fix Accept Application Auto-Opening CollaborationSpace (PENDING)
 
 File: frontend/pages/Dashboard.jsx
 
@@ -286,7 +246,7 @@ The user must always choose when to open the workspace — never auto-open it.
 
 ---
 
-### FIX-04 — Dashboard: Fix Invisible Toast Notifications
+### FIX-04 — Dashboard: Fix Invisible Toast Notifications (PENDING)
 
 File: frontend/pages/Dashboard.jsx, frontend/pages/Dashboard.css
 
@@ -310,7 +270,7 @@ padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 
 ---
 
-### FIX-05 — Profile: Remove Management Controls (Profile = Read-Only Portfolio)
+### FIX-05 — Profile: Remove Management Controls (PENDING)
 
 File: frontend/pages/Profile.jsx
 
@@ -341,7 +301,7 @@ These management actions belong exclusively in Dashboard → My Projects tab.
 
 ---
 
-### FIX-06 — Profile: Remove Hardcoded Fake Data
+### FIX-06 — Profile: Remove Hardcoded Fake Data (PENDING)
 
 File: frontend/pages/Profile.jsx
 
@@ -366,7 +326,7 @@ which is semantically wrong. Change the label to "Projects Joined" or calculate 
 
 ---
 
-### FIX-07 — Profile: Fix Settings Tab (Non-Functional Buttons)
+### FIX-07 — Profile: Fix Settings Tab (PENDING)
 
 File: frontend/pages/Profile.jsx
 
@@ -389,51 +349,27 @@ appear as broken UI. Dead buttons are worse than no buttons.
 
 ---
 
-### FIX-08 — ProjectModal: Fix Apply Closing Entire Modal
+### FIX-08 — ProjectModal: Fix Apply Closing Entire Modal (COMPLETED)
 
 File: frontend/components/ProjectModal.jsx
 
 ```
-In ProjectModal.jsx, find handleApplicationSubmit (or the submit handler for the apply form).
-It currently calls onClose() after a 2-second timeout, which closes the entire project modal.
-
-Fix:
-1. Do NOT call onClose() after submitting an application.
-2. Instead, after successful submission:
-   a. Hide only the application form: setShowApplicationForm(false)
-   b. Show a success message INSIDE the modal:
-      "Application submitted! You can track it in Dashboard → Applications → Sent."
-   c. Add a link/button: "View My Applications" that navigates to /dashboard
-      with state: { tab: 'applications', subTab: 'sent' }
-3. The project modal should remain open so the user can continue reading the project details.
+Status: Fixed. Applying to a project now shows an inline success message and does not close the modal.
 ```
 
 ---
 
-### FIX-09 — Projects Page: Remove Owner Management Controls from Discovery Page
+### FIX-09 — Projects Page: Remove Owner Management Controls (COMPLETED)
 
 File: frontend/pages/Projects.jsx
 
 ```
-Projects.jsx is a public discovery page. It should show all projects in a grid.
-Currently it renders Edit and Delete buttons on cards the user owns, and shows a
-"Your Projects" collapsible section mixed into the discovery grid.
-
-Fix:
-1. Remove the showOwnedProjects state and the collapsible "Your Projects" section entirely.
-2. Remove the onEditProject and onDeleteProject props passed to ProjectCard from Projects.jsx.
-3. Remove the isOwned prop from ProjectCard when rendered in Projects.jsx.
-4. The Projects page should only show: search bar, filters, project grid, empty state.
-5. All project management (edit, delete, stage) moves to Dashboard → My Projects tab.
-
-Also fix the empty state visibility bug:
-  In Projects.css, find .empty-state h3 and .empty-state p with color: #ffffff
-  Change to: color: #1f2937 (for h3) and color: #6b7280 (for p)
+Status: Fixed. Management controls (Edit/Delete) removed from discovery grid. Empty state colors corrected.
 ```
 
 ---
 
-### FIX-10 — Community & Hackathons: Add Auth Guards
+### FIX-10 — Community & Hackathons: Add Auth Guards (PENDING)
 
 File: frontend/pages/Community.jsx, frontend/pages/Hackathons.jsx
 
@@ -464,7 +400,7 @@ In App.jsx, update the routes:
 
 ---
 
-### FIX-11 — Onboarding: Restore "Skip for Now" Button
+### FIX-11 — Onboarding: Restore "Skip for Now" Button (PENDING)
 
 File: frontend/components/OnboardingModal.jsx
 
@@ -487,7 +423,7 @@ calling handleComplete() or making any API calls.
 
 ---
 
-### FIX-12 — CollaborationSpace: Fix Member Filter (Fragile Name Matching)
+### FIX-12 — CollaborationSpace: Fix Member Filter (PENDING)
 
 File: frontend/components/CollaborationSpace.jsx
 
@@ -512,7 +448,7 @@ Apply the same ID-based check to isAdmin.
 
 ---
 
-### FIX-13 — CollaborationSpace: Fix Fixed Width Breaking Tablets
+### FIX-13 — CollaborationSpace: Fix Fixed Width (PENDING)
 
 File: frontend/components/CollaborationSpace.css
 
@@ -531,7 +467,7 @@ This allows the modal to shrink on tablet viewports (768px–900px) instead of o
 
 ---
 
-### FIX-14 — NotificationContext: Fix Non-Serializable JSX in State
+### FIX-14 — NotificationContext: Fix Non-Serializable JSX (PENDING)
 
 File: frontend/context/NotificationContext.jsx
 
@@ -559,7 +495,7 @@ and move them to NotificationModal.jsx where they are actually rendered.
 
 ---
 
-### FIX-15 — ProjectContext: Remove Hardcoded Sample Projects
+### FIX-15 — ProjectContext: Remove Sample Projects (PENDING)
 
 File: frontend/context/ProjectContext.jsx
 
@@ -582,7 +518,7 @@ If sample data is needed for development/demo, use a separate seed script in the
 
 ---
 
-### FIX-16 — Backend: Apply JWT Auth Middleware to Protected Routes
+### FIX-16 — Backend: Apply JWT Middleware (PENDING)
 
 File: backend/api/routes/index.js
 
@@ -614,7 +550,7 @@ Also: In frontend API calls that hit protected routes, pass the JWT token in the
 
 ---
 
-### FIX-17 — Collaboration Data: Move Chat/Tasks/Files to Backend
+### FIX-17 — Collaboration Data: Backend Sync (PENDING)
 
 File: backend/api/routes/index.js, backend/models/ (new files), frontend/components/tabs/
 
@@ -646,7 +582,7 @@ Step 4 — For real-time chat, consider adding Socket.io to the backend server.
 
 ---
 
-### FIX-18 — Delete Duplicate/Copy Files
+### FIX-18 — Delete Duplicate/Copy Files (PENDING)
 
 File: frontend/pages/
 
