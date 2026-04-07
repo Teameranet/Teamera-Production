@@ -46,7 +46,7 @@ function Dashboard() {
     getSentApplications 
   } = useProjects();
   // Get notification functions
-  const { addAcceptanceNotification, addRejectionNotification } = useNotifications();
+  const { addAcceptanceNotification, addRejectionNotification, showToast } = useNotifications();
   // State to manage which tab is active: 'bookmarks' or 'applications'
   const [activeTab, setActiveTab] = useState('bookmarks');
   // State to manage which application sub-tab is active: 'received' or 'sent'
@@ -58,8 +58,6 @@ function Dashboard() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   // State to track selected project for project modal (from applications)
   const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
-  // State to track toast notifications
-  const [toast, setToast] = useState({ show: false, message: '', type: '' });
   // State to track collaboration space
   const [showCollaborationSpace, setShowCollaborationSpace] = useState(false);
   // State to track the active project in collaboration space
@@ -146,35 +144,26 @@ function Dashboard() {
       // Find the project object to pass to the action function
       const acceptedProject = projects.find(p => p.id === application.projectId);
 
-      // Show success toast with action
-      setToast({
-        show: true,
-        message: `Application accepted! Open Collaboration Space?`,
+      showToast({
         type: 'success',
-        actionLabel: 'Open Workspace',
-        actionFn: () => { 
-          if (acceptedProject) {
-            setActiveCollabProject(acceptedProject); 
-            setShowCollaborationSpace(true); 
+        title: 'Application accepted',
+        description: `${application.applicantName} has been added to '${application.projectName}'.`,
+        action: {
+          label: 'Open Workspace',
+          onClick: () => {
+            if (acceptedProject) {
+              setActiveCollabProject(acceptedProject);
+              setShowCollaborationSpace(true);
+            }
           }
         }
       });
-      
-      // Hide toast after delay
-      setTimeout(() => {
-        setToast({ show: false, message: '', type: '' });
-      }, 5000); // Increased timeout to give time for action button
     } else {
-      // Show error toast
-      setToast({
-        show: true,
-        message: 'Failed to accept application. Please try again.',
-        type: 'error'
+      showToast({
+        type: 'error',
+        title: 'Failed to accept application',
+        description: 'Something went wrong. Please try again.',
       });
-      
-      setTimeout(() => {
-        setToast({ show: false, message: '', type: '' });
-      }, 2000);
     }
   };
 
@@ -199,28 +188,17 @@ function Dashboard() {
         application.position
       );
       
-      // Show toast notification
-      setToast({
-        show: true,
-        message: 'Application has been rejected',
-        type: 'error'
+      showToast({
+        type: 'warning',
+        title: 'Application rejected',
+        description: `${application.applicantName}'s application for '${application.position}' has been declined.`,
       });
-      
-      // Hide toast after delay
-      setTimeout(() => {
-        setToast({ show: false, message: '', type: '' });
-      }, 2000);
     } else {
-      // Show error toast
-      setToast({
-        show: true,
-        message: 'Failed to reject application. Please try again.',
-        type: 'error'
+      showToast({
+        type: 'error',
+        title: 'Failed to reject application',
+        description: 'Something went wrong. Please try again.',
       });
-      
-      setTimeout(() => {
-        setToast({ show: false, message: '', type: '' });
-      }, 2000);
     }
   };
 
@@ -613,23 +591,6 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Toast notification */}
-      {toast.show && (
-        <div className={`toast-notification ${toast.type}`}>
-          <div className="toast-content">
-            <div className="toast-icon">
-              {toast.type === 'success' ? '✓' : '✕'}
-            </div>
-            <div className="toast-message">{toast.message}</div>
-            {toast.actionFn && (
-              <button className="toast-action-btn" onClick={toast.actionFn}>
-                {toast.actionLabel}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-      
       {/* Profile Modal */}
       {selectedUser && (
         <ProfileModal

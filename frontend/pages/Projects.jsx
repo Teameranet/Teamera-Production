@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, Plus, ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import ProjectCard from '../components/ProjectCard';
 import './Projects.css';
 
@@ -14,6 +15,7 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
   const [showOwnedProjects, setShowOwnedProjects] = useState(true);
   const { projects, loading, deleteProject, getUserProjects } = useProjects();
   const { user } = useAuth();
+  const { showToast } = useNotifications();
 
   const industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'E-commerce', 'Entertainment'];
   const stages = ['Idea Validation', 'MVP Development', 'Beta Testing', 'Market Ready', 'Scaling'];
@@ -61,9 +63,22 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
   };
 
   const handleDeleteProject = (projectId, e) => {
-    e.stopPropagation(); // Prevent card click event
+    e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this project?')) {
-      deleteProject(projectId);
+      const success = deleteProject(projectId);
+      if (success !== false) {
+        showToast({
+          type: 'success',
+          title: 'Project deleted',
+          description: 'Your project has been permanently deleted.',
+        });
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Failed to delete project',
+          description: 'Something went wrong. Please try again.',
+        });
+      }
     }
   };
 

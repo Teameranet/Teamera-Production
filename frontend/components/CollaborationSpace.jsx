@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, MessageCircle, FileText, CheckSquare, Copy, User, Users, Plus, Upload, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
+import { useNotifications } from '../context/NotificationContext';
 import ChatTab from './tabs/ChatTab';
 import TasksTab from './tabs/TasksTab';
 import FilesTab from './tabs/FilesTab';
@@ -17,6 +18,7 @@ function CollaborationSpace({ onClose, activeProject = null, defaultTab = 'chat'
   const [isUploading, setIsUploading] = useState(false);
   const { user } = useAuth();
   const { projects, leaveProject } = useProjects();
+  const { showToast } = useNotifications();
   const contentRef = useRef(null);
 
   // Filter projects where user is a team member (no limit)
@@ -254,26 +256,37 @@ function CollaborationSpace({ onClose, activeProject = null, defaultTab = 'chat'
 
       if (!userId) {
         console.error('Unable to determine user ID', { currentMember, user });
-        alert('Unable to determine user ID. Please try again.');
+        showToast({
+          type: 'error',
+          title: 'Unable to leave project',
+          description: 'Could not determine your user ID. Please try again.',
+        });
         return;
       }
 
-      console.log('Leaving project with userId:', userId, 'projectId:', selectedProject.id || selectedProject._id);
-
-      // Call the leaveProject function from ProjectContext
       const success = await leaveProject(selectedProject.id || selectedProject._id, userId);
 
       if (success) {
-        alert('You have successfully left the project.');
-        
-        // Reset selected project
+        showToast({
+          type: 'warning',
+          title: 'Left project',
+          description: `You have successfully left '${selectedProject.title}'.`,
+        });
         setSelectedProject(null);
       } else {
-        alert('Failed to leave project. You may be the project owner or an error occurred.');
+        showToast({
+          type: 'error',
+          title: 'Failed to leave project',
+          description: 'You may be the project owner, or an error occurred.',
+        });
       }
     } catch (error) {
       console.error('Error leaving project:', error);
-      alert('Failed to leave project. Please try again.');
+      showToast({
+        type: 'error',
+        title: 'Failed to leave project',
+        description: 'An unexpected error occurred. Please try again.',
+      });
     }
   };
 

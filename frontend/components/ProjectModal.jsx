@@ -16,15 +16,12 @@ function ProjectModal({ project, onClose }) {
     message: '',
     resume: null
   });
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState('success'); // 'success' or 'error'
-  const [existingApplications, setExistingApplications] = useState({}); // Track existing applications by position
-  const [invitations, setInvitations] = useState([]); // Track INVITED status for this project
+  const [existingApplications, setExistingApplications] = useState({});
+  const [invitations, setInvitations] = useState([]);
 
   const { user } = useAuth();
   const { applyToProject } = useProjects();
-  const { addApplicationNotification } = useNotifications();
+  const { addApplicationNotification, showToast } = useNotifications();
 
 
 
@@ -125,25 +122,24 @@ function ProjectModal({ project, onClose }) {
         }
       }));
 
-      // Hide form and show inline success message — do NOT close the modal
       setShowApplicationForm(false);
       setApplicationData({ message: '', resume: null });
       setSelectedPosition(null);
-      setToastMessage('Application submitted! You can track it in Dashboard → Applications → Sent.');
-      setToastType('success');
-      setShowToast(true);
-
-      setTimeout(() => setShowToast(false), 6000);
+      showToast({
+        type: 'success',
+        title: 'Application submitted',
+        description: `You applied for '${selectedPosition.role}' on '${project.title}'. Track it in Dashboard → Applications → Sent.`,
+        action: {
+          label: 'View My Applications',
+          onClick: () => { onClose(); navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } }); }
+        }
+      });
     } else {
-      // Show error toast notification
-      setToastMessage(result.message || 'Failed to submit application. Please try again.');
-      setToastType('error');
-      setShowToast(true);
-
-      // Hide toast after delay but keep form open
-      setTimeout(() => {
-        setShowToast(false);
-      }, 4000);
+      showToast({
+        type: 'error',
+        title: 'Application failed',
+        description: result.message || 'Failed to submit application. Please try again.',
+      });
     }
   };
 
@@ -566,25 +562,6 @@ function ProjectModal({ project, onClose }) {
           </div>
         )}
 
-        {/* Toast notification */}
-        {showToast && (
-          <div className={`toast-notification ${toastType}`}>
-            <div className="toast-content">
-              <div className="toast-icon">{toastType === 'success' ? '✓' : '✕'}</div>
-              <div className="toast-message">
-                {toastMessage}
-                {toastType === 'success' && (
-                  <button
-                    className="toast-link"
-                    onClick={() => { onClose(); navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } }); }}
-                  >
-                    View My Applications →
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

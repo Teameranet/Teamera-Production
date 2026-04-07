@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Users, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from './AuthContext';
+import ToastContainer from '../components/Toast';
 
 const NotificationContext = createContext();
 
@@ -16,7 +17,18 @@ export const NotificationProvider = ({ children }) => {
     // Store notifications by userId
     const [userNotifications, setUserNotifications] = useState({});
     const [unreadCount, setUnreadCount] = useState(0);
+    const [toasts, setToasts] = useState([]);
     const { user } = useAuth();
+
+    // ── Toast helpers ──────────────────────────────────────────
+    const dismissToast = useCallback((id) => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, []);
+
+    const showToast = useCallback(({ title, description, type = 'info', duration = 5000, action }) => {
+        const id = Date.now() + Math.random();
+        setToasts((prev) => [...prev, { id, title, description, type, duration, action }]);
+    }, []);
 
     // Initialize with some sample notifications for demo
     useEffect(() => {
@@ -64,8 +76,6 @@ export const NotificationProvider = ({ children }) => {
 
     // Add new application notification (for specific project owner)
     const addApplicationNotification = (projectOwnerId, projectName, applicantName) => {
-        console.log(`Adding application notification for user ${projectOwnerId}: ${applicantName} applied to ${projectName}`);
-        
         const newNotification = {
             id: Date.now(),
             type: 'application',
@@ -80,14 +90,10 @@ export const NotificationProvider = ({ children }) => {
             navigationState: { tab: 'applications', subTab: 'received' }
         };
 
-        setUserNotifications(prev => {
-            const updated = {
-                ...prev,
-                [projectOwnerId]: [newNotification, ...(prev[projectOwnerId] || [])]
-            };
-            console.log(`Updated notifications for user ${projectOwnerId}:`, updated[projectOwnerId]);
-            return updated;
-        });
+        setUserNotifications(prev => ({
+            ...prev,
+            [projectOwnerId]: [newNotification, ...(prev[projectOwnerId] || [])]
+        }));
     };
 
     // Add acceptance notification (for specific applicant)
@@ -179,12 +185,16 @@ export const NotificationProvider = ({ children }) => {
         addRejectionNotification,
         markAsRead,
         markAllAsRead,
-        removeNotification
+        removeNotification,
+        showToast,
+        toasts,
+        dismissToast,
     };
 
     return (
         <NotificationContext.Provider value={value}>
             {children}
+            <ToastContainer toasts={toasts} onDismiss={dismissToast} />
         </NotificationContext.Provider>
     );
 };
