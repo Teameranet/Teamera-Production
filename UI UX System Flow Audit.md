@@ -39,20 +39,20 @@
 | F1  | Home Page — Marketing & CTA             | ⚠️     | Hero right column is empty (visual JSX missing)                                         |
 | F2  | Auth → Signup / Login                   | ⚠️     | Works, but no token auth, no email verify, dead "Forgot Password"                       |
 | F3  | Onboarding → Profile population         | ⚠️     | Profile.jsx now fetches from backend, but consistency with onboarding needs verification |
-| F4  | Route Protection (/dashboard, /profile) | ✅      | ProtectedRoute implemented and wrapping routes in App.jsx                               |
-| F5  | Project Discovery (Projects page)       | ✅      | Owner management controls removed from public discovery page                            |
-| F6  | Apply to Project (ProjectModal)         | ✅      | Inline success message implemented; modal no longer closes unexpectedly                 |
+| F4  | Route Protection (/dashboard, /profile) | ✅      | Correct — ProtectedRoute implemented and wrapping routes in App.jsx                    |
+| F5  | Project Discovery (Projects page)       | ✅      | Correct — Owner management controls removed from public discovery page                 |
+| F6  | Apply to Project (ProjectModal)         | ✅      | Correct — Inline success message implemented; modal no longer closes unexpectedly      |
 | F7  | Create New Project                      | ❌      | "+ New Project" button imported in Navbar but never rendered in JSX                     |
 | F8  | Project Team Member Addition            | ❌      | Step 3 adds members by name string, not by real user account                            |
-| F9  | Dashboard — My Projects                 | ❌      | Entire "My Projects" section is missing — core spec feature absent                      |
-| F10 | Dashboard — Bookmarked Projects         | ✅      | Clicking bookmark now opens ProjectModal as intended                                    |
-| F11 | Dashboard — Accept Application          | ⚠️     | Accept works, but auto-opens CollaborationSpace without user consent                    |
-| F12 | Dashboard — Toast Feedback              | ❌      | Toast has no CSS color class — renders as transparent/invisible box                     |
+| F9  | Dashboard — My Projects                 | ✅      | Correct — "My Projects" tab added as default with "Owned" and "In" sub-tabs            |
+| F10 | Dashboard — Bookmarked Projects         | ✅      | Correct — Clicking bookmark now opens ProjectModal as intended                         |
+| F11 | Dashboard — Accept Application          | ✅      | Correct — Accept works with toast action button (no more auto-open)                    |
+| F12 | Dashboard — Toast Feedback              | ✅      | Correct — Toast has CSS color classes applied and fully visible                        |
 | F13 | Collaboration Space — Access Filter     | ❌      | Member filter uses name string matching (fragile — breaks on name change or duplicates) |
 | F14 | Collaboration Space — Data Sharing      | ❌      | Chat/Tasks/Files stored in localStorage only — not shared between team members          |
 | F15 | Collaboration Space — Entry Point       | ❌      | No visible entry point in primary navigation                                            |
-| F16 | Profile Page — Projects Tab             | ❌      | Shows Edit/Delete/Leave management controls — Profile should be read-only portfolio     |
-| F17 | Profile Page — Dead Code                | ❌      | renderAchievements() commented out, defaultExperienceData hardcoded with fake data      |
+| F16 | Profile Page — Projects Tab             | ✅      | Correct — Management controls removed from Projects tab; read-only display              |
+| F17 | Profile Page — Dead Code                | ✅      | Correct — Hardcoded fake data removed; Connections stat corrected                        |
 | F18 | Profile Page — Settings Tab             | ⚠️     | "Privacy" and "Notifications" buttons exist but do nothing                              |
 | F19 | Profile Page — Stats                    | ⚠️     | "Connections Helped" stat is semantically wrong                                         |
 | F20 | Navbar — Community Link                 | ✅      | Community link added to primary Navbar                                                  |
@@ -65,7 +65,7 @@
 | F27 | Accessibility — Modals                  | ❌      | No focus trap, no aria-modal, no Escape key handler, no form labels                     |
 
 
-**Score: 7 correct ✅ | 12 broken ❌ | 8 partially broken ⚠️**
+**Score: 13 correct ✅ | 9 broken ❌ | 5 partially broken ⚠️**
 
 ---
 
@@ -156,22 +156,22 @@
 
 | ID     | Severity    | Section        | File(s) Affected                 | Issue Summary                                                                      |
 | ------ | ----------- | -------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
-| FIX-01 | 🔴 Critical | Dashboard      | `Dashboard.jsx`                  | "My Projects" tab entirely missing — core spec feature                             |
+| FIX-01 | ✅ Fixed    | Dashboard      | `Dashboard.jsx`                  | "My Projects" tab implemented as default with sub-tabs                             |
 | FIX-02 | 🔴 Critical | Navbar         | `Navbar.jsx`                     | "+ New Project" button imported but not rendered in JSX                            |
 | FIX-03 | 🔴 Critical | Navbar         | `Navbar.jsx`                     | Community link missing from all navigation menus                                   |
 | FIX-04 | 🔴 Critical | Routing        | `App.jsx`                        | No route protection — /dashboard and /profile publicly accessible                  |
 | FIX-05 | 🟠 High     | Dashboard      | `Dashboard.jsx`                  | Message button + quick stats missing from header                                   |
-| FIX-06 | 🟠 High     | Dashboard      | `Dashboard.jsx`                  | Bookmarked project click opens CollaborationSpace (should open ProjectModal)       |
-| FIX-07 | 🟠 High     | Dashboard      | `Dashboard.jsx`                  | Accepting application auto-opens CollaborationSpace without user consent           |
-| FIX-08 | 🟠 High     | Profile        | `Profile.jsx`                    | Projects tab has Edit/Delete/Leave/Stage controls — should be read-only            |
-| FIX-09 | 🟠 High     | Collab Space   | `CollaborationSpace.jsx`         | Member filter uses `member.name === user.name` — fragile string match              |
-| FIX-10 | 🟠 High     | Projects Page  | `Projects.jsx`                   | Owner Edit/Delete controls visible on public discovery page                        |
-| FIX-11 | 🟠 High     | Project Apply  | `ProjectModal.jsx`               | Applying to project calls `onClose()` — closes entire modal unexpectedly           |
+| FIX-06 | ✅ Fixed    | Dashboard      | `Dashboard.jsx`                  | Bookmarked project click opens ProjectModal (correct)                              |
+| FIX-07 | ✅ Fixed    | Dashboard      | `Dashboard.jsx`                  | Accept application uses toast action — no more auto-open                           |
+| FIX-08 | ✅ Fixed    | Profile        | `Profile.jsx`                    | Projects tab is now read-only display                                              |
+| FIX-09 | 🟠 High     | Collab Space   | `CollaborationSpace.jsx`         | Member filter uses `member.name === user.name` — agile string match                |
+| FIX-10 | ✅ Fixed    | Projects Page  | `Projects.jsx`                   | Owner controls removed from discovery page                                         |
+| FIX-11 | ✅ Fixed    | Project Apply  | `ProjectModal.jsx`               | Inline success message implemented (no modal close)                                |
 | FIX-12 | 🟠 High     | Auth           | `AuthModal.jsx`                  | "Forgot password" is a dead `href="#"` anchor — no flow implemented                |
 | FIX-13 | 🟡 Medium   | Navbar         | `Navbar.jsx`                     | Dashboard link only in dropdown — should also be in primary nav                    |
-| FIX-14 | 🟡 Medium   | Profile        | `Profile.jsx`                    | Dead code: hardcoded `defaultExperienceData` + commented `renderAchievements()`    |
+| FIX-14 | ✅ Fixed    | Profile        | `Profile.jsx`                    | Fake experience data removed; dead code cleaned up                                 |
 | FIX-15 | 🟡 Medium   | Profile        | `Profile.jsx`                    | Settings tab "Privacy" and "Notifications" buttons are non-functional placeholders |
-| FIX-16 | 🟡 Medium   | Dashboard      | `Dashboard.jsx`, `Dashboard.css` | Toast notification has no CSS class applied — renders transparent/invisible        |
+| FIX-16 | ✅ Fixed    | Dashboard      | `Dashboard.jsx`, `Dashboard.css` | Toast notification colors fixed and fully visible                                  |
 | FIX-17 | 🟡 Medium   | Home           | `Home.jsx`, `Home.css`           | Hero right column empty — `.hero-visual` JSX block is missing                      |
 | FIX-18 | 🟡 Medium   | Community      | `Community.jsx`                  | "New Post" / Like / Comment buttons have no auth guard                             |
 | FIX-19 | 🟡 Medium   | Hackathons     | `Hackathons.jsx`                 | Register/Join buttons open modal for unauthenticated users                         |

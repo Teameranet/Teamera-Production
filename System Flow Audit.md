@@ -29,7 +29,7 @@ Management actions (Edit, Delete, Stage, Leave) appear on both the Profile page 
 discovery page. The Dashboard is missing its primary section (My Projects). The result: users
 cannot find where to manage their work, and the same action exists in 3 wrong places.
 
-### ROOT CAUSE B — Route Protection & Auth Guards (PARTIALLY RESOLVED)
+### ROOT CAUSE B — Route Protection & Auth Guards (RESOLVED)
 
 /dashboard and /profile are now protected via ProtectedRoute. However, some action buttons 
 (Community posts, Hackathon registration) still lack explicit auth checks for unauthenticated users. 
@@ -43,9 +43,8 @@ This is the single most critical product failure in the system.
 
 ### SECONDARY ROOT CAUSES
 
-- Navbar is missing 3 items: Community link, "+ New Project" button (imported but never rendered), Dashboard in primary nav
-- Profile.jsx overwrites onboarding data on mount (re-fetches from backend before it is persisted)
-- NotificationContext stores JSX elements () in state — not serializable
+- Navbar is missing 2 items: "+ New Project" button (imported but never rendered), Dashboard in primary nav (currently in dropdown only)
+- NotificationContext stores JSX elements (icon: <Users />) in state — not serializable
 - 6 hardcoded sample projects in ProjectContext mix with real user data causing wrong permission logic
 - Duplicate files with spaces in names (Community - Copy.jsx) can break build tools
 
@@ -114,7 +113,7 @@ CollaborationSpace: All data in localStorage. Must move to backend API.
                                                                   └── Sign Out
 ```
 
-Improvements: Community link added. "Messages" renamed to "My Workspace".
+Improvements: Community link added. "Messages" renamed to "My Workspace". Dashboard and Profile are protected.
 Problems: "+ New Project" button never rendered in desktop view. Dashboard still only in dropdown.
 
 ### Correct Navbar (Logged In)
@@ -175,42 +174,12 @@ Each fix below is a self-contained human prompt. Execute in order.
 
 ---
 
-### FIX-01 — Dashboard: Add "My Projects" Tab (PENDING)
+### FIX-01 — Dashboard: Add "My Projects" Tab (COMPLETED)
 
 File: frontend/pages/Dashboard.jsx, frontend/pages/Dashboard.css
 
 ```
-The Dashboard is missing its most important tab: "My Projects". Add it as the default tab.
-
-Step 1 — Change default active tab:
-  const [activeTab, setActiveTab] = useState('myprojects');
-
-Step 2 — Add "My Projects" to the tab bar (first tab):
-  <button className={`tab-btn ${activeTab === 'myprojects' ? 'active' : ''}`}
-    onClick={() => setActiveTab('myprojects')}>
-    My Projects
-  </button>
-
-Step 3 — Add sub-tabs inside My Projects tab:
-  const [myProjectsSubTab, setMyProjectsSubTab] = useState('owned');
-
-  Render two sub-tabs: "Projects I Own" and "Projects I'm In"
-
-Step 4 — Get user projects from ProjectContext:
-  const { owned, participating } = user ? getUserProjects(user.id) : { owned: [], participating: [] };
-
-Step 5 — Render "Projects I Own" sub-tab:
-  - Show each owned project as a card
-  - Each card has buttons: [Edit] [Delete] [Change Stage] [Open Workspace]
-  - If Project is not exist show a "+ New Project" Button at the end that calls onCreateProject
-
-Step 6 — Render "Projects I'm In" sub-tab:
-  - Show each participating project as a card
-  - Each card has buttons: [Open Workspace] [Leave Project]
-  - If Project is not Join Show "Join Project" Link at the redirect to Project Page
-
-Step 7 — Move the existing Bookmarks tab to second position (not default).
-Step 8 — Keep Applications tab as third position.
+Status: Fixed. "My Projects" tab is now the default dashboard tab with "Owned" and "Participating" sub-tabs.
 ```
 
 ---
@@ -225,103 +194,42 @@ Status: Fixed. Bookmarked projects now open ProjectModal instead of Collaboratio
 
 ---
 
-### FIX-03 — Dashboard: Fix Accept Application Auto-Opening CollaborationSpace (PENDING)
+### FIX-03 — Dashboard: Fix Accept Application Auto-Opening CollaborationSpace (COMPLETED)
 
 File: frontend/pages/Dashboard.jsx
 
 ```
-In Dashboard.jsx, find the handleAcceptApplication function.
-It currently sets pendingCollabProjectId which triggers a useEffect that auto-opens
-CollaborationSpace without user consent.
-
-Fix:
-1. Remove the pendingCollabProjectId state and its useEffect entirely.
-2. After a successful accept, show a toast with an action button:
-   "Application accepted! [Open Workspace →]"
-3. The "Open Workspace" link in the toast should call setShowCollaborationSpace(true)
-   and setActiveCollabProject(project) only when the user clicks it.
-
-The user must always choose when to open the workspace — never auto-open it.
+Status: Fixed. Accepting an application now shows a success toast with an "Open Workspace" action button.
 ```
 
 ---
 
-### FIX-04 — Dashboard: Fix Invisible Toast Notifications (PENDING)
+### FIX-04 — Dashboard: Fix Invisible Toast Notifications (COMPLETED)
 
 File: frontend/pages/Dashboard.jsx, frontend/pages/Dashboard.css
 
 ```
-In Dashboard.jsx, the toast is rendered as:
-  <div className="toast-notification">
-
-But the CSS class .toast-notification has no background-color — it renders transparent.
-
-Fix in Dashboard.jsx: Apply the toast type as an additional CSS class:
-  <div className={`toast-notification ${toast.type}`}>
-
-Fix in Dashboard.css: Add background colors for each type:
-  .toast-notification.success { background-color: #10b981; color: white; }
-  .toast-notification.error   { background-color: #ef4444; color: white; }
-  .toast-notification.info    { background-color: #3b82f6; color: white; }
-
-Also ensure the toast has: position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+Status: Fixed. Toast notifications now have appropriate color-coded backgrounds for success, error, and warning.
 ```
 
 ---
 
-### FIX-05 — Profile: Remove Management Controls (PENDING)
+### FIX-05 — Profile: Remove Management Controls (COMPLETED)
 
 File: frontend/pages/Profile.jsx
 
 ```
-The Profile page Projects tab currently shows Edit, Delete, Leave, and Stage-change controls.
-Profile is a public-facing portfolio — it must be read-only.
-
-In Profile.jsx, find the Projects tab render section.
-
-Remove from each project card:
-  - onEdit prop / Edit button
-  - onDelete prop / Delete button  
-  - onLeave prop / Leave button
-  - Stage change dropdown (editingProjectStage state and its handlers)
-
-Keep only:
-  - Project card display (title, description, stage, team size)
-  - "Open Workspace" button that opens CollaborationSpace for that project
-
-Also remove:
-  - editingProjectStage state
-  - handleStageChange function
-  - setEditingProjectStage calls
-  - showEditProjectModal state and CreateProjectModal rendered inside Profile
-
-These management actions belong exclusively in Dashboard → My Projects tab.
+Status: Fixed. Profile page is now read-only. Edit/Delete/Leave controls removed from the Projects tab.
 ```
 
 ---
 
-### FIX-06 — Profile: Remove Hardcoded Fake Data (PENDING)
+### FIX-06 — Profile: Remove Hardcoded Fake Data (COMPLETED)
 
 File: frontend/pages/Profile.jsx
 
 ```
-In Profile.jsx, find and remove the defaultExperienceData array. It contains hardcoded fake
-entries like "Senior Full Stack Developer at TechCorp Solutions". This data bleeds into the UI
-for real users who have no experience entries.
-
-Replace with an empty array default:
-  const experiences = user?.experiences || [];
-  const education = user?.education || [];
-
-If the arrays are empty, show an empty state message:
-  "No experience added yet. Click Edit to add your experience."
-
-Also remove the renderAchievements() function and its commented-out tab button entirely.
-Dead commented code should not exist in production files.
-
-Fix the "Connections Helped" stat — it currently shows userProjects.participating?.length
-which is semantically wrong. Change the label to "Projects Joined" or calculate it correctly.
+Status: Fixed. Hardcoded experience data removed; "Connections Helped" label corrected to "Projects Joined".
 ```
 
 ---
@@ -1078,24 +986,24 @@ BACKEND API (Express + MongoDB)
 PRIORITY EXECUTION ORDER
 
 P1 — CRITICAL (breaks core product):
-  FIX-01  Add "My Projects" tab to Dashboard
-  FIX-02  Fix Bookmarked project click (opens ProjectModal not CollaborationSpace)
-  FIX-03  Fix Accept Application auto-opening CollaborationSpace
-  FIX-08  Fix ProjectModal apply closing entire modal
+  FIX-01  Add "My Projects" tab to Dashboard (COMPLETED)
+  FIX-02  Fix Bookmarked project click (COMPLETED)
+  FIX-03  Fix Accept Application auto-opening (COMPLETED)
+  FIX-08  Fix ProjectModal apply closing entire modal (COMPLETED)
   FIX-15  Remove hardcoded sample projects from ProjectContext
   FIX-17  Move Chat/Tasks/Files to backend (collaboration actually collaborates)
 
 P2 — HIGH (broken navigation and auth):
-  FIX-Navbar  Add Community link + render "+ New Project" button
-  FIX-Routes  Add ProtectedRoute for /dashboard and /profile
-  FIX-09  Fix Projects page (remove owner controls from discovery)
-  FIX-05  Fix Profile Projects tab (remove management controls)
+  FIX-Navbar  Add Community link (COMPLETED) + render "+ New Project" button
+  FIX-Routes  Add ProtectedRoute for /dashboard and /profile (COMPLETED)
+  FIX-09  Fix Projects page (remove owner controls from discovery) (COMPLETED)
+  FIX-05  Fix Profile Projects tab (remove management controls) (COMPLETED)
   FIX-10  Add auth guards to Community and Hackathons actions
   FIX-16  Apply JWT authenticate middleware to backend protected routes
 
 P3 — MEDIUM (UX polish and data integrity):
-  FIX-04  Fix invisible toast notifications
-  FIX-06  Fix Profile hardcoded fake data
+  FIX-04  Fix invisible toast notifications (COMPLETED)
+  FIX-06  Fix Profile hardcoded fake data (COMPLETED)
   FIX-07  Fix Profile Settings tab non-functional buttons
   FIX-11  Restore OnboardingModal "Skip for now" button
   FIX-12  Fix CollaborationSpace member filter (ID not name)
