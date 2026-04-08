@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Users, Bookmark, Settings, MessageSquare, User, CheckCircle, XCircle, Clock, Download, FileText } from 'lucide-react';
+import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -109,7 +109,9 @@ function Dashboard() {
   // Filter applications based on the selected tab
   // 'received' tab shows applications_received (user is project owner)
   // 'sent' tab shows applications_sent (user is applicant)
-  const filteredApplications = applicationTab === 'received' ? receivedApplications : sentApplications;
+  const filteredApplications = (applicationTab === 'received' ? receivedApplications : sentApplications)
+    .slice()
+    .sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate));
 
   // Get real application counts from the Application collection
   const receivedApplicationsCount = receivedApplications.length;
@@ -330,6 +332,33 @@ function Dashboard() {
     setSelectedUser(null);
   };
 
+  // Open workspace for a project linked to an application
+  const handleOpenWorkspace = async (application) => {
+    const projectId = typeof application.projectId === 'object'
+      ? application.projectId._id || application.projectId.toString()
+      : application.projectId?.toString();
+
+    let project = projects.find(p => String(p.id || p._id) === String(projectId));
+
+    if (!project) {
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${apiBaseUrl}/api/projects/${projectId}`);
+        const result = await response.json();
+        if (result.success && result.data) {
+          project = { ...result.data, id: result.data._id || result.data.id };
+        }
+      } catch (error) {
+        console.error('Error fetching project for workspace:', error);
+      }
+    }
+
+    if (project) {
+      setActiveCollabProject(project);
+      setShowCollaborationSpace(true);
+    }
+  };
+
   // Function to handle sending a message to an applicant
   const handleSendMessage = (applicantId) => {
     console.log(`Sending message to ${applicantId}`);
@@ -543,7 +572,7 @@ function Dashboard() {
                           className="view-project-btn" 
                           onClick={() => handleViewProject(application)}
                         >
-                          <FileText size={16} />
+                          <ExternalLink size={16} />
                           View Project
                         </button>
                         {application.hasResume && (
@@ -553,6 +582,28 @@ function Dashboard() {
                           >
                             <Download size={16} />
                             Resume
+                          </button>
+                        )}
+
+                        {/* My Workspace — Received tab: always visible for project owners */}
+                        {applicationTab === 'received' && (
+                          <button
+                            className="workspace-btn"
+                            onClick={() => handleOpenWorkspace(application)}
+                          >
+                            <MessageCircle size={16} />
+                            My Workspace
+                          </button>
+                        )}
+
+                        {/* My Workspace — Sent tab: only when ACCEPTED or INVITED */}
+                        {applicationTab === 'sent' && (application.status === 'ACCEPTED' || application.status === 'INVITED') && (
+                          <button
+                            className="workspace-btn"
+                            onClick={() => handleOpenWorkspace(application)}
+                          >
+                            <MessageCircle size={16} />
+                            My Workspace
                           </button>
                         )}
                         

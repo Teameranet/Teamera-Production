@@ -637,7 +637,7 @@
   gap: 0.75rem;
 }
 
-.view-profile-btn, .view-project-btn, .message-btn, .resume-btn {
+.view-profile-btn, .view-project-btn, .message-btn, .resume-btn, .workspace-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -685,6 +685,15 @@
 
 .resume-btn:hover {
   background: #bfdbfe;
+}
+
+.workspace-btn {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.workspace-btn:hover {
+  background: #ddd6fe;
 }
 
 .decision-actions {
@@ -782,7 +791,7 @@
     flex-direction: column;
   }
   
-  .view-profile-btn, .resume-btn {
+  .view-profile-btn, .resume-btn, .workspace-btn {
     width: 100%;
     padding: 0.75rem;
     font-size: 1rem;

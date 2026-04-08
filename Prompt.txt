@@ -616,3 +616,8 @@ Updated routing configuration
 New CSS file with full-page styling
 Maintain all existing functionality from the modal version
 Ensure no breaking changes to child components (ChatTab, TasksTab, FilesTab, TeamTab)
+
+-----------------------------------------------------------------------------------------------
+Update the System Flow Audit.md documentation file to accurately reflect the current system flow. Review all existing sections including user journey maps, interaction flows, wireframes, and design specifications. Identify and document any changes in navigation patterns, component behaviors, user interfaces, or system processes that have been implemented since the last audit. Ensure the updated documentation includes detailed descriptions of each screen, user actions, system responses, and any new features or modifications. Verify that all flow diagrams, screen layouts, and interaction patterns are current and properly annotated. Cross-reference the updated content with the actual application to confirm accuracy and completeness of the documentation.
+
+update this UI UX System Flow Audit.md as per current flow
