@@ -159,13 +159,28 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
           )}
         </div>
 
-        {/* Mobile Menu Toggle Button (hamburger or close icon) */}
-        <button 
-          className="mobile-menu-toggle"
-          onClick={() => setShowMobileMenu(!showMobileMenu)}
-        >
-          {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Mobile Right Actions (Bell + Hamburger) */}
+        <div className="mobile-right-actions">
+          {user && (
+            <button
+              className="notification-btn mobile-notification-btn"
+              onClick={() => setShowNotifications(true)}
+              title="Notifications"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="notification-badge">{unreadCount}</span>
+              )}
+            </button>
+          )}
+          {/* Mobile Menu Toggle Button (hamburger or close icon) */}
+          <button 
+            className="mobile-menu-toggle"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+          >
+            {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
 
         {/* Mobile Menu (shown when toggled) */}
         {showMobileMenu && (
@@ -214,40 +229,13 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
               {user ? (
                 // If user is logged in, show mobile user actions
                 <>
-                  {/* Notifications Button */}
-                  <button 
-                    className="notification-btn mobile"
-                    onClick={() => {
-                      setShowNotifications(true);
-                      setShowMobileMenu(false);
-                    }}
-                  >
-                    <Bell size={20} />
-                    Notifications
-                    {unreadCount > 0 && (
-                      <span className="notification-badge">{unreadCount}</span>
-                    )}
-                  </button>
-
-                  {/* Messages Button */}
-                  <button 
-                    className="collaboration-btn mobile"
-                    onClick={() => {
-                      onCollaborationClick();
-                      setShowMobileMenu(false);
-                    }}
-                  >
-                    <MessageCircle size={20} />
-                    Messages
-                  </button>
-
                   {/* Profile Button */}
                   <button 
                     onClick={handleProfileClick}
                     className="mobile-profile-link"
                   >
                     <User size={20} />
-                    Profile
+                    My Profile
                   </button>
 
                   {/* Dashboard Link */}
@@ -259,7 +247,19 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
                     <Settings size={20} />
                     Dashboard
                   </Link>
-                  
+
+                  {/* Messages / My Workspace Button */}
+                  <button 
+                    className="collaboration-btn mobile"
+                    onClick={() => {
+                      onCollaborationClick();
+                      setShowMobileMenu(false);
+                    }}
+                  >
+                    <MessageCircle size={20} />
+                    My Workspace
+                  </button>
+
                   {/* Logout Button */}
                   <button className="mobile-logout-btn" onClick={handleLogout}>
                     <LogOut size={20} />

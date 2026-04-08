@@ -8,8 +8,9 @@ import UserAvatar from '../components/UserAvatar';
 import ProfileModal from '../components/ProfileModal';
 import ProjectModal from '../components/ProjectModal';
 import CollaborationSpace from '../components/CollaborationSpace';
+import CreateProjectModal from '../components/CreateProjectModal';
 import './Dashboard.css';
-import ProjectCard from '../components/ProjectCard'; // Added import for ProjectCard
+import ProjectCard from '../components/ProjectCard';
 
 // Dashboard component displays the main dashboard UI for authenticated users
 // 
@@ -43,12 +44,21 @@ function Dashboard() {
     acceptApplication, 
     rejectApplication, 
     getReceivedApplications, 
-    getSentApplications 
+    getSentApplications,
+    getUserProjects,
+    deleteProject,
+    editProject
   } = useProjects();
   // Get notification functions
   const { addAcceptanceNotification, addRejectionNotification, showToast } = useNotifications();
-  // State to manage which tab is active: 'bookmarks' or 'applications'
-  const [activeTab, setActiveTab] = useState('bookmarks');
+  // State to manage which tab is active: 'myprojects', 'bookmarks' or 'applications'
+  const [activeTab, setActiveTab] = useState('myprojects');
+  // State to manage which My Projects sub-tab is active: 'owned' or 'participating'
+  const [myProjectsSubTab, setMyProjectsSubTab] = useState('owned');
+  // State to hold user's owned and participating projects
+  const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
+  // State to show/hide create project modal
+  const [showCreateProject, setShowCreateProject] = useState(false);
   // State to manage which application sub-tab is active: 'received' or 'sent'
   const [applicationTab, setApplicationTab] = useState('received');
   // State to track selected user for profile modal
@@ -62,6 +72,15 @@ function Dashboard() {
   const [showCollaborationSpace, setShowCollaborationSpace] = useState(false);
   // State to track the active project in collaboration space
   const [activeCollabProject, setActiveCollabProject] = useState(null);
+
+  // Fetch user's owned and participating projects
+  useEffect(() => {
+    if (user) {
+      getUserProjects(user.id).then(result => {
+        setUserProjects(result || { owned: [], participating: [] });
+      });
+    }
+  }, [user, projects]);
 
   // Handle navigation from notifications
   useEffect(() => {
@@ -121,6 +140,29 @@ function Dashboard() {
   const bookmarkedProjectsList = projects.filter(project => 
     bookmarkedProjects.includes(project.id)
   );
+
+  // Function to handle editing a project
+  const handleEditProject = (project) => {
+    // Reuse existing edit flow via ProjectContext if available
+    console.log('Edit project:', project.id);
+  };
+
+  // Function to handle deleting a project
+  const handleDeleteProject = async (projectId) => {
+    const success = await deleteProject(projectId);
+    if (success) {
+      setUserProjects(prev => ({
+        ...prev,
+        owned: prev.owned.filter(p => (p.id || p._id) !== projectId)
+      }));
+      showToast({ type: 'success', title: 'Project deleted', description: 'Your project has been removed.' });
+    }
+  };
+
+  // Function to handle leaving a project (participating)
+  const handleLeaveProject = (projectId) => {
+    console.log('Leave project:', projectId);
+  };
 
   // Function to handle accepting an application
   const handleAcceptApplication = async (applicationId) => {
@@ -424,8 +466,14 @@ function Dashboard() {
         </div> */}
       </header>
 
-      {/* Dashboard tabs for switching between Bookmarks and Applications */}
+      {/* Dashboard tabs for switching between My Projects, Bookmarks and Applications */}
       <div className="dashboard-tabs">
+        <button
+          className={`tab-btn ${activeTab === 'myprojects' ? 'active' : ''}`}
+          onClick={() => setActiveTab('myprojects')}
+        >
+          My Projects
+        </button>
         <button
           className={`tab-btn ${activeTab === 'bookmarks' ? 'active' : ''}`}
           onClick={() => setActiveTab('bookmarks')}
@@ -442,6 +490,67 @@ function Dashboard() {
 
       {/* Main content area */}
       <div className="dashboard-content">
+        {activeTab === 'myprojects' && (
+          <div className="myprojects-content">
+            <div className="myprojects-subtabs">
+              <button
+                className={`subtab-btn ${myProjectsSubTab === 'owned' ? 'active' : ''}`}
+                onClick={() => setMyProjectsSubTab('owned')}
+              >
+                Projects I Own ({userProjects.owned.length})
+              </button>
+              <button
+                className={`subtab-btn ${myProjectsSubTab === 'participating' ? 'active' : ''}`}
+                onClick={() => setMyProjectsSubTab('participating')}
+              >
+                Projects I'm In ({userProjects.participating.length})
+              </button>
+            </div>
+
+            {myProjectsSubTab === 'owned' && (
+              <div className="projects-grid">
+                {userProjects.owned.length === 0 ? (
+                  <div className="empty-state">
+                    <p>You haven't created any projects yet.</p>
+                    <button className="empty-state-btn" onClick={() => setShowCreateProject(true)}>+ Create Your First Project</button>
+                  </div>
+                ) : (
+                  userProjects.owned.map(project => (
+                    <ProjectCard
+                      key={project.id || project._id}
+                      project={project}
+                      isOwned={true}
+                      onEdit={() => handleEditProject(project)}
+                      onDelete={() => handleDeleteProject(project.id || project._id)}
+                      onClick={() => { setActiveCollabProject(project); setShowCollaborationSpace(true); }}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {myProjectsSubTab === 'participating' && (
+              <div className="projects-grid">
+                {userProjects.participating.length === 0 ? (
+                  <div className="empty-state">
+                    <p>You haven't joined any projects yet.</p>
+                    <a href="/projects" className="empty-state-link">Browse Projects to Apply →</a>
+                  </div>
+                ) : (
+                  userProjects.participating.map(project => (
+                    <ProjectCard
+                      key={project.id || project._id}
+                      project={project}
+                      isParticipating={true}
+                      onLeave={() => handleLeaveProject(project.id || project._id)}
+                      onClick={() => { setActiveCollabProject(project); setShowCollaborationSpace(true); }}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {activeTab === 'bookmarks' && (
           <div className="projects-content">
             <span className="projects-count">{bookmarkedProjectsList.length} bookmarked projects</span>
@@ -472,15 +581,15 @@ function Dashboard() {
             {/* <h3>Application Management</h3> */}
             
             {/* Tabs for received and sent applications */}
-            <div className="applications-tabs">
+            <div className="myprojects-subtabs">
               <button 
-                className={`app-tab ${applicationTab === 'received' ? 'active' : ''}`}
+                className={`subtab-btn ${applicationTab === 'received' ? 'active' : ''}`}
                 onClick={() => setApplicationTab('received')}
               >
                 Received ({receivedApplicationsCount})
               </button>
               <button 
-                className={`app-tab ${applicationTab === 'sent' ? 'active' : ''}`}
+                className={`subtab-btn ${applicationTab === 'sent' ? 'active' : ''}`}
                 onClick={() => setApplicationTab('sent')}
               >
                 Sent ({sentApplicationsCount})
@@ -687,6 +796,11 @@ function Dashboard() {
           onClose={() => setShowCollaborationSpace(false)}
           defaultTab="team"
         />
+      )}
+
+      {/* Create Project Modal */}
+      {showCreateProject && (
+        <CreateProjectModal onClose={() => setShowCreateProject(false)} />
       )}
     </div>
   );

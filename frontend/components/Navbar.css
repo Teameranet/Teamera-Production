@@ -299,6 +299,31 @@
   background: rgba(239, 68, 68, 0.05);
 }
 
+.mobile-right-actions {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mobile-notification-btn {
+  background: #f3f4f6;
+  border: none !important;
+  padding: 0.45rem;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.mobile-notification-btn:hover {
+  background: #e5e7eb;
+  border-color: transparent !important;
+}
+
 .mobile-menu-toggle {
   display: none;
   background: none;
@@ -328,6 +353,10 @@
 
   .mobile-menu-toggle {
     display: block;
+  }
+
+  .mobile-right-actions {
+    display: flex;
   }
 
   .mobile-menu {
