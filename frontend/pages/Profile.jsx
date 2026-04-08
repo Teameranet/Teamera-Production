@@ -1,6 +1,6 @@
 // Import necessary hooks and components
 import { useState, useEffect } from 'react';
-import { Edit, MapPin, Calendar, Mail, Github as GitHub, Linkedin, Globe, User, Briefcase, Award, Settings, Eye, Plus, X, Check, ChevronDown, Users, Clock, Map, Trash2 } from 'lucide-react';
+import { Edit, MapPin, Calendar, Mail, Github as GitHub, Linkedin, Globe, User, Briefcase, Settings, Eye, Plus, X, Check, ChevronDown, Users, Clock, Map, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -90,33 +90,12 @@ function Profile() {
     }
   };
 
-  // Sample data for new users (default experience)
-  const defaultExperienceData = [
-    {
-      id: 1,
-      title: "Senior Full Stack Developer",
-      company: "TechCorp Solutions",
-      period: "2022 - Present",
-      description: "Led development of microservices architecture serving 1M+ users. Built and maintained React applications with Node.js backends.",
-      technologies: ["React", "Node.js", "MongoDB", "AWS", "Docker"]
-    },
-    {
-      id: 2,
-      title: "Full Stack Developer",
-      company: "StartupXYZ",
-      period: "2020 - 2022",
-      description: "Early employee at a fintech startup. Developed core platform features and helped scale from 0 to 100K users.",
-      technologies: ["Vue.js", "Python", "PostgreSQL", "Redis"]
-    }
-  ];
-
-
   // Get metrics from user data with fallbacks to default values
   // function: stats, if you want to fetch stats from API, do it here
   const stats = [
     { label: "Projects Created", value: userProjects.owned?.length.toString() || "0" },
     { label: "Hackathons Won", value: user?.hackathonsWon?.toString() || user?.metrics?.hackathonsWon?.toString() || "0" },
-    { label: "Connections Helped", value: userProjects.participating?.length.toString() || "0" }
+    { label: "Projects Joined", value: userProjects.participating?.length.toString() || "0" }
   ];
 
   // Function to get display title based on user role
@@ -532,13 +511,6 @@ function Profile() {
           <Briefcase size={24} />
           <span>Projects</span>
         </div>
-        {/* <div
-          className={`mobile-nav-item ${activeTab === 'achievements' ? 'active' : ''}`}
-          onClick={() => setActiveTab('achievements')}
-        >
-          <Award size={24} />
-          <span>Achievements</span>
-        </div> */}
         <div
           className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
@@ -564,13 +536,6 @@ function Profile() {
           <Briefcase size={18} />
           Projects
         </button>
-        {/* <button
-          className={`tab-button ${activeTab === 'achievements' ? 'active' : ''}`}
-          onClick={() => setActiveTab('achievements')}
-        >
-          <Award size={18} />
-          Achievements
-        </button> */}
         <button
           className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
@@ -706,8 +671,9 @@ function Profile() {
                       <p>Click "Add Experience" below to add your professional background</p>
                     </div>
                   ) : (
-                    <div className="empty-section-prompt">
-                      <p>Add your Experience details to showcase your professional background</p>
+                    <div className="empty-state">
+                      <p>No experience added yet.</p>
+                      <button onClick={() => setIsEditing(true)}>+ Add Experience</button>
                     </div>
                   );
                 })()}
@@ -909,38 +875,6 @@ function Profile() {
       </div>
     );
   }
-
-  // Render achievements tab content
-  // function: renderAchievements, if you want to fetch from API, do it here
-  // COMMENTED OUT - Achievements tab removed
-  /*
-  function renderAchievements() {
-    return (
-      <div className="achievements-content">
-        <div className="achievements-list">
-          {achievements.map(achievement => (
-            <div key={achievement.id} className="achievement-card">
-              <div className="achievement-icon">
-                <span className="trophy">{achievement.icon}</span>
-              </div>
-              <div className="achievement-details">
-                <h4 className="achievement-title">{achievement.title}</h4>
-                <p className="achievement-desc">{achievement.description}</p>
-                <p className="achievement-date">
-                  {new Date(achievement.date).toLocaleDateString('en-US', {
-                    month: 'numeric',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  */
 
   // Render settings tab content
   // function: renderSettings, add API calls for privacy/notification settings as needed
