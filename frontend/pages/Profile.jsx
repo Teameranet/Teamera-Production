@@ -54,6 +54,23 @@ function Profile() {
     loadUserProjects();
   }, [user, getUserProjects]);
 
+  // Auto-add blank entry when entering edit mode with empty experience/education
+  useEffect(() => {
+    if (isEditing) {
+      if (formData.experience.length === 0) {
+        handleInputChange('experience', [{
+          id: Date.now(),
+          title: '', company: '', period: '', description: '', technologies: []
+        }]);
+      }
+      if (formData.education.length === 0) {
+        handleInputChange('education', [{
+          degree: '', institution: '', period: '', details: ''
+        }]);
+      }
+    }
+  }, [isEditing]);
+
   // View project details
   // function: handleViewProject, no API needed, just open modal
   const handleViewProject = (project) => {
@@ -671,9 +688,8 @@ function Profile() {
                       <p>Click "Add Experience" below to add your professional background</p>
                     </div>
                   ) : (
-                    <div className="empty-state">
-                      <p>No experience added yet.</p>
-                      <button onClick={() => setIsEditing(true)}>+ Add Experience</button>
+                    <div className="empty-section-prompt">
+                      <p>Add your experience to demonstrate your skills and expertise.</p>
                     </div>
                   );
                 })()}
