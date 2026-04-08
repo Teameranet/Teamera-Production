@@ -59,6 +59,8 @@ function Dashboard() {
   const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
   // State to show/hide create project modal
   const [showCreateProject, setShowCreateProject] = useState(false);
+  // State to hold the project being edited
+  const [projectToEdit, setProjectToEdit] = useState(null);
   // State to manage which application sub-tab is active: 'received' or 'sent'
   const [applicationTab, setApplicationTab] = useState('received');
   // State to track selected user for profile modal
@@ -143,8 +145,14 @@ function Dashboard() {
 
   // Function to handle editing a project
   const handleEditProject = (project) => {
-    // Reuse existing edit flow via ProjectContext if available
-    console.log('Edit project:', project.id);
+    setProjectToEdit(project);
+    setShowCreateProject(true);
+  };
+
+  // Function to close the create/edit project modal
+  const handleCloseCreateModal = () => {
+    setShowCreateProject(false);
+    setProjectToEdit(null);
   };
 
   // Function to handle deleting a project
@@ -800,7 +808,10 @@ function Dashboard() {
 
       {/* Create Project Modal */}
       {showCreateProject && (
-        <CreateProjectModal onClose={() => setShowCreateProject(false)} />
+        <CreateProjectModal
+          onClose={handleCloseCreateModal}
+          projectToEdit={projectToEdit}
+        />
       )}
     </div>
   );

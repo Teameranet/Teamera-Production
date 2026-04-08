@@ -6,14 +6,14 @@ import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
 import ProjectCard from '../components/ProjectCard';
 import ProjectModal from '../components/ProjectModal';
-import CreateProjectModal from '../components/CreateProjectModal';
 import './Profile.css';
+
 
 // Main Profile component
 function Profile() {
   // Auth and project context hooks
   const { user, updateProfile, setUser, profileUpdateTrigger } = useAuth();
-  const { getUserProjects, updateProjectStage, editProject, deleteProject, leaveProject } = useProjects();
+  const { getUserProjects } = useProjects();
   const { showToast } = useNotifications();
 
   // Function to map experience to skill level
@@ -33,26 +33,12 @@ function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   // State for user's projects
   const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
-  // State for editing project stage
-  const [editingProjectStage, setEditingProjectStage] = useState(null);
   // State for password reset message
   const [resetPasswordMessage, setResetPasswordMessage] = useState('');
 
   // Project modal state
   const [selectedProject, setSelectedProject] = useState(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
-  const [showEditProjectModal, setShowEditProjectModal] = useState(false);
-  const [projectToEdit, setProjectToEdit] = useState(null);
-
-  // List of possible project stages
-  const projectStages = [
-    'Ideation Stage',
-    'Idea Validation',
-    'MVP Development',
-    'Beta Testing',
-    'Market Ready',
-    'Scaling'
-  ];
 
   // useEffect to load user projects when user is available
   useEffect(() => {
@@ -67,86 +53,6 @@ function Profile() {
     
     loadUserProjects();
   }, [user, getUserProjects]);
-
-  // Handle project stage change
-  // function: handleStageChange, add API call to update project stage here
-  const handleStageChange = (projectId, newStage) => {
-    // Add API call to update project stage in backend here
-    const success = updateProjectStage(projectId, newStage);
-    if (success) {
-      // Update local state
-      setUserProjects(prev => ({
-        ...prev,
-        owned: prev.owned.map(project =>
-          project.id === projectId
-            ? { ...project, stage: newStage }
-            : project
-        )
-      }));
-      setEditingProjectStage(null);
-    }
-  };
-
-  // Handle editing a project
-  // function: handleEditProject, open edit modal, API handled in modal
-  const handleEditProject = (project) => {
-    setProjectToEdit(project);
-    setShowEditProjectModal(true);
-  };
-
-  // Handle deleting a project
-  // function: handleDeleteProject, add API call to delete project here
-  const handleDeleteProject = (projectId) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
-      const success = deleteProject(projectId);
-      if (success) {
-        setUserProjects(prev => ({
-          ...prev,
-          owned: prev.owned.filter(project =>
-            project.id !== projectId && project._id !== projectId
-          )
-        }));
-        showToast({
-          type: 'success',
-          title: 'Project deleted',
-          description: 'Your project has been permanently deleted.',
-        });
-      } else {
-        showToast({
-          type: 'error',
-          title: 'Failed to delete project',
-          description: 'Something went wrong. Please try again.',
-        });
-      }
-    }
-  };
-
-  // Handle leaving a project
-  // function: handleLeaveProject, add API call to leave project here
-  const handleLeaveProject = (projectId) => {
-    if (window.confirm('Are you sure you want to leave this project?')) {
-      const success = leaveProject(projectId, user.id || user._id);
-      if (success) {
-        setUserProjects(prev => ({
-          ...prev,
-          participating: prev.participating.filter(project =>
-            project.id !== projectId && project._id !== projectId
-          )
-        }));
-        showToast({
-          type: 'warning',
-          title: 'Left project',
-          description: 'You have successfully left the project.',
-        });
-      } else {
-        showToast({
-          type: 'error',
-          title: 'Failed to leave project',
-          description: 'Something went wrong. Please try again.',
-        });
-      }
-    }
-  };
 
   // View project details
   // function: handleViewProject, no API needed, just open modal
@@ -689,17 +595,6 @@ function Profile() {
           onClose={handleCloseProjectModal}
         />
       )}
-
-      {/* Edit project modal */}
-      {showEditProjectModal && projectToEdit && (
-        <CreateProjectModal
-          projectToEdit={projectToEdit}
-          onClose={() => {
-            setShowEditProjectModal(false);
-            setProjectToEdit(null);
-          }}
-        />
-      )}
     </div>
   );
 
@@ -994,9 +889,6 @@ function Profile() {
                 key={project.id || project._id}
                 project={project}
                 onClick={handleViewProject}
-                isOwned={true}
-                onEdit={handleEditProject}
-                onDelete={handleDeleteProject}
               />
             ))}
           </div>
@@ -1010,8 +902,6 @@ function Profile() {
                 key={project.id || project._id}
                 project={project}
                 onClick={handleViewProject}
-                isParticipating={true}
-                onLeave={handleLeaveProject}
               />
             ))}
           </div>
