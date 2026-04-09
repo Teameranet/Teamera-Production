@@ -302,7 +302,6 @@ Build a team collaboration platform (squadup.dev or teamsync.io) where developer
 ### 7.2 Chat Tab (ChatTab.jsx / ChatTab.css)
 - Messages stored in localStorage, associated with project via `projectId`
 - Show: user avatar (initials), name, timestamp (relative: "Just now", "2 mins", "1 hour")
-- Like and reply counts per message
 - Message input at bottom → send on click or Enter
 - Messages persist across sessions; filter by selected project
 - Empty state: icon + "No messages yet — Start the conversation"
