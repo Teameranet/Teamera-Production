@@ -1,18 +1,20 @@
 // Import necessary hooks and components
 import { useState, useEffect } from 'react';
-import { Edit, MapPin, Calendar, Mail, Github as GitHub, Linkedin, Globe, User, Briefcase, Award, Settings, Eye, Plus, X, Check, ChevronDown, Users, Clock, Map, Trash2 } from 'lucide-react';
+import { Edit, MapPin, Calendar, Mail, Github as GitHub, Linkedin, Globe, User, Briefcase, Settings, Eye, Plus, X, Check, ChevronDown, Users, Clock, Map, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
+import { useNotifications } from '../context/NotificationContext';
 import ProjectCard from '../components/ProjectCard';
 import ProjectModal from '../components/ProjectModal';
-import CreateProjectModal from '../components/CreateProjectModal';
 import './Profile.css';
+
 
 // Main Profile component
 function Profile() {
   // Auth and project context hooks
   const { user, updateProfile, setUser, profileUpdateTrigger } = useAuth();
-  const { getUserProjects, updateProjectStage, editProject, deleteProject, leaveProject } = useProjects();
+  const { getUserProjects } = useProjects();
+  const { showToast } = useNotifications();
 
   // Function to map experience to skill level
   const mapExperienceToSkillLevel = (experience) => {
@@ -31,104 +33,43 @@ function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   // State for user's projects
   const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
-  // State for editing project stage
-  const [editingProjectStage, setEditingProjectStage] = useState(null);
   // State for password reset message
   const [resetPasswordMessage, setResetPasswordMessage] = useState('');
 
   // Project modal state
   const [selectedProject, setSelectedProject] = useState(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
-  const [showEditProjectModal, setShowEditProjectModal] = useState(false);
-  const [projectToEdit, setProjectToEdit] = useState(null);
-
-  // List of possible project stages
-  const projectStages = [
-    'Ideation Stage',
-    'Idea Validation',
-    'MVP Development',
-    'Beta Testing',
-    'Market Ready',
-    'Scaling'
-  ];
 
   // useEffect to load user projects when user is available
-  // function: useEffect, add API call to fetch user projects here if needed
   useEffect(() => {
-    if (user && user.id) {
-      // Here you can add API call to fetch user projects from backend
-      const projects = getUserProjects(user.id);
-      setUserProjects(projects);
-    }
+    const loadUserProjects = async () => {
+      if (user && user.id) {
+        // CRITICAL FIX: Use async/await to fetch projects from backend API
+        // Backend determines participation based on application status (ACCEPTED/INVITED)
+        const projects = await getUserProjects(user.id);
+        setUserProjects(projects);
+      }
+    };
+    
+    loadUserProjects();
   }, [user, getUserProjects]);
 
-  // Handle project stage change
-  // function: handleStageChange, add API call to update project stage here
-  const handleStageChange = (projectId, newStage) => {
-    // Add API call to update project stage in backend here
-    const success = updateProjectStage(projectId, newStage);
-    if (success) {
-      // Update local state
-      setUserProjects(prev => ({
-        ...prev,
-        owned: prev.owned.map(project =>
-          project.id === projectId
-            ? { ...project, stage: newStage }
-            : project
-        )
-      }));
-      setEditingProjectStage(null);
-    }
-  };
-
-  // Handle editing a project
-  // function: handleEditProject, open edit modal, API handled in modal
-  const handleEditProject = (project) => {
-    setProjectToEdit(project);
-    setShowEditProjectModal(true);
-  };
-
-  // Handle deleting a project
-  // function: handleDeleteProject, add API call to delete project here
-  const handleDeleteProject = (projectId) => {
-    if (window.confirm('Are you sure you want to delete this project?')) {
-      // Use the project ID (could be either id or _id from MongoDB)
-      const success = deleteProject(projectId);
-      if (success) {
-        // Update local state after successful deletion
-        setUserProjects(prev => ({
-          ...prev,
-          owned: prev.owned.filter(project => 
-            project.id !== projectId && project._id !== projectId
-          )
-        }));
-        console.log("Project deleted successfully:", projectId);
-      } else {
-        console.error("Failed to delete project:", projectId);
+  // Auto-add blank entry when entering edit mode with empty experience/education
+  useEffect(() => {
+    if (isEditing) {
+      if (formData.experience.length === 0) {
+        handleInputChange('experience', [{
+          id: Date.now(),
+          title: '', company: '', period: '', description: '', technologies: []
+        }]);
+      }
+      if (formData.education.length === 0) {
+        handleInputChange('education', [{
+          degree: '', institution: '', period: '', details: ''
+        }]);
       }
     }
-  };
-
-  // Handle leaving a project
-  // function: handleLeaveProject, add API call to leave project here
-  const handleLeaveProject = (projectId) => {
-    if (window.confirm('Are you sure you want to leave this project?')) {
-      // Add API call to leave project in backend here
-      const success = leaveProject(projectId, user.id || user._id);
-      if (success) {
-        // Update local state after successfully leaving
-        setUserProjects(prev => ({
-          ...prev,
-          participating: prev.participating.filter(project => 
-            project.id !== projectId && project._id !== projectId
-          )
-        }));
-        console.log("Project left successfully:", projectId);
-      } else {
-        console.error("Failed to leave project:", projectId);
-      }
-    }
-  };
+  }, [isEditing]);
 
   // View project details
   // function: handleViewProject, no API needed, just open modal
@@ -166,33 +107,12 @@ function Profile() {
     }
   };
 
-  // Sample data for new users (default experience)
-  const defaultExperienceData = [
-    {
-      id: 1,
-      title: "Senior Full Stack Developer",
-      company: "TechCorp Solutions",
-      period: "2022 - Present",
-      description: "Led development of microservices architecture serving 1M+ users. Built and maintained React applications with Node.js backends.",
-      technologies: ["React", "Node.js", "MongoDB", "AWS", "Docker"]
-    },
-    {
-      id: 2,
-      title: "Full Stack Developer",
-      company: "StartupXYZ",
-      period: "2020 - 2022",
-      description: "Early employee at a fintech startup. Developed core platform features and helped scale from 0 to 100K users.",
-      technologies: ["Vue.js", "Python", "PostgreSQL", "Redis"]
-    }
-  ];
-
-
   // Get metrics from user data with fallbacks to default values
   // function: stats, if you want to fetch stats from API, do it here
   const stats = [
     { label: "Projects Created", value: userProjects.owned?.length.toString() || "0" },
     { label: "Hackathons Won", value: user?.hackathonsWon?.toString() || user?.metrics?.hackathonsWon?.toString() || "0" },
-    { label: "Connections Helped", value: userProjects.participating?.length.toString() || "0" }
+    { label: "Projects Joined", value: userProjects.participating?.length.toString() || "0" }
   ];
 
   // Function to get display title based on user role
@@ -386,17 +306,27 @@ function Profile() {
       const result = await updateProfile(profileData);
       
       if (result.success) {
-        // Update local user state
         setUser(result.user);
         setIsEditing(false);
-        console.log('Profile updated successfully');
+        showToast({
+          type: 'success',
+          title: 'Profile updated',
+          description: 'Your profile changes have been saved successfully.',
+        });
       } else {
-        console.error('Failed to update profile:', result.error);
-        alert(`Failed to update profile: ${result.error || 'Unknown error'}`);
+        showToast({
+          type: 'error',
+          title: 'Failed to update profile',
+          description: result.error || 'Something went wrong. Please try again.',
+        });
       }
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert(`An error occurred while saving your profile: ${error.message}`);
+      showToast({
+        type: 'error',
+        title: 'Unexpected error',
+        description: error.message || 'An error occurred while saving your profile.',
+      });
     }
   };
 
@@ -598,13 +528,6 @@ function Profile() {
           <Briefcase size={24} />
           <span>Projects</span>
         </div>
-        {/* <div
-          className={`mobile-nav-item ${activeTab === 'achievements' ? 'active' : ''}`}
-          onClick={() => setActiveTab('achievements')}
-        >
-          <Award size={24} />
-          <span>Achievements</span>
-        </div> */}
         <div
           className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
@@ -630,13 +553,6 @@ function Profile() {
           <Briefcase size={18} />
           Projects
         </button>
-        {/* <button
-          className={`tab-button ${activeTab === 'achievements' ? 'active' : ''}`}
-          onClick={() => setActiveTab('achievements')}
-        >
-          <Award size={18} />
-          Achievements
-        </button> */}
         <button
           className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
@@ -659,17 +575,6 @@ function Profile() {
         <ProjectModal
           project={selectedProject}
           onClose={handleCloseProjectModal}
-        />
-      )}
-
-      {/* Edit project modal */}
-      {showEditProjectModal && projectToEdit && (
-        <CreateProjectModal
-          projectToEdit={projectToEdit}
-          onClose={() => {
-            setShowEditProjectModal(false);
-            setProjectToEdit(null);
-          }}
         />
       )}
     </div>
@@ -784,7 +689,7 @@ function Profile() {
                     </div>
                   ) : (
                     <div className="empty-section-prompt">
-                      <p>Add your Experience details to showcase your professional background</p>
+                      <p>Add your experience to demonstrate your skills and expertise.</p>
                     </div>
                   );
                 })()}
@@ -966,9 +871,6 @@ function Profile() {
                 key={project.id || project._id}
                 project={project}
                 onClick={handleViewProject}
-                isOwned={true}
-                onEdit={handleEditProject}
-                onDelete={handleDeleteProject}
               />
             ))}
           </div>
@@ -982,8 +884,6 @@ function Profile() {
                 key={project.id || project._id}
                 project={project}
                 onClick={handleViewProject}
-                isParticipating={true}
-                onLeave={handleLeaveProject}
               />
             ))}
           </div>
@@ -991,38 +891,6 @@ function Profile() {
       </div>
     );
   }
-
-  // Render achievements tab content
-  // function: renderAchievements, if you want to fetch from API, do it here
-  // COMMENTED OUT - Achievements tab removed
-  /*
-  function renderAchievements() {
-    return (
-      <div className="achievements-content">
-        <div className="achievements-list">
-          {achievements.map(achievement => (
-            <div key={achievement.id} className="achievement-card">
-              <div className="achievement-icon">
-                <span className="trophy">{achievement.icon}</span>
-              </div>
-              <div className="achievement-details">
-                <h4 className="achievement-title">{achievement.title}</h4>
-                <p className="achievement-desc">{achievement.description}</p>
-                <p className="achievement-date">
-                  {new Date(achievement.date).toLocaleDateString('en-US', {
-                    month: 'numeric',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  */
 
   // Render settings tab content
   // function: renderSettings, add API calls for privacy/notification settings as needed

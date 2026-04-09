@@ -2,6 +2,7 @@ import Dashboard from '../../models/Dashboard.js';
 import Application from '../../models/Application.js';
 import User from '../../models/User.js';
 import Project from '../../models/Project.js';
+import { createNotification } from './notificationController.js';
 
 // Get dashboard data for a user
 export const getDashboard = async (req, res) => {
@@ -154,7 +155,8 @@ export const submitApplication = async (req, res) => {
       skills,
       hasResume,
       resumeUrl,
-      resumeFileName
+      resumeFileName,
+      positionId
     } = req.body;
 
     // Validate required fields
@@ -219,6 +221,8 @@ export const submitApplication = async (req, res) => {
       });
     }
 
+
+
     // Check if user already applied to this project for this position
     // Only block if there's a PENDING or ACCEPTED application
     // Allow re-application if previous was REJECTED, QUIT, or REMOVED
@@ -266,6 +270,7 @@ export const submitApplication = async (req, res) => {
       projectStage: projectStage || project.stage || '',
       projectIndustry: projectIndustry || project.industry || '',
       position,
+      positionId: positionId || '',
       message: message || '',
       skills: skills || [],
       status: 'PENDING',
@@ -298,6 +303,7 @@ export const submitApplication = async (req, res) => {
       projectName,
       projectStage: projectStage || project.stage || '',
       position,
+      positionId: positionId || '',
       message: message || '',
       skills: skills || [],
       status: 'PENDING',
@@ -332,6 +338,19 @@ export const submitApplication = async (req, res) => {
       ownerApplication.save(),
       project.save()
     ]);
+
+    // Notify project owner of new application
+    await createNotification({
+      recipientId: projectOwnerId,
+      type: 'NEW_APPLICATION',
+      message: `${projectName}: New application received for ${position}.`,
+      projectId,
+      projectName,
+      positionName: position,
+      actorName: applicant.name,
+      navigationPath: '/dashboard',
+      navigationState: { tab: 'applications', subTab: 'received' }
+    });
 
     res.status(201).json({
       success: true,
@@ -446,22 +465,53 @@ export const updateApplicationStatus = async (req, res) => {
     if (status === 'ACCEPTED') {
       const project = await Project.findById(application.projectId);
       if (project) {
-        const isAlreadyMember = project.teamMembers.some(
-          member => member.id && member.id.toString() === application.applicantId.toString()
-        );
-
-        if (!isAlreadyMember) {
-          project.teamMembers.push({
-            id: application.applicantId,
-            name: application.applicantName,
-            role: application.position,
-            email: application.applicantEmail,
-            avatar: application.applicantAvatar || '',
-            applicantColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
-          });
-          await project.save();
-        }
+        project.teamMembers.push({
+          id: application.applicantId,
+          name: application.applicantName,
+          role: application.position,
+          positionId: application.positionId,
+          email: application.applicantEmail,
+          avatar: application.applicantAvatar || '',
+          applicantColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
+        });
+        await project.save();
       }
+    }
+
+    // Send notification to the affected member
+    if (status === 'ACCEPTED') {
+      await createNotification({
+        recipientId: application.applicantId,
+        type: 'APPLICATION_ACCEPTED',
+        message: `${application.projectName}: Your application for ${application.position} has been accepted.`,
+        projectId: application.projectId,
+        projectName: application.projectName,
+        positionName: application.position,
+        navigationPath: '/dashboard',
+        navigationState: { tab: 'applications', subTab: 'sent' }
+      });
+    } else if (status === 'REJECTED') {
+      await createNotification({
+        recipientId: application.applicantId,
+        type: 'APPLICATION_REJECTED',
+        message: `${application.projectName}: Your application for ${application.position} has been rejected.`,
+        projectId: application.projectId,
+        projectName: application.projectName,
+        positionName: application.position,
+        navigationPath: '/dashboard',
+        navigationState: { tab: 'applications', subTab: 'sent' }
+      });
+    } else if (status === 'REMOVED') {
+      await createNotification({
+        recipientId: application.applicantId,
+        type: 'MEMBER_REMOVED',
+        message: `${application.projectName}: You have been removed from the ${application.position} role.`,
+        projectId: application.projectId,
+        projectName: application.projectName,
+        positionName: application.position,
+        navigationPath: '/dashboard',
+        navigationState: { tab: 'applications', subTab: 'sent' }
+      });
     }
 
     res.status(200).json({
@@ -645,6 +695,141 @@ export const getProjectApplications = async (req, res) => {
   }
 };
 
+// Check if user has already applied to a project position
+export const checkUserApplication = async (req, res) => {
+  try {
+    const { projectId, userId, position, positionId } = req.query;
+
+    if (!projectId || !userId || (!position && !positionId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: projectId, userId, and either position or positionId are required'
+      });
+    }
+
+    // Get user's application document
+    const userApplication = await Application.findOne({ userId });
+    
+    if (!userApplication) {
+      return res.json({
+        success: true,
+        data: {
+          hasApplied: false,
+          application: null,
+          previousApplication: null
+        }
+      });
+    }
+
+    // Find ALL applications for this project and position (including historical ones)
+    const allApplications = userApplication.applications_sent.filter(
+      app => app.projectId.toString() === projectId && 
+             (positionId ? app.positionId === positionId : app.position === position)
+    );
+
+    if (allApplications.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          hasApplied: false,
+          application: null,
+          previousApplication: null
+        }
+      });
+    }
+
+    // Sort by appliedDate to get the most recent application
+    allApplications.sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate));
+    const mostRecentApplication = allApplications[0];
+
+    // Check if the most recent application is PENDING, ACCEPTED, or INVITED (active)
+    const isActive = mostRecentApplication.status === 'PENDING' || mostRecentApplication.status === 'ACCEPTED' || mostRecentApplication.status === 'INVITED';
+
+    // Check if there's a previous application history (REJECTED, QUIT, or REMOVED)
+    const hasPreviousHistory = mostRecentApplication.status === 'REJECTED' || 
+                               mostRecentApplication.status === 'QUIT' || 
+                               mostRecentApplication.status === 'REMOVED';
+
+    res.json({
+      success: true,
+      data: {
+        hasApplied: isActive,
+        application: isActive ? {
+          applicationId: mostRecentApplication.applicationId,
+          status: mostRecentApplication.status,
+          position: mostRecentApplication.position,
+          projectName: mostRecentApplication.projectName,
+          appliedDate: mostRecentApplication.appliedDate,
+          statusUpdatedAt: mostRecentApplication.statusUpdatedAt
+        } : null,
+        // Include previous application history for UI to show appropriate messages
+        previousApplication: hasPreviousHistory ? {
+          applicationId: mostRecentApplication.applicationId,
+          status: mostRecentApplication.status,
+          position: mostRecentApplication.position,
+          projectName: mostRecentApplication.projectName,
+          appliedDate: mostRecentApplication.appliedDate,
+          statusUpdatedAt: mostRecentApplication.statusUpdatedAt,
+          rejectionReason: mostRecentApplication.rejectionReason || '',
+          removalReason: mostRecentApplication.removalReason || '',
+          quitAt: mostRecentApplication.quitAt || null,
+          removedFromTeamAt: mostRecentApplication.removedFromTeamAt || null
+        } : null
+      }
+    });
+  } catch (error) {
+    console.error('Error checking user application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking user application',
+      error: error.message
+    });
+  }
+};
+
+
+// Get all INVITED applications for a user on a specific project
+// Used by ProjectModal to show invitation banners (including custom positions)
+export const getProjectInvitations = async (req, res) => {
+  try {
+    const { projectId, userId } = req.query;
+
+    if (!projectId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required parameters: projectId and userId'
+      });
+    }
+
+    const userApplication = await Application.findOne({ userId });
+
+    if (!userApplication) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const invitations = userApplication.applications_sent
+      .filter(app =>
+        app.projectId.toString() === projectId &&
+        app.status === 'INVITED'
+      )
+      .map(app => ({
+        applicationId: app.applicationId,
+        position: app.position,
+        positionId: app.positionId || null,
+        projectOwnerName: app.projectOwnerName,
+        appliedDate: app.appliedDate
+      }));
+
+    res.json({ success: true, data: invitations });
+  } catch (error) {
+    console.error('Error fetching project invitations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching project invitations',
+      error: error.message
+    });
+  }
+};
 
 export default {
   getDashboard,
@@ -655,5 +840,7 @@ export default {
   getDashboardStats,
   getBookmarkedProjects,
   getApplications,
-  getProjectApplications
+  getProjectApplications,
+  checkUserApplication,
+  getProjectInvitations
 };

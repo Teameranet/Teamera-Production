@@ -72,6 +72,10 @@ const applicationSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    positionId: {
+      type: String,
+      required: false
+    },
     message: {
       type: String,
       default: ''
@@ -196,6 +200,10 @@ const applicationSchema = new mongoose.Schema({
     position: {
       type: String,
       required: true
+    },
+    positionId: {
+      type: String,
+      required: false
     },
     message: {
       type: String,
@@ -341,7 +349,7 @@ const applicationSchema = new mongoose.Schema({
 });
 
 // Indexes for faster queries
-applicationSchema.index({ userId: 1 }, { unique: true });
+// Note: userId index is already created by unique: true in schema definition
 applicationSchema.index({ 'applications_received.applicationId': 1 });
 applicationSchema.index({ 'applications_received.status': 1 });
 applicationSchema.index({ 'applications_received.applicantId': 1 });

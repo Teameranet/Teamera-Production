@@ -39,6 +39,10 @@ const projectSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    positionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project.openPositions'
+    },
     avatar: String,
     email: String,
     applicantColor: String

@@ -1,6 +1,7 @@
 import Project from '../../models/Project.js';
 import User from '../../models/User.js';
 import Application from '../../models/Application.js';
+import { createNotification } from './notificationController.js';
 import {
   successResponse,
   errorResponse,
@@ -67,9 +68,15 @@ const projectController = {
 
     // Create invitation records for invited team members (excluding founder)
     if (projectData.teamMembers && projectData.teamMembers.length > 0) {
-      const invitedMembers = projectData.teamMembers.filter(
-        member => member.role !== 'Founder' && member.id
-      );
+      const invitedMembers = projectData.teamMembers
+        .filter(member => member.role !== 'Founder' && member.id)
+        .map(member => {
+          const position = newProject.openPositions.find(p => p.role === member.role);
+          return {
+            ...member,
+            positionId: position ? position._id.toString() : (member.positionId || null)
+          };
+        });
 
       for (const member of invitedMembers) {
         try {
@@ -100,6 +107,7 @@ const projectController = {
                   projectName: newProject.title,
                   projectStage: newProject.stage,
                   position: member.role,
+                  positionId: member.positionId,
                   message: 'Invited to join the project',
                   status: 'INVITED',
                   appliedDate: new Date(),
@@ -129,6 +137,7 @@ const projectController = {
                   projectStage: newProject.stage,
                   projectIndustry: newProject.industry,
                   position: member.role,
+                  positionId: member.positionId,
                   message: 'Invited to join the project',
                   status: 'INVITED',
                   appliedDate: new Date(),
@@ -140,6 +149,19 @@ const projectController = {
           ).then(doc => {
             doc.updateStats();
             return doc.save();
+          });
+
+          // Notify invited member
+          await createNotification({
+            recipientId: member.id,
+            type: 'INVITATION_RECEIVED',
+            message: `${newProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+            projectId: newProject._id,
+            projectName: newProject.title,
+            positionName: member.role,
+            actorName: owner.name,
+            navigationPath: '/dashboard',
+            navigationState: { tab: 'applications', subTab: 'sent' }
           });
         } catch (error) {
           console.error('Error creating invitation record:', error);
@@ -169,6 +191,147 @@ const projectController = {
         .json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
     }
 
+    // CRITICAL DATA INTEGRITY: Ensure all ACCEPTED members are preserved during updates
+    // unless this is an EXPLICIT membership change that doesn't break relationships.
+    // Participation should depend on status/membership, not on project fields.
+    let membersActuallyChanged = false;
+    let memberRolesChanged = []; // Track members who had their role changed
+
+    if (updateData.teamMembers !== undefined) {
+      const originalMembers = originalProject.teamMembers || [];
+      const newMembersInUpdate = updateData.teamMembers || [];
+      
+      // Helper to normalize IDs for comparison
+      const getNormalizedId = (idOrObj) => {
+        if (!idOrObj) return null;
+        if (typeof idOrObj === 'string') return idOrObj;
+        if (typeof idOrObj === 'object') {
+          return (idOrObj._id || idOrObj).toString();
+        }
+        return idOrObj.toString();
+      };
+
+      const originalMemberIdsSet = new Set(originalMembers
+        .map(m => getNormalizedId(m.id))
+        .filter(Boolean));
+      
+      const newMemberIdsSet = new Set(newMembersInUpdate
+        .map(m => getNormalizedId(m.id))
+        .filter(Boolean));
+      
+      // Identify members genuinely added
+      membersActuallyChanged = newMembersInUpdate.some(m => {
+        const mid = getNormalizedId(m.id);
+        return mid && !originalMemberIdsSet.has(mid);
+      });
+
+      // SYNC ROLE CHANGES: Detect if an existing member's role was changed in the update
+      for (const newMember of newMembersInUpdate) {
+        const mid = getNormalizedId(newMember.id);
+        if (mid && originalMemberIdsSet.has(mid)) {
+          const oldMember = originalMembers.find(m => getNormalizedId(m.id) === mid);
+          const oldPosId = getNormalizedId(oldMember.positionId);
+          const newPosId = getNormalizedId(newMember.positionId);
+
+          if (oldMember && (oldMember.role !== newMember.role || oldPosId !== newPosId)) {
+            console.log(`Detected role change for member ${mid}: "${oldMember.role}" → "${newMember.role}"`);
+            memberRolesChanged.push({
+              userId: mid,
+              oldRole: oldMember.role,
+              oldPositionId: oldPosId,
+              newRole: newMember.role,
+              newPositionId: newPosId
+            });
+          }
+        }
+      }
+
+      // Identify members genuinely removed (present in original but NOT in update)
+      const removedMembers = originalMembers.filter(m => {
+        const mid = getNormalizedId(m.id);
+        return mid && !newMemberIdsSet.has(mid) && m.role !== 'Founder';
+      });
+
+      if (removedMembers.length > 0) {
+        console.log(`Processing removal for ${removedMembers.length} members missing from update.`);
+        const now = new Date();
+        for (const rm of removedMembers) {
+          const userId = getNormalizedId(rm.id);
+          try {
+            // Update applicant's application record (sent)
+            const applicantApp = await Application.findOne({ userId });
+            if (applicantApp) {
+              const app = applicantApp.applications_sent.find(
+                a => a.projectId.toString() === id && 
+                   (a.status === 'ACCEPTED' || a.status === 'INVITED')
+              );
+              if (app) {
+                app.status = 'REMOVED';
+                app.statusUpdatedAt = now;
+                app.removedFromTeamAt = now;
+                app.removalReason = 'Removed by project owner during project update';
+                applicantApp.updateStats();
+                await applicantApp.save();
+                console.log(`Marked application status as REMOVED for user ${userId}`);
+              }
+            }
+
+            // Update owner's application record (received)
+            const ownerApp = await Application.findOne({ userId: originalProject.ownerId });
+            if (ownerApp) {
+              const app = ownerApp.applications_received.find(
+                a => a.projectId.toString() === id && 
+                   a.applicantId.toString() === userId &&
+                   (a.status === 'ACCEPTED' || a.status === 'INVITED')
+              );
+              if (app) {
+                app.status = 'REMOVED';
+                app.statusUpdatedAt = now;
+                app.removedFromTeamAt = now;
+                app.removalReason = 'Removed by project owner during project update';
+                ownerApp.updateStats();
+                await ownerApp.save();
+              }
+            }
+
+            // Notify removed member
+            const removedMemberApp = await Application.findOne({ userId });
+            const removedApp = removedMemberApp?.applications_sent.find(
+              a => a.projectId.toString() === id && a.status === 'REMOVED'
+            );
+            if (removedApp) {
+              await createNotification({
+                recipientId: userId,
+                type: 'MEMBER_REMOVED',
+                message: `${originalProject.title}: You have been removed from the ${removedApp.position} role.`,
+                projectId: id,
+                projectName: originalProject.title,
+                positionName: removedApp.position,
+                navigationPath: '/dashboard',
+                navigationState: { tab: 'applications', subTab: 'sent' }
+              });
+            }
+          } catch (err) {
+            console.error(`Error during member removal sync for user ${userId}:`, err);
+          }
+        }
+      }
+
+      // Final deduplication
+      const uniqueMembers = [];
+      const seenMemberIds = new Set();
+      for (const member of updateData.teamMembers) {
+        const mid = getNormalizedId(member.id);
+        if (mid && !seenMemberIds.has(mid)) {
+          uniqueMembers.push(member);
+          seenMemberIds.add(mid);
+        } else if (!mid) {
+          uniqueMembers.push(member);
+        }
+      }
+      updateData.teamMembers = uniqueMembers;
+    }
+
     const updatedProject = await Project.findByIdAndUpdate(
       id,
       { $set: updateData },
@@ -177,174 +340,332 @@ const projectController = {
       .populate('ownerId', 'name email')
       .populate('teamMembers.id', 'name email');
 
-    // Check for newly added team members and removed team members
-    if (updateData.teamMembers) {
-      const originalMemberIds = originalProject.teamMembers
-        .filter(m => m.id && m.role !== 'Founder')
-        .map(m => m.id.toString());
-      
-      const updatedMemberIds = updateData.teamMembers
-        .filter(m => m.id && m.role !== 'Founder')
-        .map(m => m.id.toString());
-      
-      // Find newly added members
-      const newMembers = updateData.teamMembers.filter(
-        member => member.id && 
-                  member.role !== 'Founder' && 
-                  !originalMemberIds.includes(member.id.toString())
-      );
-
-      // Find removed members
-      const removedMemberIds = originalMemberIds.filter(
-        memberId => !updatedMemberIds.includes(memberId)
-      );
-
-      // Handle newly added members (create invitations)
-      for (const member of newMembers) {
+    // CRITICAL FIX: Sync individual member role updates back to their Applications
+    // This ensures that when an owner changes a member's position/custom-role, 
+    // the application record stays in sync with matching projectId + userId + status
+    if (memberRolesChanged.length > 0) {
+      for (const change of memberRolesChanged) {
         try {
-          const applicationId = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          
-          // Get owner details
-          const owner = await User.findById(updatedProject.ownerId);
-          if (!owner) continue;
+          // Update applicant's send record - Match by userId, projectId, and status
+          // Use ID-based matching primarily, with role name as fallback
+          const sentFilter = { 
+            userId: change.userId, 
+            'applications_sent.projectId': id,
+            'applications_sent.status': { $in: ['ACCEPTED', 'INVITED'] }
+          };
 
-          // Get invited member details
-          const invitedUser = await User.findById(member.id);
-          if (!invitedUser) continue;
+          if (change.oldPositionId) {
+            sentFilter['$or'] = [
+              { 'applications_sent.positionId': change.oldPositionId },
+              { 'applications_sent.position': change.oldRole }
+            ];
+          } else {
+            sentFilter['applications_sent.position'] = change.oldRole;
+          }
 
-          // Create/update application record for project owner (received)
-          await Application.findOneAndUpdate(
-            { userId: updatedProject.ownerId },
-            {
-              $push: {
-                applications_received: {
-                  applicationId,
-                  applicantId: member.id,
-                  applicantName: member.name,
-                  applicantEmail: member.email || invitedUser.email,
-                  applicantAvatar: invitedUser.avatar || '',
-                  applicantTitle: invitedUser.title || '',
-                  applicantLocation: invitedUser.location || '',
-                  projectId: updatedProject._id,
-                  projectName: updatedProject.title,
-                  projectStage: updatedProject.stage,
-                  position: member.role,
-                  message: 'Invited to join the project',
-                  status: 'INVITED',
-                  appliedDate: new Date(),
-                  statusUpdatedAt: new Date()
-                }
-              }
+          await Application.updateOne(
+            sentFilter,
+            { 
+              $set: { 
+                'applications_sent.$[elem].position': change.newRole,
+                'applications_sent.$[elem].positionId': change.newPositionId 
+              } 
             },
-            { upsert: true, new: true }
-          ).then(doc => {
-            doc.updateStats();
-            return doc.save();
-          });
+            { arrayFilters: [{ 
+              'elem.projectId': id, 
+              'elem.status': { $in: ['ACCEPTED', 'INVITED'] },
+              $or: [
+                { 'elem.positionId': change.oldPositionId || 'NONE' },
+                { 'elem.position': change.oldRole }
+              ]
+            }] }
+          );
 
-          // Create/update application record for invited member (sent)
-          await Application.findOneAndUpdate(
-            { userId: member.id },
-            {
-              $push: {
-                applications_sent: {
-                  applicationId,
-                  projectOwnerId: updatedProject.ownerId,
-                  projectOwnerName: owner.name,
-                  projectOwnerEmail: owner.email,
-                  projectOwnerAvatar: owner.avatar || '',
-                  projectId: updatedProject._id,
-                  projectName: updatedProject.title,
-                  projectStage: updatedProject.stage,
-                  projectIndustry: updatedProject.industry,
-                  position: member.role,
-                  message: 'Invited to join the project',
-                  status: 'INVITED',
-                  appliedDate: new Date(),
-                  statusUpdatedAt: new Date()
-                }
-              }
+          // Update owner's received record
+          const receivedFilter = { 
+            userId: originalProject.ownerId, 
+            'applications_received.projectId': id,
+            'applications_received.applicantId': change.userId,
+            'applications_received.status': { $in: ['ACCEPTED', 'INVITED'] }
+          };
+
+          if (change.oldPositionId) {
+            receivedFilter['$or'] = [
+              { 'applications_received.positionId': change.oldPositionId },
+              { 'applications_received.position': change.oldRole }
+            ];
+          } else {
+            receivedFilter['applications_received.position'] = change.oldRole;
+          }
+
+          await Application.updateOne(
+            receivedFilter,
+            { 
+              $set: { 
+                'applications_received.$[elem].position': change.newRole,
+                'applications_received.$[elem].positionId': change.newPositionId 
+              } 
             },
-            { upsert: true, new: true }
-          ).then(doc => {
-            doc.updateStats();
-            return doc.save();
-          });
+            { arrayFilters: [{ 
+              'elem.projectId': id, 
+              'elem.applicantId': change.userId,
+              'elem.status': { $in: ['ACCEPTED', 'INVITED'] },
+              $or: [
+                { 'elem.positionId': change.oldPositionId || 'NONE' },
+                { 'elem.position': change.oldRole }
+              ]
+            }] }
+          );
         } catch (error) {
-          console.error('Error creating invitation record:', error);
-          // Continue with other members even if one fails
+          console.error(`Error syncing role change for user ${change.userId}:`, error);
         }
       }
+    }
 
-      // Handle removed members (update status to REMOVED)
-      const now = new Date();
-      for (const removedMemberId of removedMemberIds) {
-        try {
-          // Find the application for this project and removed member
-          const memberApplication = await Application.findOne({
-            userId: removedMemberId,
-            'applications_sent.projectId': id
-          });
+    // Process new invitations only
+    if (membersActuallyChanged) {
+      // Re-calculate original IDs
+      const originalMemberIdsSet = new Set(originalProject.teamMembers
+        .map(m => m.id ? (typeof m.id === 'object' ? (m.id._id?.toString() || m.id.toString()) : m.id.toString()) : null)
+        .filter(Boolean));
 
-          if (memberApplication) {
-            const application = memberApplication.applications_sent.find(
-              app => app.projectId.toString() === id && 
-                     (app.status === 'ACCEPTED' || app.status === 'INVITED')
+      // Find truly new members (excluding founder)
+      let addedMembers = (updateData.teamMembers || [])
+        .filter(member => member.id && 
+                  member.role !== 'Founder' && 
+                  !originalMemberIdsSet.has(member.id.toString()))
+        .map(member => {
+          const position = updatedProject.openPositions.find(p => p.role === member.role);
+          return {
+            ...member,
+            positionId: position ? position._id.toString() : (member.positionId || null)
+          };
+        });
+
+      if (addedMembers.length > 0) {
+        console.log(`Processing ${addedMembers.length} new team invitations`);
+        for (const member of addedMembers) {
+          try {
+            const applicationId = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const owner = await User.findById(updatedProject.ownerId);
+            const invitedUser = await User.findById(member.id);
+            if (!owner || !invitedUser) continue;
+
+            // Create/update application record for project owner (received)
+            await Application.findOneAndUpdate(
+              { userId: updatedProject.ownerId },
+              {
+                $push: {
+                  applications_received: {
+                    applicationId,
+                    applicantId: member.id,
+                    applicantName: member.name,
+                    applicantEmail: member.email || invitedUser.email,
+                    applicantAvatar: invitedUser.avatar || '',
+                    applicantTitle: invitedUser.title || '',
+                    applicantLocation: invitedUser.location || '',
+                    projectId: updatedProject._id,
+                    projectName: updatedProject.title,
+                    projectStage: updatedProject.stage,
+                    position: member.role,
+                    positionId: member.positionId,
+                    message: 'Invited to join the project',
+                    status: 'INVITED',
+                    appliedDate: new Date(),
+                    statusUpdatedAt: new Date()
+                  }
+                }
+              },
+              { upsert: true, new: true }
+            ).then(doc => { doc.updateStats(); return doc.save(); });
+
+            // Create/update application record for invited member (sent)
+            await Application.findOneAndUpdate(
+              { userId: member.id },
+              {
+                $push: {
+                  applications_sent: {
+                    applicationId,
+                    projectOwnerId: updatedProject.ownerId,
+                    projectOwnerName: owner.name,
+                    projectOwnerEmail: owner.email,
+                    projectOwnerAvatar: owner.avatar || '',
+                    projectId: updatedProject._id,
+                    projectName: updatedProject.title,
+                    projectStage: updatedProject.stage,
+                    projectIndustry: updatedProject.industry,
+                    position: member.role,
+                    positionId: member.positionId,
+                    message: 'Invited to join the project',
+                    status: 'INVITED',
+                    appliedDate: new Date(),
+                    statusUpdatedAt: new Date()
+                  }
+                }
+              },
+              { upsert: true, new: true }
+            ).then(doc => { doc.updateStats(); return doc.save(); });
+
+            // Notify invited member
+            await createNotification({
+              recipientId: member.id,
+              type: 'INVITATION_RECEIVED',
+              message: `${updatedProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+              projectId: updatedProject._id,
+              projectName: updatedProject.title,
+              positionName: member.role,
+              actorName: owner.name,
+              navigationPath: '/dashboard',
+              navigationState: { tab: 'applications', subTab: 'sent' }
+            });
+          } catch (error) {
+            console.error('Error creating invitation record:', error);
+          }
+        }
+      }
+    }
+
+    // CRITICAL FIX: Sync project name, stage, and industry to ALL applications
+    // This keeps application data current WITHOUT touching status or membership
+    if (updateData.title || updateData.stage || updateData.industry) {
+      try {
+        const updateFields = {};
+        
+        if (updateData.title) {
+          updateFields['applications_received.$[elem].projectName'] = updateData.title;
+          updateFields['applications_sent.$[elem].projectName'] = updateData.title;
+        }
+        
+        if (updateData.stage) {
+          updateFields['applications_received.$[elem].projectStage'] = updateData.stage;
+          updateFields['applications_sent.$[elem].projectStage'] = updateData.stage;
+        }
+
+        if (updateData.industry) {
+          // Note: applications_received doesn't store projectIndustry, only applications_sent does
+          updateFields['applications_sent.$[elem].projectIndustry'] = updateData.industry;
+        }
+
+        // CRITICAL: Only update display fields, NEVER touch status or membership fields
+        await Application.updateMany(
+          { 'applications_received.projectId': id },
+          { $set: updateFields },
+          { arrayFilters: [{ 'elem.projectId': id }] }
+        );
+
+        await Application.updateMany(
+          { 'applications_sent.projectId': id },
+          { $set: updateFields },
+          { arrayFilters: [{ 'elem.projectId': id }] }
+        );
+
+        console.log(`Project details (${Object.keys(updateFields).join(', ')}) synced to all applications`);
+      } catch (error) {
+        console.error('Error syncing project details to applications:', error);
+      }
+    }
+
+    // CRITICAL FIX: Sync position alterations to applications
+    // This handles both renames and other property changes for open positions
+    if (updateData.openPositions && originalProject.openPositions) {
+      try {
+        const originalPositions = originalProject.openPositions;
+        const newPositions = updatedProject.openPositions;
+
+        for (const newPos of newPositions) {
+          // Find the corresponding original position by ID
+          const oldPos = originalPositions.find(p => p._id.toString() === newPos._id.toString());
+          
+          if (oldPos && oldPos.role !== newPos.role) {
+            console.log(`Detected position rename via ID: "${oldPos.role}" → "${newPos.role}" (ID: ${newPos._id})`);
+            
+            // Update applications_received position field using positionId as primary anchor
+            await Application.updateMany(
+              { 
+                'applications_received.projectId': id,
+                $or: [
+                  { 'applications_received.positionId': newPos._id.toString() },
+                  { 'applications_received.position': oldPos.role }
+                ]
+              },
+              { 
+                $set: { 
+                  'applications_received.$[elem].position': newPos.role,
+                  'applications_received.$[elem].positionId': newPos._id.toString()
+                }
+              },
+              { 
+                arrayFilters: [{ 
+                  'elem.projectId': id,
+                  $or: [
+                    { 'elem.positionId': newPos._id.toString() },
+                    { 'elem.position': oldPos.role }
+                  ]
+                }]
+              }
             );
 
-            if (application) {
-              // Update member's applications_sent to REMOVED
-              await Application.updateOne(
-                {
-                  userId: removedMemberId,
-                  'applications_sent.applicationId': application.applicationId
-                },
-                {
-                  $set: {
-                    'applications_sent.$.status': 'REMOVED',
-                    'applications_sent.$.statusUpdatedAt': now,
-                    'applications_sent.$.removedFromTeamAt': now,
-                    'applications_sent.$.removalReason': 'Removed by project owner during project edit'
-                  }
+            // Update applications_sent position field
+            await Application.updateMany(
+              { 
+                'applications_sent.projectId': id,
+                $or: [
+                  { 'applications_sent.positionId': newPos._id.toString() },
+                  { 'applications_sent.position': oldPos.role }
+                ]
+              },
+              { 
+                $set: { 
+                  'applications_sent.$[elem].position': newPos.role,
+                  'applications_sent.$[elem].positionId': newPos._id.toString()
                 }
-              );
+              },
+              { 
+                arrayFilters: [{ 
+                  'elem.projectId': id,
+                  $or: [
+                    { 'elem.positionId': newPos._id.toString() },
+                    { 'elem.position': oldPos.role }
+                  ]
+                }]
+              }
+            );
 
-              // Update owner's applications_received to REMOVED
-              await Application.updateOne(
-                {
-                  userId: updatedProject.ownerId,
-                  'applications_received.applicationId': application.applicationId
-                },
-                {
-                  $set: {
-                    'applications_received.$.status': 'REMOVED',
-                    'applications_received.$.statusUpdatedAt': now,
-                    'applications_received.$.removedFromTeamAt': now,
-                    'applications_received.$.removalReason': 'Removed by project owner during project edit'
-                  }
+            // Update team member roles in project
+            await Project.updateOne(
+              { _id: id },
+              { 
+                $set: { 
+                  'teamMembers.$[member].role': newPos.role,
+                  'teamMembers.$[member].positionId': newPos._id
                 }
-              );
-
-              // Update stats for both users
-              const updatedMemberApp = await Application.findOne({ userId: removedMemberId });
-              if (updatedMemberApp) {
-                updatedMemberApp.updateStats();
-                await updatedMemberApp.save();
+              },
+              {
+                arrayFilters: [{
+                  $or: [
+                    { 'member.positionId': newPos._id },
+                    { 'member.role': oldPos.role }
+                  ]
+                }]
               }
+            );
 
-              const updatedOwnerApp = await Application.findOne({ userId: updatedProject.ownerId });
-              if (updatedOwnerApp) {
-                updatedOwnerApp.updateStats();
-                await updatedOwnerApp.save();
-              }
-
-              console.log(`Application status updated to REMOVED for removed member: ${removedMemberId}`);
+            // Update in-memory object for response consistency
+            if (updatedProject.teamMembers) {
+              updatedProject.teamMembers.forEach(member => {
+                const memberPosId = member.positionId?.toString();
+                if (memberPosId === newPos._id.toString() || member.role === oldPos.role) {
+                  member.role = newPos.role;
+                  member.positionId = newPos._id;
+                }
+              });
             }
+
+            console.log(`Position name and ID synced across applications and team: "${oldPos.role}" → "${newPos.role}"`);
           }
-        } catch (error) {
-          console.error('Error updating application status for removed member:', error);
-          // Continue with other members even if one fails
         }
+      } catch (error) {
+        console.error('Error syncing position name changes:', error);
       }
     }
 
@@ -381,11 +702,30 @@ const projectController = {
       .populate('teamMembers.id', 'name email')
       .sort({ createdAt: -1 });
 
-    // Find projects where user is a team member
-    const participatingProjects = await Project.find({
-      'teamMembers.id': userId,
+    // CRITICAL FIX: Find projects where user is participating
+    // Check BOTH Application status AND Project teamMembers for maximum reliability
+    const userApplications = await Application.findOne({ userId });
+    const participatingProjectIds = [];
+    
+    if (userApplications && userApplications.applications_sent) {
+      userApplications.applications_sent.forEach(app => {
+        // Include both ACCEPTED and INVITED status
+        if ((app.status === 'ACCEPTED' || app.status === 'INVITED') && app.projectId) {
+          participatingProjectIds.push(app.projectId.toString());
+        }
+      });
+    }
+
+    // Query projects by Application ID list OR direct membership in teamMembers array
+    const participatingFilter = {
+      $or: [
+        { _id: { $in: participatingProjectIds } },
+        { 'teamMembers.id': userId }
+      ],
       ownerId: { $ne: userId }
-    })
+    };
+
+    const participatingProjects = await Project.find(participatingFilter)
       .populate('ownerId', 'name email')
       .populate('teamMembers.id', 'name email')
       .sort({ createdAt: -1 });
@@ -449,16 +789,7 @@ const projectController = {
         .json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
     }
 
-    // Check if user is already a team member
-    const isAlreadyMember = project.teamMembers.some(
-      member => member.id.toString() === userId
-    );
 
-    if (isAlreadyMember) {
-      return res
-        .status(400)
-        .json(errorResponse('User is already a team member', 'ALREADY_MEMBER'));
-    }
 
     project.teamMembers.push({
       id: userId,
@@ -477,8 +808,9 @@ const projectController = {
   // Remove team member from project
   removeTeamMember: asyncHandler(async (req, res) => {
     const { id, userId } = req.params;
+    const { isQuit } = req.query; // Check if this is a quit action from the member
 
-    console.log('Removing team member - ProjectId:', id, 'UserId:', userId);
+    console.log('Removing team member - ProjectId:', id, 'UserId:', userId, 'isQuit:', isQuit);
 
     const project = await Project.findById(id);
 
@@ -524,7 +856,9 @@ const projectController = {
     await project.save();
     console.log('Project saved successfully');
 
-    // Update application status to REMOVED for both member and owner
+    // Determine status and reason based on whether it's a quit or removal
+    const status = isQuit === 'true' ? 'QUIT' : 'REMOVED';
+    const removalReason = isQuit === 'true' ? 'Member quit the project' : 'Removed by project owner';
     const now = new Date();
 
     // Find the application for this project and user
@@ -540,36 +874,46 @@ const projectController = {
       );
 
       if (application) {
-        // Update member's applications_sent to REMOVED
+        // Update member's applications_sent with appropriate status
+        const updateFields = {
+          'applications_sent.$.status': status,
+          'applications_sent.$.statusUpdatedAt': now,
+          'applications_sent.$.removalReason': removalReason
+        };
+
+        if (isQuit === 'true') {
+          updateFields['applications_sent.$.quitAt'] = now;
+        } else {
+          updateFields['applications_sent.$.removedFromTeamAt'] = now;
+        }
+
         await Application.updateOne(
           {
             userId: userId,
             'applications_sent.applicationId': application.applicationId
           },
-          {
-            $set: {
-              'applications_sent.$.status': 'REMOVED',
-              'applications_sent.$.statusUpdatedAt': now,
-              'applications_sent.$.removedFromTeamAt': now,
-              'applications_sent.$.removalReason': 'Removed by project owner'
-            }
-          }
+          { $set: updateFields }
         );
 
-        // Update owner's applications_received to REMOVED
+        // Update owner's applications_received with appropriate status
+        const ownerUpdateFields = {
+          'applications_received.$.status': status,
+          'applications_received.$.statusUpdatedAt': now,
+          'applications_received.$.removalReason': removalReason
+        };
+
+        if (isQuit === 'true') {
+          ownerUpdateFields['applications_received.$.quitAt'] = now;
+        } else {
+          ownerUpdateFields['applications_received.$.removedFromTeamAt'] = now;
+        }
+
         await Application.updateOne(
           {
             userId: project.ownerId,
             'applications_received.applicationId': application.applicationId
           },
-          {
-            $set: {
-              'applications_received.$.status': 'REMOVED',
-              'applications_received.$.statusUpdatedAt': now,
-              'applications_received.$.removedFromTeamAt': now,
-              'applications_received.$.removalReason': 'Removed by project owner'
-            }
-          }
+          { $set: ownerUpdateFields }
         );
 
         // Update stats for both users
@@ -585,11 +929,41 @@ const projectController = {
           await updatedOwnerApp.save();
         }
 
-        console.log('Application status updated to REMOVED');
+        console.log(`Application status updated to ${status}`);
+
+        // Send notification based on action type
+        if (isQuit === 'true') {
+          // Notify project owner that a member quit
+          const memberUser = await User.findById(userId);
+          const memberName = memberUser?.name || application.applicantName || 'A member';
+          await createNotification({
+            recipientId: project.ownerId,
+            type: 'MEMBER_QUIT',
+            message: `${memberName} has left the ${application.position} role in ${project.title}.`,
+            projectId: project._id,
+            projectName: project.title,
+            positionName: application.position,
+            actorName: memberName,
+            navigationPath: '/dashboard',
+            navigationState: { tab: 'applications', subTab: 'received' }
+          });
+        } else {
+          // Notify the removed member
+          await createNotification({
+            recipientId: userId,
+            type: 'MEMBER_REMOVED',
+            message: `${project.title}: You have been removed from the ${application.position} role.`,
+            projectId: project._id,
+            projectName: project.title,
+            positionName: application.position,
+            navigationPath: '/dashboard',
+            navigationState: { tab: 'applications', subTab: 'sent' }
+          });
+        }
       }
     }
 
-    const response = successResponse(project, 'Team member removed successfully');
+    const response = successResponse(project, isQuit === 'true' ? 'Successfully quit project' : 'Team member removed successfully');
     res.json(response);
   }),
 

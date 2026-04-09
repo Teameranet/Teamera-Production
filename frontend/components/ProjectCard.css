@@ -177,18 +177,19 @@ div.project-card:hover {
   padding: 0.15rem 0.4rem;
   border-radius: 8px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.025em;
 }
 
 .position-status.paid {
-  background: #10b981;
-  color: white;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
 }
 
 .position-status.unpaid {
-  background: #f59e0b;
-  color: white;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #78350f;
+  border: 1px solid #fcd34d;
 }
 
 .project-team {
