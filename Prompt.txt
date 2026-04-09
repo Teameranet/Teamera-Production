@@ -312,6 +312,7 @@ Build a team collaboration platform (squadup.dev or teamsync.io) where developer
 - Create tasks: title, assignee, due date, priority
 - View all tasks with status, priority, assignee
 - Priority indicators and status tracking
+- Workflow checklists with interactive steps, live progress bar, auto-complete at 100%
 
 ### 7.4 Files Tab (FilesTab.jsx / FilesTab.css)
 - Upload and view shared files
