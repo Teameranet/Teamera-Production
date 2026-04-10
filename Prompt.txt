@@ -632,3 +632,41 @@ Design the Workspace page base on our design system
 - When User click "My Workspace" from the navbar dropdown (both desktop and mobile), it will  navigate to the dedicated Workspace page instead of opening a modal.
 - Ensure layout works on desktop, tablet, and mobile 
 - Use a clean  design with a consistent, accessible color palette where each color clearly represents its function
+-----------------------------------------------------------------------------------------------
+Design the Workspace page base on our design system 
+- Project Selection
+- Dropdown to choose from user's projects
+- Show empty state message if no projects exist
+- functionality navigate back
+
+- Each tab renders different content (ChatTab, TasksTab,  TeamTab & Process status)
+
+- On ChatTab functionality
+ - Team can able to communication 
+ - Able to share the files 
+ - Display the chats on chat tab with user avatar on the left, name + timestamp on top,  message below, with "You" messages aligned right.
+ - Delete (own messages only) and reply functionality matching
+ - Enter sends, Shift+Enter adds a new line Paperclip and Smile icons bottom-right, followed by an indigo "Send" (with icon) text button
+ - user can send emoji after click on  Smile icons bottom
+
+- On TasksTab functionality
+ - Action Button Create Task 
+ - Create tasks: Title, Description , Steps (one per line checklists), Assignee to , due date, Priority & 
+ - Workflow checklists with interactive steps, live progress bar, auto-complete at 100%
+ - View all tasks 
+ - Priority indicators and status tracking
+
+- On TeamTab functionality
+ -Action Button "Invite Members" (only for Founder) & 'Quit Project' (only for Project Member)
+ - Show all team members with roles/positions
+ - Founder label for project owner
+ - Project owners (Founders) Can:
+  - Remove member button (requires confirmation)
+  - "Invite Members" button
+ - Project Member (Member) Can:
+  - The 'Quit Project' the Project button
+
+- Move action buttons (Invite Members, & Quit Project , New Task, ) to a toolbar or action bar
+- When User click "My Workspace" from the navbar dropdown (both desktop and mobile), it will  navigate to the dedicated Workspace page instead of opening a modal.
+- Ensure layout works on desktop, tablet, and mobile 
+- Use a clean  design with a consistent, accessible color palette where each color clearly represents its function
