@@ -644,6 +644,8 @@ Design the Workspace page base on our design system
 - On ChatTab functionality
  - Team can able to communication 
  - Able to share the files 
+   - user can able to downlode that file
+   - only sender can able to delete the send file
  - Display the chats on chat tab with user avatar on the left, name + timestamp on top,  message below, with "You" messages aligned right.
  - Delete (own messages only) and reply functionality matching
  - Enter sends, Shift+Enter adds a new line Paperclip and Smile icons bottom-right, followed by an indigo "Send" (with icon) text button
