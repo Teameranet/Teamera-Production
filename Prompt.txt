@@ -302,7 +302,6 @@ Build a team collaboration platform (squadup.dev or teamsync.io) where developer
 ### 7.2 Chat Tab (ChatTab.jsx / ChatTab.css)
 - Messages stored in localStorage, associated with project via `projectId`
 - Show: user avatar (initials), name, timestamp (relative: "Just now", "2 mins", "1 hour")
-- Like and reply counts per message
 - Message input at bottom → send on click or Enter
 - Messages persist across sessions; filter by selected project
 - Empty state: icon + "No messages yet — Start the conversation"
@@ -312,6 +311,7 @@ Build a team collaboration platform (squadup.dev or teamsync.io) where developer
 - Create tasks: title, assignee, due date, priority
 - View all tasks with status, priority, assignee
 - Priority indicators and status tracking
+- Workflow checklists with interactive steps, live progress bar, auto-complete at 100%
 
 ### 7.4 Files Tab (FilesTab.jsx / FilesTab.css)
 - Upload and view shared files
@@ -616,3 +616,59 @@ Updated routing configuration
 New CSS file with full-page styling
 Maintain all existing functionality from the modal version
 Ensure no breaking changes to child components (ChatTab, TasksTab, FilesTab, TeamTab)
+
+-----------------------------------------------------------------------------------------------
+Update the System Flow Audit.md documentation file to accurately reflect the current system flow. Review all existing sections including user journey maps, interaction flows, wireframes, and design specifications. Identify and document any changes in navigation patterns, component behaviors, user interfaces, or system processes that have been implemented since the last audit. Ensure the updated documentation includes detailed descriptions of each screen, user actions, system responses, and any new features or modifications. Verify that all flow diagrams, screen layouts, and interaction patterns are current and properly annotated. Cross-reference the updated content with the actual application to confirm accuracy and completeness of the documentation.
+
+update this UI UX System Flow Audit.md as per current flow
+----------------------------------------------------------------------------------------------
+Design the Workspace page base on our design system 
+- Project Selection
+- Dropdown to choose from user's projects
+- Show empty state message if no projects exist
+- functionality navigate back
+- Each tab renders different content (ChatTab, TasksTab,  TeamTab & Process status)
+- Move action buttons (Invite Members, & Quit Project , New Task, ) to a toolbar or action bar
+- When User click "My Workspace" from the navbar dropdown (both desktop and mobile), it will  navigate to the dedicated Workspace page instead of opening a modal.
+- Ensure layout works on desktop, tablet, and mobile 
+- Use a clean  design with a consistent, accessible color palette where each color clearly represents its function
+-----------------------------------------------------------------------------------------------
+Design the Workspace page base on our design system 
+- Project Selection
+- Dropdown to choose from user's projects
+- Show empty state message if no projects exist
+- functionality navigate back
+
+- Each tab renders different content (ChatTab, TasksTab,  TeamTab & Process status)
+
+- On ChatTab functionality
+ - Team can able to communication 
+ - Able to share the files 
+   - user can able to downlode that file
+   - only sender can able to delete the send file
+ - Display the chats on chat tab with user avatar on the left, name + timestamp on top,  message below, with "You" messages aligned right.
+ - Delete (own messages only) and reply functionality matching
+ - Enter sends, Shift+Enter adds a new line Paperclip and Smile icons bottom-right, followed by an indigo "Send" (with icon) text button
+ - user can send emoji after click on  Smile icons bottom
+
+- On TasksTab functionality
+ - Action Button Create Task 
+ - Create tasks: Title, Description , Steps (one per line checklists), Assignee to , due date, Priority & 
+ - Workflow checklists with interactive steps, live progress bar, auto-complete at 100%
+ - View all tasks 
+ - Priority indicators and status tracking
+
+- On TeamTab functionality
+ -Action Button "Invite Members" (only for Founder) & 'Quit Project' (only for Project Member)
+ - Show all team members with roles/positions
+ - Founder label for project owner
+ - Project owners (Founders) Can:
+  - Remove member button (requires confirmation)
+  - "Invite Members" button
+ - Project Member (Member) Can:
+  - The 'Quit Project' the Project button
+
+- Move action buttons (Invite Members, & Quit Project , New Task, ) to a toolbar or action bar
+- When User click "My Workspace" from the navbar dropdown (both desktop and mobile), it will  navigate to the dedicated Workspace page instead of opening a modal.
+- Ensure layout works on desktop, tablet, and mobile 
+- Use a clean  design with a consistent, accessible color palette where each color clearly represents its function

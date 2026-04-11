@@ -221,8 +221,7 @@ export const ProjectProvider = ({ children }) => {
 
     fetchProjectsData();
     fetchBookmarks();
-    fetchApplications(); // Call the function defined above
-    setHackathons(sampleHackathons);
+    fetchApplications();
   }, []);
 
   const createProject = async (projectData) => {
@@ -1073,28 +1072,5 @@ export const ProjectProvider = ({ children }) => {
   );
 };
 
-// Sample hackathon data
-const sampleHackathons = [
-  {
-    id: 1,
-    title: "FinTech Innovation Challenge 2024",
-    description: "Build the next generation of financial technology solutions",
-    startDate: "2024-02-15",
-    endDate: "2024-02-17",
-    prize: "₹5,00,000",
-    participants: 150,
-    status: "upcoming",
-    categories: ["Blockchain", "AI/ML", "Mobile Apps"]
-  },
-  {
-    id: 2,
-    title: "Sustainable Tech Hackathon",
-    description: "Create technology solutions for environmental challenges",
-    startDate: "2024-01-20",
-    endDate: "2024-01-22",
-    prize: "₹3,00,000",
-    participants: 89,
-    status: "ongoing",
-    categories: ["IoT", "Clean Energy", "Data Analytics"]
-  }
-];
+// Export ProjectProvider as default
+export default ProjectProvider;
