@@ -638,7 +638,6 @@ Design the Workspace page base on our design system
 - Dropdown to choose from user's projects
 - Show empty state message if no projects exist
 - functionality navigate back
-
 - Each tab renders different content (ChatTab, TasksTab,  TeamTab & Process status)
 
 - On ChatTab functionality
