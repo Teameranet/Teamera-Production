@@ -148,10 +148,16 @@
 
 .workspace-select-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   width: 100%;
-  max-width: 640px;
+  max-width: 760px;
+}
+
+@media (max-width: 640px) {
+  .workspace-select-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .workspace-select-card {

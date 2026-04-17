@@ -1,18 +1,16 @@
-import { useState, useEffect } from 'react';
-import { MessageSquare, CheckSquare, Users, FileText, FolderOpen } from 'lucide-react';
+import { useState } from 'react';
+import { MessageSquare, CheckSquare, Users, FolderOpen, MessageCircle, CheckCircle } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
-import ChatTab from '../components/tabs/ChatTab';
-import TasksTab from '../components/tabs/TasksTab';
-import TeamTab from '../components/tabs/TeamTab';
-import FilesTab from '../components/tabs/FilesTab';
+import WorkspaceChatTab  from '../components/tabs/WorkspaceChatTab';
+import WorkspaceTasksTab from '../components/tabs/WorkspaceTasksTab';
+import WorkspaceTeamTab  from '../components/tabs/WorkspaceTeamTab';
 import './Workspace.css';
 
 const TABS = [
-  { id: 'chat', label: 'Chat', icon: MessageSquare },
-  { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-  { id: 'team', label: 'Team', icon: Users },
-  { id: 'files', label: 'Files', icon: FileText },
+  { id: 'chat',  label: 'Chat',  icon: MessageCircle },
+  { id: 'tasks', label: 'Tasks', icon: CheckCircle },
+  { id: 'team',  label: 'Team',  icon: Users },
 ];
 
 function Workspace() {
@@ -21,7 +19,6 @@ function Workspace() {
   const { projects } = useProjects();
   const { user } = useAuth();
 
-  // Filter projects the user is part of
   const userProjects = projects.filter(p => {
     if (!user) return false;
     const userId = user.id || user._id;
@@ -41,25 +38,22 @@ function Workspace() {
     ? String(selectedProject.ownerId?._id || selectedProject.ownerId) === String(user?.id || user?._id)
     : false;
 
-  // No auto-select — user must choose a project
-
   const renderTab = () => {
     switch (activeTab) {
-      case 'chat':  return <ChatTab project={selectedProject} />;
-      case 'tasks': return <TasksTab project={selectedProject} isAdmin={isAdmin} />;
-      case 'team':  return <TeamTab project={selectedProject} isAdmin={isAdmin} />;
-      case 'files': return <FilesTab project={selectedProject} />;
+      case 'chat':  return <WorkspaceChatTab  project={selectedProject} />;
+      case 'tasks': return <WorkspaceTasksTab project={selectedProject} isAdmin={isAdmin} />;
+      case 'team':  return <WorkspaceTeamTab  project={selectedProject} isAdmin={isAdmin} />;
       default:      return null;
     }
   };
 
   return (
     <div className="workspace-container">
-      {/* Header — mirrors Hackathons gradient header */}
+      {/* Header */}
       <div className="workspace-header">
         <div className="workspace-header-content">
           <h1>Workspace</h1>
-          <p>Collaborate with your team — chat, manage tasks, share files, and track progress</p>
+          <p>Collaborate with your team — chat, manage tasks, and coordinate members</p>
         </div>
 
         {userProjects.length > 0 && (
@@ -81,7 +75,7 @@ function Workspace() {
         )}
       </div>
 
-      {/* Tabs — only shown when user has projects */}
+      {/* Tabs */}
       {userProjects.length > 0 && (
         <div className="workspace-tabs">
           {TABS.map(({ id, label, icon: Icon }) => (
@@ -119,12 +113,8 @@ function Workspace() {
                 Manage and track project tasks
               </div>
               <div className="workspace-select-card">
-                <FileText size={20} className="select-card-icon" />
-                Share and access project files
-              </div>
-              <div className="workspace-select-card">
                 <Users size={20} className="select-card-icon" />
-                Collaborate with team members
+                Coordinate and manage team members
               </div>
             </div>
           </div>
