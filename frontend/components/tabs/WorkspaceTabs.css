@@ -216,7 +216,6 @@
   gap: 0.75rem;
   align-items: flex-start;
   padding: 0.25rem 0;
-  group: true;
 }
 .wt-message--own {
   flex-direction: row-reverse;
@@ -236,7 +235,6 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: #6b7280;
-  padding: 0 0.25rem;
 }
 
 /* Reply preview inside message */
@@ -247,7 +245,7 @@
   padding: 0.4rem 0.75rem;
   border-left: 3px solid #4f46e5;
   background: #f0f0ff;
-  border-radius: 0 6px 6px 0;
+  border-radius: 2.8px 6px 6px 2.8px;
   font-size: 0.8rem;
   max-width: 100%;
 }
@@ -351,6 +349,134 @@
   align-items: center;
 }
 .wt-reply-bar-close:hover { color: #374151; background: #e5e7eb; }
+
+/* File card — matches design: page icon + ext badge, name bold, size muted */
+.wt-file-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  min-width: 220px;
+  max-width: 320px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.wt-file-card:hover {
+  border-color: #a5b4fc;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.1);
+}
+
+/* Page icon with ext badge */
+.wt-file-card-icon {
+  position: relative;
+  width: 40px;
+  height: 48px;
+  flex-shrink: 0;
+}
+.wt-file-card-page {
+  width: 40px;
+  height: 48px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  border: 1.5px solid #e5e7eb;
+  position: relative;
+}
+.wt-file-card-page::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 12px; height: 12px;
+  background: #e5e7eb;
+  border-bottom-left-radius: 4px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+.wt-file-card-ext {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #7c3aed;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* File info */
+.wt-file-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.wt-file-card-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wt-file-card-size {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.wt-file-card-dl {
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.wt-file-card:hover .wt-file-card-dl { color: #4f46e5; }
+.wt-file-card-dl--disabled { opacity: 0.35; }
+
+.wt-file-card--expired { cursor: default; opacity: 0.7; }
+.wt-file-card--expired:hover { border-color: #e5e7eb; box-shadow: none; }
+.wt-file-expired-label { color: #f59e0b; font-size: 0.75rem; }
+
+/* Message meta (name + timestamp on same line) */
+.wt-message-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.2rem;
+}
+.wt-message-ts {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+/* Emoji picker */
+.wt-emoji-wrapper { position: relative; }
+.wt-emoji-picker {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 100;
+  width: 180px;
+}
+.wt-emoji-btn {
+  background: none; border: none; font-size: 1.2rem;
+  cursor: pointer; padding: 0.25rem; border-radius: 6px;
+  transition: background 0.1s;
+  line-height: 1;
+}
+.wt-emoji-btn:hover { background: #f3f4f6; }
 
 /* Input bar */
 .wt-chat-input {
