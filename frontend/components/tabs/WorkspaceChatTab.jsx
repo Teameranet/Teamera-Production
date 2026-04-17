@@ -88,6 +88,10 @@ function WorkspaceChatTab({ project }) {
     setMessage('');
     setReplyTo(null);
     setShowEmoji(false);
+    // Reset textarea height back to one row
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
   };
 
   const handleFileChange = (e) => {
@@ -145,6 +149,15 @@ function WorkspaceChatTab({ project }) {
       e.preventDefault();
       handleSend(e);
     }
+    // Shift+Enter falls through — browser inserts \n naturally into the textarea
+  };
+
+  const handleTextareaChange = (e) => {
+    setMessage(e.target.value);
+    // Auto-expand: reset to auto first so shrinking works too
+    const el = e.target;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   };
 
   const formatTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -244,7 +257,7 @@ function WorkspaceChatTab({ project }) {
                         </div>
                       ) : (
                         <div className="wt-message-bubble">
-                          <p>{msg.text}</p>
+                          <p style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</p>
                         </div>
                       )}
 
@@ -297,9 +310,9 @@ function WorkspaceChatTab({ project }) {
         <textarea
           ref={inputRef}
           rows={1}
-          placeholder="Type a message… (Enter to send)"
+          placeholder="Type a message… (Shift+Enter for new line)"
           value={message}
-          onChange={e => setMessage(e.target.value)}
+          onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           className="wt-chat-textarea"
         />

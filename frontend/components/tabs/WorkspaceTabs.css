@@ -498,9 +498,13 @@
   font-family: inherit;
   resize: none;
   line-height: 1.5;
+  height: auto;
+  min-height: 38px;
   max-height: 120px;
   overflow-y: auto;
   transition: border-color 0.2s, box-shadow 0.2s;
+  align-self: flex-end;
+  box-sizing: border-box;
 }
 .wt-chat-textarea:focus {
   outline: none;
