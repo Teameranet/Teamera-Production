@@ -62,8 +62,8 @@ function Workspace() {
       {/* Header */}
       <div className="workspace-header">
         <div className="workspace-header-content">
-          <h1>Workspace</h1>
-          <p>Collaborate with your team — chat, manage tasks, and coordinate members</p>
+         <h1>Workspace</h1>
+         <p>Collaborate with your team. Chat in real time, manage tasks, and coordinate members.</p>
         </div>
 
         {userProjects.length > 0 && (
