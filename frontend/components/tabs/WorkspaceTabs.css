@@ -1131,6 +1131,137 @@
   .wt-modal-body, .wt-modal-header { padding-left: 1rem; padding-right: 1rem; }
 }
 
+/* ── Team tab extras ────────────────────────────────────── */
+.wt-team-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.wt-section-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9ca3af;
+  letter-spacing: 0.08em;
+}
+
+.wt-members-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.wt-member-card--founder {
+  border-color: #e0e7ff;
+  background: #f0f7ff;
+}
+
+.wt-founder-badge {
+  padding: 0.1rem 0.5rem;
+  background: #ede9fe;
+  color: #7c3aed;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.wt-member-card-right {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.wt-owner-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.wt-owner-icon {
+  color: #9ca3af;
+}
+
+/* Invite modal email row */
+.wt-invite-email-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wt-invite-email-row .wt-form-input {
+  flex: 1;
+}
+
+.wt-verify-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wt-verified-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.75rem;
+  background: #d1fae5;
+  color: #059669;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wt-verified-user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+}
+
+.wt-verified-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.wt-field-error {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #ef4444;
+}
+
+/* Danger button (solid) */
+.wt-btn--danger {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+}
+.wt-btn--danger:hover {
+  background: #dc2626;
+}
+.wt-btn--danger:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+
+/* Small modal variant */
+.wt-modal--sm {
+  max-width: 420px;
+}
+
+@media (max-width: 640px) {
+  .wt-members-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Spinner animation ──────────────────────────────────── */
 @keyframes wt-spin {
   to { transform: rotate(360deg); }
