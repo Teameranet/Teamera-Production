@@ -127,11 +127,11 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
                       <Settings size={16} />
                       Dashboard
                     </Link>
-                    {/* Messages/Collaboration */}
-                    <button onClick={onCollaborationClick} className="dropdown-item">
+                    {/* My Workspace Link */}
+                    <Link to="/workspace" onClick={() => setShowUserMenu(false)} className="dropdown-item">
                       <MessageCircle size={16} />
                       My Workspace
-                    </button>
+                    </Link>
 
                     {/* Settings Link */}
                     {/* <Link to="/settings" onClick={() => setShowUserMenu(false)} className="dropdown-item">
@@ -248,17 +248,15 @@ function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
                     Dashboard
                   </Link>
 
-                  {/* Messages / My Workspace Button */}
-                  <button 
+                  {/* My Workspace Link */}
+                  <Link
+                    to="/workspace"
                     className="collaboration-btn mobile"
-                    onClick={() => {
-                      onCollaborationClick();
-                      setShowMobileMenu(false);
-                    }}
+                    onClick={() => setShowMobileMenu(false)}
                   >
                     <MessageCircle size={20} />
                     My Workspace
-                  </button>
+                  </Link>
 
                   {/* Logout Button */}
                   <button className="mobile-logout-btn" onClick={handleLogout}>

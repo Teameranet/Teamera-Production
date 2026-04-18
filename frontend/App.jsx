@@ -8,6 +8,7 @@ import Hackathons from './pages/Hackathons';
 import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
 import Community from './pages/Community';
+import Workspace from './pages/Workspace';
 import AuthModal from './components/AuthModal';
 import OnboardingModal from './components/OnboardingModal';
 import ProjectModal from './components/ProjectModal';
@@ -70,6 +71,7 @@ function AppContent() {
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/community" element={<Community />} />
+                <Route path="/workspace" element={<ProtectedRoute><Workspace /></ProtectedRoute>} />
               </Routes>
             </main>
             <Footer />
