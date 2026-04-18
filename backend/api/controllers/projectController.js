@@ -2,6 +2,7 @@ import Project from '../../models/Project.js';
 import User from '../../models/User.js';
 import Application from '../../models/Application.js';
 import { createNotification } from './notificationController.js';
+import { broadcastToProject } from '../../utils/chatSseClients.js';
 import {
   successResponse,
   errorResponse,
@@ -990,6 +991,80 @@ const projectController = {
       'Application count incremented successfully'
     );
     res.json(response);
+  }),
+
+  // ── Tasks ──────────────────────────────────────────────────────────────────
+
+  // GET /projects/:id/tasks
+  getTasks: asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id).select('tasks');
+    if (!project) return res.status(404).json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
+    res.json(successResponse(project.tasks, 'Tasks retrieved'));
+  }),
+
+  // POST /projects/:id/tasks
+  createTask: asyncHandler(async (req, res) => {
+    const { title, description, assigneeId, dueDate, priority, steps, createdBy, createdById } = req.body;
+    if (!title?.trim()) return res.status(400).json(errorResponse('Title is required', 'MISSING_TITLE'));
+
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
+
+    const task = {
+      title: title.trim(),
+      description: description || '',
+      assigneeId: assigneeId || '',
+      dueDate: dueDate || '',
+      priority: priority || 'medium',
+      steps: (steps || []).map(s => ({ id: s.id?.toString() || Date.now().toString(), text: s.text, done: !!s.done })),
+      status: 'pending',
+      createdBy: createdBy || 'Unknown',
+      createdById: createdById || '',
+      createdAt: new Date(),
+    };
+
+    project.tasks.push(task);
+    await project.save();
+
+    const saved = project.tasks[project.tasks.length - 1];
+    broadcastToProject(req.params.id, { type: 'task_created', task: saved });
+    res.status(201).json(successResponse(saved, 'Task created'));
+  }),
+
+  // PUT /projects/:id/tasks/:taskId
+  updateTask: asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
+
+    const task = project.tasks.id(req.params.taskId);
+    if (!task) return res.status(404).json(errorResponse('Task not found', 'TASK_NOT_FOUND'));
+
+    const { title, description, assigneeId, dueDate, priority, steps, status } = req.body;
+    if (title !== undefined) task.title = title.trim();
+    if (description !== undefined) task.description = description;
+    if (assigneeId !== undefined) task.assigneeId = assigneeId;
+    if (dueDate !== undefined) task.dueDate = dueDate;
+    if (priority !== undefined) task.priority = priority;
+    if (status !== undefined) task.status = status;
+    if (steps !== undefined) task.steps = steps.map(s => ({ id: s.id?.toString(), text: s.text, done: !!s.done }));
+
+    await project.save();
+    broadcastToProject(req.params.id, { type: 'task_updated', task });
+    res.json(successResponse(task, 'Task updated'));
+  }),
+
+  // DELETE /projects/:id/tasks/:taskId
+  deleteTask: asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
+
+    const task = project.tasks.id(req.params.taskId);
+    if (!task) return res.status(404).json(errorResponse('Task not found', 'TASK_NOT_FOUND'));
+
+    task.deleteOne();
+    await project.save();
+    broadcastToProject(req.params.id, { type: 'task_deleted', taskId: req.params.taskId });
+    res.json(successResponse({ taskId: req.params.taskId }, 'Task deleted'));
   })
 };
 

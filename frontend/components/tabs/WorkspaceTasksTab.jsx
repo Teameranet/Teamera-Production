@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Trash2, Check, Clock, User, ChevronDown, ChevronUp,
   CheckSquare, X, AlertCircle, Edit2, Flag
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './WorkspaceTabs.css';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const PRIORITIES = ['low', 'medium', 'high'];
 const STATUSES   = ['pending', 'in-progress', 'completed'];
@@ -25,7 +27,6 @@ const EMPTY_FORM = {
   title: '', description: '', assigneeId: '', dueDate: '', priority: 'medium', steps: [],
 };
 
-/* ── helpers ─────────────────────────────────────────────── */
 function formatDue(dateStr) {
   if (!dateStr) return null;
   const d    = new Date(dateStr);
@@ -42,7 +43,7 @@ function calcProgress(steps) {
 }
 
 /* ── Task Modal ──────────────────────────────────────────── */
-function TaskModal({ task, members, currentUserId, onSave, onClose }) {
+function TaskModal({ task, members, onSave, onClose }) {
   const isEdit = !!task;
   const [form, setForm]     = useState(isEdit ? { ...task } : { ...EMPTY_FORM });
   const [stepInput, setStepInput] = useState('');
@@ -53,7 +54,7 @@ function TaskModal({ task, members, currentUserId, onSave, onClose }) {
   const addStep = () => {
     const text = stepInput.trim();
     if (!text) return;
-    set('steps', [...(form.steps || []), { id: Date.now(), text, done: false }]);
+    set('steps', [...(form.steps || []), { id: Date.now().toString(), text, done: false }]);
     setStepInput('');
     stepRef.current?.focus();
   };
@@ -70,19 +71,15 @@ function TaskModal({ task, members, currentUserId, onSave, onClose }) {
     onSave(form);
   };
 
-  const progress = calcProgress(form.steps);
-
   return (
     <div className="wt-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="wt-modal" role="dialog" aria-modal="true" aria-label={isEdit ? 'Edit task' : 'Create task'}>
-        {/* Header */}
         <div className="wt-modal-header">
           <h2 className="wt-modal-title">{isEdit ? 'Edit Task' : 'Create Task'}</h2>
           <button className="wt-modal-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="wt-modal-body">
-          {/* Title */}
           <div className="wt-mfield">
             <label className="wt-mlabel">Title <span className="wt-required">*</span></label>
             <input
@@ -95,7 +92,6 @@ function TaskModal({ task, members, currentUserId, onSave, onClose }) {
             />
           </div>
 
-          {/* Description */}
           <div className="wt-mfield">
             <label className="wt-mlabel">Description</label>
             <textarea
@@ -107,7 +103,6 @@ function TaskModal({ task, members, currentUserId, onSave, onClose }) {
             />
           </div>
 
-          {/* Steps */}
           <div className="wt-mfield">
             <label className="wt-mlabel">Steps / Checklist</label>
             <div className="wt-step-add-row">
@@ -143,15 +138,10 @@ function TaskModal({ task, members, currentUserId, onSave, onClose }) {
             </div>
           </div>
 
-          {/* Row: Assignee + Due date + Priority */}
           <div className="wt-form-row">
             <div className="wt-form-group">
               <label className="wt-mlabel">Assignee</label>
-              <select
-                className="wt-form-input"
-                value={form.assigneeId}
-                onChange={e => set('assigneeId', e.target.value)}
-              >
+              <select className="wt-form-input" value={form.assigneeId} onChange={e => set('assigneeId', e.target.value)}>
                 <option value="">Unassigned</option>
                 {members.map(m => (
                   <option key={m.id || m._id} value={m.id || m._id}>
@@ -162,20 +152,11 @@ function TaskModal({ task, members, currentUserId, onSave, onClose }) {
             </div>
             <div className="wt-form-group">
               <label className="wt-mlabel">Due Date</label>
-              <input
-                type="date"
-                className="wt-form-input"
-                value={form.dueDate}
-                onChange={e => set('dueDate', e.target.value)}
-              />
+              <input type="date" className="wt-form-input" value={form.dueDate} onChange={e => set('dueDate', e.target.value)} />
             </div>
             <div className="wt-form-group">
               <label className="wt-mlabel">Priority</label>
-              <select
-                className="wt-form-input"
-                value={form.priority}
-                onChange={e => set('priority', e.target.value)}
-              >
+              <select className="wt-form-input" value={form.priority} onChange={e => set('priority', e.target.value)}>
                 {PRIORITIES.map(p => (
                   <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
                 ))}
@@ -183,7 +164,6 @@ function TaskModal({ task, members, currentUserId, onSave, onClose }) {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="wt-modal-footer">
             <button type="button" className="wt-btn wt-btn--ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="wt-btn wt-btn--primary">
@@ -213,15 +193,13 @@ function TaskCard({ task, currentUserId, isAdmin, members, onStatusChange, onSte
 
   return (
     <div className={`wt-task-card ${task.status === 'completed' ? 'wt-task-card--done' : ''}`}>
-      {/* Priority stripe */}
       <div className="wt-task-stripe" style={{ background: pm.color }} />
 
       <div className="wt-task-card-main">
-        {/* Status toggle */}
         <button
           className="wt-status-btn"
           style={{ '--status-color': sm.color, '--status-bg': sm.bg }}
-          onClick={() => onStatusChange(task.id)}
+          onClick={() => onStatusChange(task._id || task.id)}
           title={`${sm.label} — click to advance`}
         >
           <StatusIcon size={16} />
@@ -240,7 +218,6 @@ function TaskCard({ task, currentUserId, isAdmin, members, onStatusChange, onSte
               <span className="wt-chip wt-chip--assignee"><User size={10} /> {assignee.name}</span>
             )}
           </div>
-          {/* Mini progress bar on card */}
           {task.steps?.length > 0 && (
             <div className="wt-card-progress">
               <div className="wt-progress-bar wt-progress-bar--sm">
@@ -266,7 +243,7 @@ function TaskCard({ task, currentUserId, isAdmin, members, onStatusChange, onSte
             confirmDelete ? (
               <button
                 className="wt-icon-btn wt-icon-btn--danger"
-                onClick={() => onDelete(task.id)}
+                onClick={() => onDelete(task._id || task.id)}
                 title="Confirm delete"
               >
                 <AlertCircle size={15} />
@@ -285,12 +262,10 @@ function TaskCard({ task, currentUserId, isAdmin, members, onStatusChange, onSte
         </div>
       </div>
 
-      {/* Expanded detail */}
       {expanded && (
         <div className="wt-task-detail">
           {task.description && <p className="wt-task-desc">{task.description}</p>}
 
-          {/* Steps checklist */}
           {task.steps?.length > 0 && (
             <div className="wt-task-steps">
               <div className="wt-steps-progress">
@@ -306,7 +281,7 @@ function TaskCard({ task, currentUserId, isAdmin, members, onStatusChange, onSte
                 <div key={step.id} className="wt-step-item wt-step-item--view">
                   <button
                     className={`wt-step-check ${step.done ? 'wt-step-check--done' : ''}`}
-                    onClick={() => onStepToggle(task.id, step.id)}
+                    onClick={() => onStepToggle(task._id || task.id, step.id)}
                     aria-label={step.done ? 'Mark incomplete' : 'Mark complete'}
                   >
                     {step.done && <Check size={12} />}
@@ -331,92 +306,185 @@ function TaskCard({ task, currentUserId, isAdmin, members, onStatusChange, onSte
 function WorkspaceTasksTab({ project, isAdmin }) {
   const { user } = useAuth();
   const [tasks, setTasks]         = useState([]);
+  const [loading, setLoading]     = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editTask, setEditTask]   = useState(null);
+  const sseRef = useRef(null);
 
-  const storageKey = project ? `workspace_tasks_${project.id || project._id}` : null;
+  const projectId = project ? (project._id || project.id) : null;
+  const currentUserId = user?.id || user?._id;
 
+  /* ── Fetch tasks from API ── */
+  const fetchTasks = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/${projectId}/tasks`);
+      const data = await res.json();
+      if (data.success) setTasks(data.data || []);
+    } catch (err) {
+      console.error('[Tasks] fetch error', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  /* ── Initial load ── */
   useEffect(() => {
-    if (!storageKey) return;
-    const stored = localStorage.getItem(storageKey);
-    setTasks(stored ? JSON.parse(stored) : []);
-  }, [storageKey]);
+    fetchTasks();
+  }, [fetchTasks]);
 
-  const saveTasks = (updated) => {
-    setTasks(updated);
-    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(updated));
-  };
+  /* ── SSE for real-time updates (reuse chat SSE stream) ── */
+  useEffect(() => {
+    if (!projectId) return;
 
-  /* Build members list: owner + teamMembers */
+    const es = new EventSource(`${API_BASE}/api/messages/${projectId}/stream`);
+    sseRef.current = es;
+
+    es.onmessage = (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+        if (payload.type === 'task_created') {
+          setTasks(prev => {
+            // avoid duplicate if we already added it optimistically
+            if (prev.find(t => String(t._id) === String(payload.task._id))) return prev;
+            return [...prev, payload.task];
+          });
+        } else if (payload.type === 'task_updated') {
+          setTasks(prev => prev.map(t =>
+            String(t._id) === String(payload.task._id) ? payload.task : t
+          ));
+        } else if (payload.type === 'task_deleted') {
+          setTasks(prev => prev.filter(t => String(t._id) !== String(payload.taskId)));
+        }
+      } catch (_) {}
+    };
+
+    es.onerror = () => es.close();
+
+    return () => {
+      es.close();
+      sseRef.current = null;
+    };
+  }, [projectId]);
+
+  /* ── Members list ── */
   const members = (() => {
     if (!project) return [];
     const list = [];
     const ownerId = project.ownerId?._id || project.ownerId;
-
-    // Find owner name from teamMembers where role === 'Founder'
     const founderMember = project.teamMembers?.find(m => m.role === 'Founder');
     const ownerName = founderMember?.name || project.ownerName || 'Owner';
 
-    if (ownerId) {
-      list.push({ id: ownerId, name: ownerName, isOwner: true });
-    }
+    if (ownerId) list.push({ id: ownerId, name: ownerName, isOwner: true });
 
     (project.teamMembers || []).forEach(m => {
       const id = m.id?._id || m.id || m._id;
-      // skip if already in list (e.g. the founder added above)
       if (id && !list.find(l => String(l.id) === String(id)) && m.role !== 'Founder') {
         list.push({ id, name: m.name, isOwner: false });
       }
     });
-
     return list;
   })();
 
-  const handleSave = (form) => {
+  /* ── CRUD handlers ── */
+  const handleSave = async (form) => {
     if (editTask) {
-      // Edit existing
-      saveTasks(tasks.map(t => t.id === editTask.id ? { ...t, ...form } : t));
-      setEditTask(null);
+      // Update
+      try {
+        const res = await fetch(`${API_BASE}/api/projects/${projectId}/tasks/${editTask._id || editTask.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        const data = await res.json();
+        if (data.success) {
+          // SSE will update state; also update locally for instant feedback
+          setTasks(prev => prev.map(t =>
+            String(t._id) === String(editTask._id || editTask.id) ? data.data : t
+          ));
+        }
+      } catch (err) {
+        console.error('[Tasks] update error', err);
+      }
     } else {
-      // Create new
-      const task = {
-        id: Date.now(),
-        ...form,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        createdBy: user?.name || 'Unknown',
-        createdById: user?.id || user?._id,
-      };
-      saveTasks([...tasks, task]);
+      // Create
+      try {
+        const payload = {
+          ...form,
+          createdBy: user?.name || 'Unknown',
+          createdById: currentUserId,
+        };
+        const res = await fetch(`${API_BASE}/api/projects/${projectId}/tasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Optimistically add; SSE deduplicates
+          setTasks(prev => {
+            if (prev.find(t => String(t._id) === String(data.data._id))) return prev;
+            return [...prev, data.data];
+          });
+        }
+      } catch (err) {
+        console.error('[Tasks] create error', err);
+      }
     }
     setShowModal(false);
+    setEditTask(null);
   };
 
-  const handleStatusCycle = (taskId) => {
-    saveTasks(tasks.map(t => {
-      if (t.id !== taskId) return t;
-      const idx = STATUSES.indexOf(t.status);
-      const next = STATUSES[(idx + 1) % STATUSES.length];
-      return { ...t, status: next };
-    }));
+  const handleStatusCycle = async (taskId) => {
+    const task = tasks.find(t => String(t._id || t.id) === String(taskId));
+    if (!task) return;
+    const idx  = STATUSES.indexOf(task.status);
+    const next = STATUSES[(idx + 1) % STATUSES.length];
+    // Optimistic update
+    setTasks(prev => prev.map(t => String(t._id || t.id) === String(taskId) ? { ...t, status: next } : t));
+    try {
+      await fetch(`${API_BASE}/api/projects/${projectId}/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: next }),
+      });
+    } catch (err) {
+      console.error('[Tasks] status update error', err);
+    }
   };
 
-  const handleStepToggle = (taskId, stepId) => {
-    saveTasks(tasks.map(t => {
-      if (t.id !== taskId) return t;
-      const steps = t.steps.map(s => s.id === stepId ? { ...s, done: !s.done } : s);
-      const progress = calcProgress(steps);
-      // Auto-advance status based on progress
-      let status = t.status;
-      if (progress === 0) status = 'pending';
-      else if (progress === 100) status = 'completed';
-      else status = 'in-progress';
-      return { ...t, steps, status };
-    }));
+  const handleStepToggle = async (taskId, stepId) => {
+    const task = tasks.find(t => String(t._id || t.id) === String(taskId));
+    if (!task) return;
+    const steps = task.steps.map(s => s.id === stepId ? { ...s, done: !s.done } : s);
+    const progress = calcProgress(steps);
+    let status = task.status;
+    if (progress === 0) status = 'pending';
+    else if (progress === 100) status = 'completed';
+    else status = 'in-progress';
+
+    // Optimistic update
+    setTasks(prev => prev.map(t => String(t._id || t.id) === String(taskId) ? { ...t, steps, status } : t));
+    try {
+      await fetch(`${API_BASE}/api/projects/${projectId}/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ steps, status }),
+      });
+    } catch (err) {
+      console.error('[Tasks] step toggle error', err);
+    }
   };
 
-  const handleDelete = (taskId) => {
-    saveTasks(tasks.filter(t => t.id !== taskId));
+  const handleDelete = async (taskId) => {
+    // Optimistic remove
+    setTasks(prev => prev.filter(t => String(t._id || t.id) !== String(taskId)));
+    try {
+      await fetch(`${API_BASE}/api/projects/${projectId}/tasks/${taskId}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('[Tasks] delete error', err);
+    }
   };
 
   const handleEdit = (task) => {
@@ -429,8 +497,6 @@ function WorkspaceTasksTab({ project, isAdmin }) {
     'in-progress': tasks.filter(t => t.status === 'in-progress').length,
     completed:     tasks.filter(t => t.status === 'completed').length,
   };
-
-  const currentUserId = user?.id || user?._id;
 
   if (!project) {
     return (
@@ -462,7 +528,11 @@ function WorkspaceTasksTab({ project, isAdmin }) {
 
       {/* Task grid */}
       <div className="wt-tasks-grid-scroll">
-        {tasks.length === 0 ? (
+        {loading ? (
+          <div className="wt-empty-state">
+            <p>Loading tasks...</p>
+          </div>
+        ) : tasks.length === 0 ? (
           <div className="wt-empty-state">
             <CheckSquare size={48} className="wt-empty-icon" />
             <h3>No tasks yet</h3>
@@ -472,7 +542,7 @@ function WorkspaceTasksTab({ project, isAdmin }) {
           <div className="wt-tasks-grid">
             {tasks.map(task => (
               <TaskCard
-                key={task.id}
+                key={task._id || task.id}
                 task={task}
                 currentUserId={currentUserId}
                 isAdmin={isAdmin}
@@ -487,12 +557,10 @@ function WorkspaceTasksTab({ project, isAdmin }) {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <TaskModal
           task={editTask}
           members={members}
-          currentUserId={currentUserId}
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditTask(null); }}
         />

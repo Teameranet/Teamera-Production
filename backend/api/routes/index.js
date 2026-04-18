@@ -89,6 +89,12 @@ router.get("/projects/:id", projectController.getProjectById);
 router.put("/projects/:id", projectController.updateProject);
 router.delete("/projects/:id", projectController.deleteProject);
 
+// Task endpoints (workspace)
+router.get("/projects/:id/tasks", projectController.getTasks);
+router.post("/projects/:id/tasks", projectController.createTask);
+router.put("/projects/:id/tasks/:taskId", projectController.updateTask);
+router.delete("/projects/:id/tasks/:taskId", projectController.deleteTask);
+
 // API info endpoint
 router.get("/", (req, res) => {
   res.json({
