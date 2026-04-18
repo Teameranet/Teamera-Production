@@ -1,12 +1,29 @@
 import express from "express";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
 import helloController from "../controllers/helloController.js";
 import contactController from "../controllers/contactController.js";
 import userController from "../controllers/userController.js";
 import dashboardController from "../controllers/dashboardController.js";
 import projectController from "../controllers/projectController.js";
 import { streamNotifications, getNotifications, markAsRead, markAllAsRead, deleteNotification } from "../controllers/notificationController.js";
+import { streamMessages, getMessages, sendMessage, uploadFile, deleteMessage } from "../controllers/messageController.js";
 import { logger } from "../../middleware/auth.js";
 import { validateRegistration } from "../../middleware/validation.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Multer storage — save to backend/uploads/
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, '../../uploads'),
+  filename: (req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${unique}-${file.originalname}`);
+  },
+});
+const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 } }); // 25 MB limit
 
 const router = express.Router();
 
@@ -52,6 +69,13 @@ router.get("/notifications/:userId", getNotifications);
 router.patch("/notifications/:notificationId/read", markAsRead);
 router.patch("/notifications/:userId/read-all", markAllAsRead);
 router.delete("/notifications/:notificationId", deleteNotification);
+
+// Message (chat) endpoints — stream MUST be before /:projectId
+router.get("/messages/:projectId/stream", streamMessages);
+router.get("/messages/:projectId", getMessages);
+router.post("/messages/:projectId", sendMessage);
+router.post("/messages/:projectId/upload", upload.single('file'), uploadFile);
+router.delete("/messages/:messageId", deleteMessage);
 
 // Project endpoints
 router.get("/projects", projectController.getAllProjects);

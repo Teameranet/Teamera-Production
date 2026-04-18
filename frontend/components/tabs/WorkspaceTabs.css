@@ -907,3 +907,21 @@
 
   .wt-message-body { max-width: 92%; }
 }
+
+/* ── Spinner animation ──────────────────────────────────── */
+@keyframes wt-spin {
+  to { transform: rotate(360deg); }
+}
+.wt-spin {
+  animation: wt-spin 0.8s linear infinite;
+}
+
+/* ── Sending state ──────────────────────────────────────── */
+.wt-message--sending {
+  opacity: 0.6;
+}
+.wt-message-status {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  margin-left: 0.25rem;
+}

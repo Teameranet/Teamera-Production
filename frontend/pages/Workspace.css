@@ -75,7 +75,7 @@
 /* Tabs — same pattern as .hackathons-tabs */
 .workspace-tabs {
   display: flex;
-  justify-content: center;
+  /* justify-content: center; */
   gap: 1rem;
   margin-bottom: 2rem;
   border-bottom: 2px solid #e5e7eb;

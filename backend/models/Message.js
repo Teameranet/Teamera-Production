@@ -15,6 +15,10 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  senderAvatar: {
+    type: String,
+    default: null
+  },
   content: {
     type: String,
     required: [true, 'Message content is required'],
@@ -24,6 +28,23 @@ const messageSchema = new mongoose.Schema({
     type: String,
     enum: ['text', 'file', 'image', 'system'],
     default: 'text'
+  },
+  // File attachment fields (populated when type === 'file')
+  fileUrl: {
+    type: String,
+    default: null
+  },
+  fileName: {
+    type: String,
+    default: null
+  },
+  fileSize: {
+    type: Number,
+    default: null
+  },
+  fileType: {
+    type: String,
+    default: null
   },
   replyTo: {
     type: mongoose.Schema.Types.ObjectId,
