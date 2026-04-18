@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
@@ -7,7 +7,6 @@ import { useNotifications } from '../context/NotificationContext';
 import UserAvatar from '../components/UserAvatar';
 import ProfileModal from '../components/ProfileModal';
 import ProjectModal from '../components/ProjectModal';
-import CollaborationSpace from '../components/CollaborationSpace';
 import CreateProjectModal from '../components/CreateProjectModal';
 import './Dashboard.css';
 import ProjectCard from '../components/ProjectCard';
@@ -34,6 +33,7 @@ function Dashboard() {
   const { user } = useAuth();
   // Get location for navigation state
   const location = useLocation();
+  const navigate = useNavigate();
   // Get all projects and bookmarked projects from ProjectContext
   const { 
     projects, 
@@ -70,10 +70,6 @@ function Dashboard() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   // State to track selected project for project modal (from applications)
   const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
-  // State to track collaboration space
-  const [showCollaborationSpace, setShowCollaborationSpace] = useState(false);
-  // State to track the active project in collaboration space
-  const [activeCollabProject, setActiveCollabProject] = useState(null);
 
   // Fetch user's owned and participating projects
   useEffect(() => {
@@ -192,9 +188,6 @@ function Dashboard() {
         application.projectName,
         application.position
       );
-      
-      // Find the project object to pass to the action function
-      const acceptedProject = projects.find(p => p.id === application.projectId);
 
       showToast({
         type: 'success',
@@ -203,10 +196,9 @@ function Dashboard() {
         action: {
           label: 'Open Workspace',
           onClick: () => {
-            if (acceptedProject) {
-              setActiveCollabProject(acceptedProject);
-              setShowCollaborationSpace(true);
-            }
+            const projectId = String(application.projectId?._id || application.projectId);
+            if (projectId) localStorage.setItem('workspace_selected_project', projectId);
+            navigate('/workspace');
           }
         }
       });
@@ -383,30 +375,15 @@ function Dashboard() {
   };
 
   // Open workspace for a project linked to an application
-  const handleOpenWorkspace = async (application) => {
+  const handleOpenWorkspace = (application) => {
     const projectId = typeof application.projectId === 'object'
       ? application.projectId._id || application.projectId.toString()
       : application.projectId?.toString();
 
-    let project = projects.find(p => String(p.id || p._id) === String(projectId));
-
-    if (!project) {
-      try {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiBaseUrl}/api/projects/${projectId}`);
-        const result = await response.json();
-        if (result.success && result.data) {
-          project = { ...result.data, id: result.data._id || result.data.id };
-        }
-      } catch (error) {
-        console.error('Error fetching project for workspace:', error);
-      }
+    if (projectId) {
+      localStorage.setItem('workspace_selected_project', projectId);
     }
-
-    if (project) {
-      setActiveCollabProject(project);
-      setShowCollaborationSpace(true);
-    }
+    navigate('/workspace');
   };
 
   // Function to handle sending a message to an applicant
@@ -530,7 +507,10 @@ function Dashboard() {
                       isOwned={true}
                       onEdit={() => handleEditProject(project)}
                       onDelete={() => handleDeleteProject(project.id || project._id)}
-                      onClick={() => { setActiveCollabProject(project); setShowCollaborationSpace(true); }}
+                      onClick={() => {
+                        localStorage.setItem('workspace_selected_project', project.id || project._id);
+                        navigate('/workspace');
+                      }}
                     />
                   ))
                 )}
@@ -551,7 +531,10 @@ function Dashboard() {
                       project={project}
                       isParticipating={true}
                       onLeave={() => handleLeaveProject(project.id || project._id)}
-                      onClick={() => { setActiveCollabProject(project); setShowCollaborationSpace(true); }}
+                      onClick={() => {
+                        localStorage.setItem('workspace_selected_project', project.id || project._id);
+                        navigate('/workspace');
+                      }}
                     />
                   ))
                 )}
@@ -776,10 +759,9 @@ function Dashboard() {
             setSelectedProject(null);
           }}
           onOpenCollaboration={(project) => {
-            setActiveCollabProject(project);
-            setShowCollaborationSpace(true);
-            setShowProjectModal(false);
-            setSelectedProject(null);
+            const id = project.id || project._id;
+            if (id) localStorage.setItem('workspace_selected_project', id);
+            navigate('/workspace');
           }}
         />
       )}
@@ -790,22 +772,13 @@ function Dashboard() {
           project={selectedProjectForModal}
           onClose={() => setSelectedProjectForModal(null)}
           onOpenCollaboration={(project) => {
-            setActiveCollabProject(project);
-            setShowCollaborationSpace(true);
-            setSelectedProjectForModal(null);
+            const id = project.id || project._id;
+            if (id) localStorage.setItem('workspace_selected_project', id);
+            navigate('/workspace');
           }}
         />
       )}
       
-      {/* Collaboration Space Modal */}
-      {showCollaborationSpace && (
-        <CollaborationSpace
-          activeProject={activeCollabProject}
-          onClose={() => setShowCollaborationSpace(false)}
-          defaultTab="team"
-        />
-      )}
-
       {/* Create Project Modal */}
       {showCreateProject && (
         <CreateProjectModal
