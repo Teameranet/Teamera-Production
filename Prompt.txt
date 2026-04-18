@@ -671,3 +671,7 @@ Design the Workspace page base on our design system
 - When User click "My Workspace" from the navbar dropdown (both desktop and mobile), it will  navigate to the dedicated Workspace page instead of opening a modal.
 - Ensure layout works on desktop, tablet, and mobile 
 - Use a clean  design with a consistent, accessible color palette where each color clearly represents its function
+--------------------------------------------------------------------------------------
+As per Sr UI UX developer 
+
+When Project Owner Invite the Member The Application Status Of Invited Should be In Resived Section or Send Section of Project owner & Project Member 
