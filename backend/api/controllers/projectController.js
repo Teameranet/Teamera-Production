@@ -790,17 +790,99 @@ const projectController = {
         .json(errorResponse('Project not found', 'PROJECT_NOT_FOUND'));
     }
 
-
+    // Resolve positionId from openPositions if the role matches
+    const matchedPosition = project.openPositions.find(p => p.role === role);
+    const positionId = matchedPosition ? matchedPosition._id.toString() : null;
 
     project.teamMembers.push({
       id: userId,
       name,
       role,
       email,
-      applicantColor
+      applicantColor,
+      ...(positionId && { positionId })
     });
 
     await project.save();
+
+    // ── Application records & notification ──────────────────────────────────
+    try {
+      const applicationId = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const owner = await User.findById(project.ownerId);
+      const invitedUser = await User.findById(userId);
+
+      if (owner && invitedUser) {
+        // Owner's received record
+        await Application.findOneAndUpdate(
+          { userId: project.ownerId },
+          {
+            $push: {
+              applications_received: {
+                applicationId,
+                applicantId: userId,
+                applicantName: name,
+                applicantEmail: email || invitedUser.email,
+                applicantAvatar: invitedUser.avatar || '',
+                applicantTitle: invitedUser.title || '',
+                applicantLocation: invitedUser.location || '',
+                projectId: project._id,
+                projectName: project.title,
+                projectStage: project.stage,
+                position: role,
+                positionId,
+                message: 'Invited to join the project',
+                status: 'INVITED',
+                appliedDate: new Date(),
+                statusUpdatedAt: new Date()
+              }
+            }
+          },
+          { upsert: true, new: true }
+        ).then(doc => { doc.updateStats(); return doc.save(); });
+
+        // Invited member's sent record
+        await Application.findOneAndUpdate(
+          { userId },
+          {
+            $push: {
+              applications_sent: {
+                applicationId,
+                projectOwnerId: project.ownerId,
+                projectOwnerName: owner.name,
+                projectOwnerEmail: owner.email,
+                projectOwnerAvatar: owner.avatar || '',
+                projectId: project._id,
+                projectName: project.title,
+                projectStage: project.stage,
+                projectIndustry: project.industry,
+                position: role,
+                positionId,
+                message: 'Invited to join the project',
+                status: 'INVITED',
+                appliedDate: new Date(),
+                statusUpdatedAt: new Date()
+              }
+            }
+          },
+          { upsert: true, new: true }
+        ).then(doc => { doc.updateStats(); return doc.save(); });
+
+        // Notify invited member
+        await createNotification({
+          recipientId: userId,
+          type: 'INVITATION_RECEIVED',
+          message: `${project.title}: You have been invited to join as ${role} by ${owner.name}.`,
+          projectId: project._id,
+          projectName: project.title,
+          positionName: role,
+          actorName: owner.name,
+          navigationPath: '/dashboard',
+          navigationState: { tab: 'applications', subTab: 'sent' }
+        });
+      }
+    } catch (err) {
+      console.error('Error creating invitation record for direct invite:', err);
+    }
 
     const response = successResponse(project, 'Team member added successfully');
     res.json(response);

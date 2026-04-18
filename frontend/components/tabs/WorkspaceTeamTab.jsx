@@ -6,7 +6,7 @@ import './WorkspaceTabs.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const ROLE_OPTIONS = ['Developer', 'Designer', 'Product Manager', 'Marketing', 'QA Engineer', 'DevOps', 'Data Scientist', 'Other'];
+
 
 function WorkspaceTeamTab({ project, onProjectUpdate }) {
   const { user } = useAuth();
@@ -85,7 +85,7 @@ function WorkspaceTeamTab({ project, onProjectUpdate }) {
   // ── Invite member ─────────────────────────────────────────────────────────
   const handleInvite = async () => {
     if (!verifiedUser || !inviteRole) return;
-    const finalRole = inviteRole === 'Other' ? customRole.trim() : inviteRole;
+    const finalRole = inviteRole === '__custom__' ? customRole.trim() : inviteRole;
     if (!finalRole) return;
     setActionLoading(true);
     try {
@@ -306,24 +306,21 @@ function WorkspaceTeamTab({ project, onProjectUpdate }) {
                 <select
                   className="wt-form-input"
                   value={inviteRole}
-                  onChange={e => setInviteRole(e.target.value)}
+                  onChange={e => { setInviteRole(e.target.value); setCustomRole(''); }}
                   disabled={!verifiedUser}
                 >
                   <option value="">Select a role</option>
-                  {/* Show project open positions first */}
                   {(project.openPositions || []).filter(p => p.role?.trim()).map((p, i) => (
                     <option key={i} value={p.role}>{p.role}</option>
                   ))}
-                  {ROLE_OPTIONS.map(r => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
+                  <option value="__custom__">Custom position</option>
                 </select>
-                {inviteRole === 'Other' && (
+                {inviteRole === '__custom__' && (
                   <input
                     className="wt-form-input"
                     style={{ marginTop: '0.5rem' }}
                     type="text"
-                    placeholder="Enter custom role"
+                    placeholder="Enter custom position"
                     value={customRole}
                     onChange={e => setCustomRole(e.target.value)}
                   />
@@ -335,9 +332,9 @@ function WorkspaceTeamTab({ project, onProjectUpdate }) {
                 <button
                   className="wt-btn wt-btn--primary"
                   onClick={handleInvite}
-                  disabled={!verifiedUser || !inviteRole || actionLoading || (inviteRole === 'Other' && !customRole.trim())}
+                  disabled={!verifiedUser || !inviteRole || actionLoading || (inviteRole === '__custom__' && !customRole.trim())}
                 >
-                  {actionLoading ? 'Sending…' : 'Send Invite'}
+                  {actionLoading ? 'Sending…' : 'Invite Members'}
                 </button>
               </div>
             </div>
