@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { MessageSquare, CheckSquare, Users, FolderOpen, MessageCircle, CheckCircle } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
@@ -15,8 +15,10 @@ const TABS = [
 
 function Workspace() {
   const [activeTab, setActiveTab] = useState('chat');
-  const [selectedProjectId, setSelectedProjectId] = useState('');
-  const { projects } = useProjects();
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    () => localStorage.getItem('workspace_selected_project') || ''
+  );
+  const { projects, editProject } = useProjects();
   const { user } = useAuth();
 
   const userProjects = projects.filter(p => {
@@ -38,11 +40,19 @@ function Workspace() {
     ? String(selectedProject.ownerId?._id || selectedProject.ownerId) === String(user?.id || user?._id)
     : false;
 
+  // Refresh selected project after team changes
+  const handleProjectUpdate = useCallback((updatedProject) => {
+    if (!updatedProject) return;
+    const id = updatedProject._id || updatedProject.id;
+    // Patch local projects state via editProject context helper
+    editProject(id, updatedProject);
+  }, [editProject]);
+
   const renderTab = () => {
     switch (activeTab) {
       case 'chat':  return <WorkspaceChatTab  project={selectedProject} />;
       case 'tasks': return <WorkspaceTasksTab project={selectedProject} isAdmin={isAdmin} />;
-      case 'team':  return <WorkspaceTeamTab  project={selectedProject} isAdmin={isAdmin} />;
+      case 'team':  return <WorkspaceTeamTab  project={selectedProject} onProjectUpdate={handleProjectUpdate} />;
       default:      return null;
     }
   };
@@ -61,7 +71,10 @@ function Workspace() {
             <FolderOpen size={18} />
             <select
               value={selectedProjectId}
-              onChange={e => setSelectedProjectId(e.target.value)}
+              onChange={e => {
+                setSelectedProjectId(e.target.value);
+                localStorage.setItem('workspace_selected_project', e.target.value);
+              }}
               aria-label="Select project"
             >
               <option value="">Select your project</option>
