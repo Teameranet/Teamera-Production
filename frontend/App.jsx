@@ -13,7 +13,6 @@ import AuthModal from './components/AuthModal';
 import OnboardingModal from './components/OnboardingModal';
 import ProjectModal from './components/ProjectModal';
 import CreateProjectModal from './components/CreateProjectModal';
-import CollaborationSpace from './components/CollaborationSpace';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ProjectProvider } from './context/ProjectContext';
@@ -26,7 +25,6 @@ function AppContent() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
-  const [showCollaboration, setShowCollaboration] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState(null);
 
   // Handle state updates with startTransition
@@ -55,7 +53,6 @@ function AppContent() {
             <Navbar 
               onAuthClick={() => handleModalState(setShowAuthModal, true)}
               onCreateProject={() => handleModalState(setShowCreateProject, true)}
-              onCollaborationClick={() => handleModalState(setShowCollaboration, true)}
             />
             <main className="main-content">
               <Routes>
@@ -118,11 +115,6 @@ function AppContent() {
               />
             )}
 
-            {showCollaboration && (
-              <CollaborationSpace 
-                onClose={() => handleModalState(setShowCollaboration, false)}
-              />
-            )}
           </div>
   );
 }

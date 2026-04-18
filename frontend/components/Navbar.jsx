@@ -8,7 +8,7 @@ import UserAvatar from './UserAvatar';
 import './Navbar.css';
 
 // Navbar component handles navigation, user actions, and responsive menu
-function Navbar({ onAuthClick, onCreateProject, onCollaborationClick }) {
+function Navbar({ onAuthClick, onCreateProject }) {
   // Hooks for routing and authentication
   const location = useLocation();
   const navigate = useNavigate();
