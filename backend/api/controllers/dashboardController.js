@@ -510,7 +510,7 @@ export const updateApplicationStatus = async (req, res) => {
         projectName: application.projectName,
         positionName: application.position,
         navigationPath: '/dashboard',
-        navigationState: { tab: 'applications', subTab: 'sent' }
+        navigationState: { tab: 'applications', subTab: 'received' }
       });
     }
 

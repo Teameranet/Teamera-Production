@@ -11,9 +11,9 @@ const TYPE_META = {
   NEW_APPLICATION:      { icon: (s) => <Users size={s} />,       color: '#10b981', subTab: 'received' },
   APPLICATION_ACCEPTED: { icon: (s) => <CheckCircle size={s} />, color: '#10b981', subTab: 'sent' },
   APPLICATION_REJECTED: { icon: (s) => <XCircle size={s} />,     color: '#ef4444', subTab: 'sent' },
-  MEMBER_REMOVED:       { icon: (s) => <UserMinus size={s} />,   color: '#f59e0b', subTab: 'sent' },
-  MEMBER_QUIT:          { icon: (s) => <LogOut size={s} />,      color: '#6366f1', subTab: 'received' },
-  INVITATION_RECEIVED:  { icon: (s) => <Mail size={s} />,        color: '#3b82f6', subTab: 'sent' },
+  MEMBER_REMOVED:       { icon: (s) => <UserMinus size={s} />,   color: '#f59e0b', subTab: 'received' },
+  MEMBER_QUIT:          { icon: (s) => <LogOut size={s} />,      color: '#6366f1', subTab: 'sent' },
+  INVITATION_RECEIVED:  { icon: (s) => <Mail size={s} />,        color: '#3b82f6', subTab: 'received' },
 };
 
 function enrichNotification(n) {

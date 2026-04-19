@@ -162,7 +162,7 @@ const projectController = {
             positionName: member.role,
             actorName: owner.name,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'sent' }
+            navigationState: { tab: 'applications', subTab: 'received' }
           });
         } catch (error) {
           console.error('Error creating invitation record:', error);
@@ -309,7 +309,7 @@ const projectController = {
                 projectName: originalProject.title,
                 positionName: removedApp.position,
                 navigationPath: '/dashboard',
-                navigationState: { tab: 'applications', subTab: 'sent' }
+                navigationState: { tab: 'applications', subTab: 'received' }
               });
             }
           } catch (err) {
@@ -517,7 +517,7 @@ const projectController = {
               positionName: member.role,
               actorName: owner.name,
               navigationPath: '/dashboard',
-              navigationState: { tab: 'applications', subTab: 'sent' }
+              navigationState: { tab: 'applications', subTab: 'received' }
             });
           } catch (error) {
             console.error('Error creating invitation record:', error);
@@ -877,7 +877,7 @@ const projectController = {
           positionName: role,
           actorName: owner.name,
           navigationPath: '/dashboard',
-          navigationState: { tab: 'applications', subTab: 'sent' }
+          navigationState: { tab: 'applications', subTab: 'received' }
         });
       }
     } catch (err) {
@@ -1028,7 +1028,7 @@ const projectController = {
             positionName: application.position,
             actorName: memberName,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'received' }
+            navigationState: { tab: 'applications', subTab: 'sent' }
           });
         } else {
           // Notify the removed member
@@ -1040,7 +1040,7 @@ const projectController = {
             projectName: project.title,
             positionName: application.position,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'sent' }
+            navigationState: { tab: 'applications', subTab: 'received' }
           });
         }
       }
