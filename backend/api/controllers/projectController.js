@@ -884,6 +884,9 @@ const projectController = {
       console.error('Error creating invitation record for direct invite:', err);
     }
 
+    // Broadcast real-time team update to all workspace users in this project
+    broadcastToProject(id, { type: 'team_updated', project: project.toObject() });
+
     const response = successResponse(project, 'Team member added successfully');
     res.json(response);
   }),
@@ -1073,6 +1076,8 @@ const projectController = {
     }
 
     const response = successResponse(project, isQuit === 'true' ? 'Successfully quit project' : 'Team member removed successfully');
+    // Broadcast real-time team update to all workspace users in this project
+    broadcastToProject(id, { type: 'team_updated', project: project.toObject() });
     res.json(response);
   }),
 

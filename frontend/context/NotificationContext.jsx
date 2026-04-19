@@ -59,6 +59,7 @@ export const NotificationProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
   const { user } = useAuth();
   const esRef = useRef(null);
+  const [lastEvent, setLastEvent] = useState(null); // latest raw SSE event for subscribers
 
   // ── Toast helpers ──────────────────────────────────────────
   const dismissToast = useCallback((id) => {
@@ -103,6 +104,8 @@ export const NotificationProvider = ({ children }) => {
         const raw = JSON.parse(event.data);
         // Skip the connection-confirmation event
         if (raw.type === 'CONNECTED') return;
+        // Expose raw event so other contexts (e.g. ProjectContext) can react
+        setLastEvent(raw);
         const enriched = enrichNotification(raw);
         setNotifications((prev) => {
           // Avoid duplicates
@@ -210,6 +213,7 @@ export const NotificationProvider = ({ children }) => {
     showToast,
     toasts,
     dismissToast,
+    lastEvent, // latest raw SSE event — consumers can watch this to react in real-time
   };
 
   return (

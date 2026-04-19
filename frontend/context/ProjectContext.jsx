@@ -25,7 +25,42 @@ export const ProjectProvider = ({ children }) => {
   const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const { fetchNotifications } = useNotifications();
+  const { fetchNotifications, lastEvent } = useNotifications();
+
+  // Map SSE notification types to the application status they represent
+  const STATUS_EVENT_MAP = {
+    APPLICATION_ACCEPTED: 'ACCEPTED',
+    APPLICATION_REJECTED: 'REJECTED',
+    MEMBER_REMOVED:       'REMOVED',
+    MEMBER_QUIT:          'QUIT',
+  };
+
+  // React to real-time SSE events and update application status immediately
+  useEffect(() => {
+    if (!lastEvent) return;
+    const newStatus = STATUS_EVENT_MAP[lastEvent.type];
+    if (!newStatus || !lastEvent.projectId) return;
+
+    setApplications(prev => prev.map(app => {
+      const appProjectId = String(app.projectId?._id || app.projectId);
+      const eventProjectId = String(lastEvent.projectId);
+      if (appProjectId !== eventProjectId) return app;
+
+      // For QUIT: update the owner's received copy (applicant quit → owner sees it)
+      // For REMOVED: update the member's sent copy (owner removed → member sees it)
+      // For ACCEPTED/REJECTED: update the applicant's sent copy
+      const isRelevant =
+        (newStatus === 'QUIT'     && app.type === 'received') ||
+        (newStatus === 'REMOVED'  && app.type === 'sent')     ||
+        (newStatus === 'ACCEPTED' && app.type === 'sent')     ||
+        (newStatus === 'REJECTED' && app.type === 'sent');
+
+      if (!isRelevant) return app;
+      if (app.status === newStatus) return app; // already up to date
+
+      return { ...app, status: newStatus };
+    }));
+  }, [lastEvent]);
   
   // Function to fetch applications (can be called anytime)
   const fetchApplications = async () => {
@@ -1069,6 +1104,14 @@ export const ProjectProvider = ({ children }) => {
     fetchApplications,
     createProject,
     editProject,
+    // Lightweight local-only patch — use this for SSE-driven updates to avoid re-POSTing to backend
+    patchProject: (projectId, updatedData) => {
+      setProjects(prev => prev.map(p =>
+        String(p.id || p._id) === String(projectId)
+          ? { ...p, ...updatedData, id: p.id || p._id }
+          : p
+      ));
+    },
     deleteProject,
     leaveProject,
     applyToProject,
