@@ -1012,11 +1012,17 @@ const projectController = {
           await updatedOwnerApp.save();
         }
 
-        console.log(`Application status updated to ${status}`);
-
         // Send notification based on action type
+        // Routing depends on whether this is a regular application (APP-) or an invitation (INV-).
+        // For regular applications:
+        //   - Member quits  → owner's copy is in applications_received → redirect owner to "Received" tab
+        //   - Owner removes → member's copy is in applications_sent    → redirect member to "Sent" tab
+        // For invitations the tabs are swapped (INV- records live in the opposite arrays),
+        // so the subTab values are reversed.
+        const isInvitation = application.applicationId.startsWith('INV-');
+
         if (isQuit === 'true') {
-          // Notify project owner that a member quit → owner redirected to Sent tab
+          // Notify project owner that a member quit
           const memberUser = await User.findById(userId);
           const memberName = memberUser?.name || application.applicantName || 'A member';
           await createNotification({
@@ -1028,10 +1034,12 @@ const projectController = {
             positionName: application.position,
             actorName: memberName,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'sent' }
+            // APP-: owner sees the quit record in Received (their received applications)
+            // INV-: owner's copy lives in Sent (their sent invitations)
+            navigationState: { tab: 'applications', subTab: isInvitation ? 'sent' : 'received' }
           });
         } else {
-          // Notify the removed member → member redirected to Received tab
+          // Notify the removed member
           await createNotification({
             recipientId: userId,
             type: 'MEMBER_REMOVED',
@@ -1040,9 +1048,11 @@ const projectController = {
             projectName: project.title,
             positionName: application.position,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'received' }
+            // APP-: member sees the removal in Sent (their sent applications)
+            // INV-: member's copy lives in Received (their received invitations)
+            navigationState: { tab: 'applications', subTab: isInvitation ? 'received' : 'sent' }
           });
-          // Also notify the owner that they removed a member → owner redirected to Sent tab
+          // Also notify the owner that they removed a member
           const removedUser = await User.findById(userId);
           const removedName = removedUser?.name || 'A member';
           await createNotification({
@@ -1054,7 +1064,9 @@ const projectController = {
             positionName: application.position,
             actorName: removedName,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'sent' }
+            // APP-: owner sees the removal in Received (their received applications)
+            // INV-: owner's copy lives in Sent (their sent invitations)
+            navigationState: { tab: 'applications', subTab: isInvitation ? 'sent' : 'received' }
           });
         }
       }

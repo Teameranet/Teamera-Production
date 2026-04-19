@@ -510,7 +510,8 @@ export const updateApplicationStatus = async (req, res) => {
         projectName: application.projectName,
         positionName: application.position,
         navigationPath: '/dashboard',
-        navigationState: { tab: 'applications', subTab: 'received' }
+        // Member's copy lives in applications_sent (APP- record) → redirect to Sent tab
+        navigationState: { tab: 'applications', subTab: 'sent' }
       });
     }
 

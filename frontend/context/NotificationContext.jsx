@@ -11,12 +11,12 @@ const TYPE_META = {
   NEW_APPLICATION:      { icon: (s) => <Users size={s} />,       color: '#10b981', subTab: 'received' },
   APPLICATION_ACCEPTED: { icon: (s) => <CheckCircle size={s} />, color: '#10b981', subTab: 'sent' },
   APPLICATION_REJECTED: { icon: (s) => <XCircle size={s} />,     color: '#ef4444', subTab: 'sent' },
-  // Owner is notified when a member quits → redirect owner to Sent tab (their sent invitations)
-  MEMBER_QUIT:          { icon: (s) => <LogOut size={s} />,      color: '#6366f1', subTab: 'sent' },
-  // Owner is notified when they remove a member → redirect owner to Sent tab
-  MEMBER_REMOVED_OWNER: { icon: (s) => <UserMinus size={s} />,   color: '#f59e0b', subTab: 'sent' },
-  // Member is notified when they are removed → redirect member to Received tab
-  MEMBER_REMOVED:       { icon: (s) => <UserMinus size={s} />,   color: '#f59e0b', subTab: 'received' },
+  // Owner is notified when a member quits → owner's copy is in Received (their received applications)
+  MEMBER_QUIT:          { icon: (s) => <LogOut size={s} />,      color: '#6366f1', subTab: 'received' },
+  // Owner is notified when they remove a member → owner's copy is in Received (their received applications)
+  MEMBER_REMOVED_OWNER: { icon: (s) => <UserMinus size={s} />,   color: '#f59e0b', subTab: 'received' },
+  // Member is notified when they are removed → member's copy is in Sent (their sent applications)
+  MEMBER_REMOVED:       { icon: (s) => <UserMinus size={s} />,   color: '#f59e0b', subTab: 'sent' },
   // Member is notified when they receive an invitation → redirect to Received tab
   INVITATION_RECEIVED:  { icon: (s) => <Mail size={s} />,        color: '#3b82f6', subTab: 'received' },
 };
