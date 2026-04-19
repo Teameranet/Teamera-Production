@@ -75,6 +75,9 @@ function Dashboard() {
   // State for quit project confirmation modal
   const [quitProjectTarget, setQuitProjectTarget] = useState(null); // { id, title }
   const [quitLoading, setQuitLoading] = useState(false);
+  // State for delete project confirmation modal
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState(null); // { id, title }
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Fetch user's owned and participating projects
   useEffect(() => {
@@ -156,15 +159,26 @@ function Dashboard() {
     setProjectToEdit(null);
   };
 
-  // Function to handle deleting a project
-  const handleDeleteProject = async (projectId) => {
-    const success = await deleteProject(projectId);
+  // Function to handle deleting a project — opens confirmation modal
+  const handleDeleteProject = (projectId) => {
+    const project = userProjects.owned.find(p => (p.id || p._id) === projectId);
+    setDeleteProjectTarget({ id: projectId, title: project?.title || 'this project' });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteProjectTarget) return;
+    setDeleteLoading(true);
+    const success = await deleteProject(deleteProjectTarget.id);
+    setDeleteLoading(false);
+    setDeleteProjectTarget(null);
     if (success) {
       setUserProjects(prev => ({
         ...prev,
-        owned: prev.owned.filter(p => (p.id || p._id) !== projectId)
+        owned: prev.owned.filter(p => (p.id || p._id) !== deleteProjectTarget.id)
       }));
       showToast({ type: 'success', title: 'Project deleted', description: 'Your project has been removed.' });
+    } else {
+      showToast({ type: 'error', title: 'Failed to delete project', description: 'Something went wrong. Please try again.' });
     }
   };
 
@@ -784,6 +798,33 @@ function Dashboard() {
           onClose={handleCloseCreateModal}
           projectToEdit={projectToEdit}
         />
+      )}
+
+      {/* Delete Project Confirmation Modal */}
+      {deleteProjectTarget && (
+        <div className="wt-modal-overlay" onClick={() => setDeleteProjectTarget(null)}>
+          <div className="wt-modal wt-modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="wt-modal-header">
+              <h4 className="wt-modal-title">Delete Project</h4>
+              <button className="wt-modal-close" onClick={() => setDeleteProjectTarget(null)}><X size={16} /></button>
+            </div>
+            <div className="wt-modal-body">
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.9rem' }}>
+                Are you sure you want to delete <strong>{deleteProjectTarget.title}</strong>? This action cannot be undone.
+              </p>
+              <div className="wt-modal-footer">
+                <button className="wt-btn wt-btn--ghost" onClick={() => setDeleteProjectTarget(null)}>Cancel</button>
+                <button
+                  className="wt-btn wt-btn--danger"
+                  onClick={handleConfirmDelete}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Deleting…' : 'Delete Project'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Quit Project Confirmation Modal */}
