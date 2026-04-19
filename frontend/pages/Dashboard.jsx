@@ -707,7 +707,11 @@ function Dashboard() {
                       </div>
                       
                       <p className="application-message">
-                        {application.message}
+                        {application.status === 'INVITED' 
+                          ? (applicationTab === 'sent' 
+                              ? `You invited ${application.applicantName} to join as ${application.position}` 
+                              : `${application.projectOwnerName} invited you to join as ${application.position}`)
+                          : application.message}
                       </p>
                     </div>
                     

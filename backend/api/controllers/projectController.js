@@ -109,7 +109,7 @@ const projectController = {
                   projectStage: newProject.stage,
                   position: member.role,
                   positionId: member.positionId,
-                  message: 'Invited to join the project',
+                  message: `You have been invited to join ${newProject.title} as ${member.role}`,
                   status: 'INVITED',
                   appliedDate: new Date(),
                   statusUpdatedAt: new Date()
@@ -139,7 +139,7 @@ const projectController = {
                   projectIndustry: newProject.industry,
                   position: member.role,
                   positionId: member.positionId,
-                  message: 'Invited to join the project',
+                  message: `${owner.name} has invited you to join ${newProject.title} as ${member.role}`,
                   status: 'INVITED',
                   appliedDate: new Date(),
                   statusUpdatedAt: new Date()
@@ -470,7 +470,7 @@ const projectController = {
                     projectStage: updatedProject.stage,
                     position: member.role,
                     positionId: member.positionId,
-                    message: 'Invited to join the project',
+                    message: `You have been invited to join ${updatedProject.title} as ${member.role}`,
                     status: 'INVITED',
                     appliedDate: new Date(),
                     statusUpdatedAt: new Date()
@@ -497,7 +497,7 @@ const projectController = {
                     projectIndustry: updatedProject.industry,
                     position: member.role,
                     positionId: member.positionId,
-                    message: 'Invited to join the project',
+                    message: `${owner.name} has invited you to join ${updatedProject.title} as ${member.role}`,
                     status: 'INVITED',
                     appliedDate: new Date(),
                     statusUpdatedAt: new Date()
@@ -830,7 +830,7 @@ const projectController = {
                 projectStage: project.stage,
                 position: role,
                 positionId,
-                message: 'Invited to join the project',
+                message: `You have been invited to join ${project.title} as ${role}`,
                 status: 'INVITED',
                 appliedDate: new Date(),
                 statusUpdatedAt: new Date()
@@ -857,7 +857,7 @@ const projectController = {
                 projectIndustry: project.industry,
                 position: role,
                 positionId,
-                message: 'Invited to join the project',
+                message: `${owner.name} has invited you to join ${project.title} as ${role}`,
                 status: 'INVITED',
                 appliedDate: new Date(),
                 statusUpdatedAt: new Date()
