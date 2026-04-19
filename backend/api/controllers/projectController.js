@@ -109,7 +109,7 @@ const projectController = {
                   projectStage: newProject.stage,
                   position: member.role,
                   positionId: member.positionId,
-                  message: `You have been invited to join ${newProject.title} as ${member.role}`,
+                  message: `You invited ${member.name} to join ${newProject.title} as ${member.role}`,
                   status: 'INVITED',
                   appliedDate: new Date(),
                   statusUpdatedAt: new Date()
@@ -156,7 +156,7 @@ const projectController = {
           await createNotification({
             recipientId: member.id,
             type: 'INVITATION_RECEIVED',
-            message: `${newProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+            message: `${newProject.title}: ${owner.name} has invited you to join as ${member.role}.`,
             projectId: newProject._id,
             projectName: newProject.title,
             positionName: member.role,
@@ -470,7 +470,7 @@ const projectController = {
                     projectStage: updatedProject.stage,
                     position: member.role,
                     positionId: member.positionId,
-                    message: `You have been invited to join ${updatedProject.title} as ${member.role}`,
+                    message: `You invited ${member.name} to join ${updatedProject.title} as ${member.role}`,
                     status: 'INVITED',
                     appliedDate: new Date(),
                     statusUpdatedAt: new Date()
@@ -511,7 +511,7 @@ const projectController = {
             await createNotification({
               recipientId: member.id,
               type: 'INVITATION_RECEIVED',
-              message: `${updatedProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+              message: `${updatedProject.title}: ${owner.name} has invited you to join as ${member.role}.`,
               projectId: updatedProject._id,
               projectName: updatedProject.title,
               positionName: member.role,
@@ -830,7 +830,7 @@ const projectController = {
                 projectStage: project.stage,
                 position: role,
                 positionId,
-                message: `You have been invited to join ${project.title} as ${role}`,
+                message: `You invited ${name} to join ${project.title} as ${role}`,
                 status: 'INVITED',
                 appliedDate: new Date(),
                 statusUpdatedAt: new Date()
@@ -871,7 +871,7 @@ const projectController = {
         await createNotification({
           recipientId: userId,
           type: 'INVITATION_RECEIVED',
-          message: `${project.title}: You have been invited to join as ${role} by ${owner.name}.`,
+          message: `${project.title}: ${owner.name} has invited you to join as ${role}.`,
           projectId: project._id,
           projectName: project.title,
           positionName: role,
@@ -1016,7 +1016,7 @@ const projectController = {
 
         // Send notification based on action type
         if (isQuit === 'true') {
-          // Notify project owner that a member quit
+          // Notify project owner that a member quit → owner redirected to Sent tab
           const memberUser = await User.findById(userId);
           const memberName = memberUser?.name || application.applicantName || 'A member';
           await createNotification({
@@ -1031,7 +1031,7 @@ const projectController = {
             navigationState: { tab: 'applications', subTab: 'sent' }
           });
         } else {
-          // Notify the removed member
+          // Notify the removed member → member redirected to Received tab
           await createNotification({
             recipientId: userId,
             type: 'MEMBER_REMOVED',
@@ -1041,6 +1041,20 @@ const projectController = {
             positionName: application.position,
             navigationPath: '/dashboard',
             navigationState: { tab: 'applications', subTab: 'received' }
+          });
+          // Also notify the owner that they removed a member → owner redirected to Sent tab
+          const removedUser = await User.findById(userId);
+          const removedName = removedUser?.name || 'A member';
+          await createNotification({
+            recipientId: project.ownerId,
+            type: 'MEMBER_REMOVED_OWNER',
+            message: `You removed ${removedName} from the ${application.position} role in ${project.title}.`,
+            projectId: project._id,
+            projectName: project.title,
+            positionName: application.position,
+            actorName: removedName,
+            navigationPath: '/dashboard',
+            navigationState: { tab: 'applications', subTab: 'sent' }
           });
         }
       }

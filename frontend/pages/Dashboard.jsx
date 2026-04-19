@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut } from 'lucide-react';
+import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -272,9 +272,8 @@ function Dashboard() {
   const handleViewProfile = async (application) => {
     console.log(`Viewing details for application:`, application);
     
-    // In "Sent" tab: Show project modal (the project you applied to)
-    if (applicationTab === 'sent') {
-      // Find the project from the projects list
+    // type:'sent' = member's record → show the project they applied/were invited to
+    if (application.type === 'sent') {
       const project = projects.find(p => 
         (p.id === application.projectId || p._id === application.projectId)
       );
@@ -282,7 +281,6 @@ function Dashboard() {
       if (project) {
         setSelectedProjectForModal(project);
       } else {
-        // If project not in local state, fetch it
         try {
           const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           const projectId = typeof application.projectId === 'object' 
@@ -293,13 +291,7 @@ function Dashboard() {
           const result = await response.json();
           
           if (result.success && result.data) {
-            const projectData = {
-              ...result.data,
-              id: result.data._id || result.data.id
-            };
-            setSelectedProjectForModal(projectData);
-          } else {
-            console.error('Failed to fetch project:', result.message);
+            setSelectedProjectForModal({ ...result.data, id: result.data._id || result.data.id });
           }
         } catch (error) {
           console.error('Error fetching project:', error);
@@ -308,49 +300,26 @@ function Dashboard() {
       return;
     }
     
-    // In "Received" tab: Show applicant's profile (who applied to your project)
+    // type:'received' = owner's record → show the applicant's profile
     try {
-      // Show loading state
       setSelectedUser({ loading: true });
       
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      
-      // Convert applicantId to string for comparison
       const idToFetch = typeof application.applicantId === 'object' 
         ? application.applicantId._id || application.applicantId.toString() 
         : application.applicantId.toString();
       
-      console.log('Fetching applicant profile for ID:', idToFetch);
-      
       const response = await fetch(`${apiBaseUrl}/api/users/${idToFetch}/profile`);
       const result = await response.json();
       
-      console.log('Fetched user profile result:', result);
-      
       if (result.success && result.data) {
-        // Add id field if not present
-        const userData = {
-          ...result.data,
-          id: result.data._id || result.data.id
-        };
-        setSelectedUser(userData);
+        setSelectedUser({ ...result.data, id: result.data._id || result.data.id });
       } else {
-        console.error('Failed to fetch user profile:', result.message);
-        // Fallback to application userDetails if API fails
-        if (application.userDetails) {
-          setSelectedUser(application.userDetails);
-        } else {
-          setSelectedUser(null);
-        }
+        setSelectedUser(application.userDetails || null);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // Fallback to application userDetails
-      if (application.userDetails) {
-        setSelectedUser(application.userDetails);
-      } else {
-        setSelectedUser(null);
-      }
+      setSelectedUser(application.userDetails || null);
     }
   };
 
@@ -618,92 +587,105 @@ function Dashboard() {
               <div className="applications-list">
                 {filteredApplications.map(application => (
                   <div key={application.id} className="application-item">
-                    {/* Applicant info - Display based on tab context */}
+                    {/*
+                      Display logic uses application.type (the raw backend source), NOT applicationTab.
+                      Reason: invitations are cross-tab — an invitation in the "Received" tab has
+                      type:'sent' (member's record), and one in "Sent" has type:'received' (owner's record).
+                      Using applicationTab would read the wrong fields and show undefined names.
+
+                      type:'received' = owner's record  → has applicantName, applicantTitle, applicantLocation
+                      type:'sent'     = member's record → has projectOwnerName
+                    */}
                     <div className="applicant-info">
-                      <UserAvatar 
-                        user={{ 
-                          name: applicationTab === 'received' 
-                            ? application.applicantName 
-                            : application.projectOwnerName 
-                        }} 
+                      <UserAvatar
+                        user={{
+                          name: application.type === 'received'
+                            ? application.applicantName
+                            : application.projectOwnerName
+                        }}
                         size="medium"
                         className="applicant-avatar"
                       />
                       <div className="applicant-details">
                         <h4>
-                          {applicationTab === 'received' 
-                            ? application.applicantName 
+                          {application.type === 'received'
+                            ? application.applicantName
                             : application.projectOwnerName}
                         </h4>
                         <p className="profile-title">
-                          {applicationTab === 'received' 
+                          {application.type === 'received'
                             ? (application.applicantTitle || 'Member')
                             : 'Project Owner'}
                         </p>
-                        {applicationTab === 'received' && application.applicantLocation && (
+                        {application.type === 'received' && application.applicantLocation && (
                           <span className="applicant-location">{application.applicantLocation}</span>
                         )}
-                        <span>Applied {getRelativeTime(application.appliedDate)}</span>
+                        <span>{application.status === 'INVITED' ? 'Invited' : 'Applied'} {getRelativeTime(application.appliedDate)}</span>
                       </div>
                     </div>
-                    
-                    {/* Application details from Application collection schema */}
+
+                    {/* Application details */}
                     <div className="application-details">
                       <div className="application-project">
                         <p>{application.projectName}</p>
                         <span>{application.position} position</span>
                       </div>
-                      
+
                       <div className="applicant-skills">
                         {application.skills.map((skill, index) => (
                           <span key={index} className="skill-tag">{skill}</span>
                         ))}
                       </div>
-                      
+
                       <p className="application-message">
-                        {application.status === 'INVITED' 
-                          ? (applicationTab === 'sent' 
-                              ? `You invited ${application.applicantName} to join as ${application.position}` 
-                              : `${application.projectOwnerName} invited you to join as ${application.position}`)
+                        {application.status === 'INVITED'
+                          ? (application.type === 'sent'
+                              // Member's record: they received the invite
+                              ? `${application.projectOwnerName} invited you to join as ${application.position}`
+                              // Owner's record: they sent the invite
+                              : `You invited ${application.applicantName} to join as ${application.position}`)
                           : application.message}
                       </p>
                     </div>
-                    
-                    {/* Status and actions - Aligned with Application schema statuses */}
+
+                    {/* Status badge + action buttons */}
                     <div className="application-status-actions">
                       <div className={`application-status status-${application.status.toLowerCase()}`}>
-                        {application.status === 'PENDING' && <Clock size={16} />}
+                        {application.status === 'PENDING'  && <Clock size={16} />}
                         {application.status === 'ACCEPTED' && <CheckCircle size={16} />}
-                        {application.status === 'INVITED' && <CheckCircle size={16} />}
-                        {(application.status === 'REJECTED' || application.status === 'QUIT') && <XCircle size={16} />}
-                        {application.status === 'REMOVED' && <XCircle size={16} />}
+                        {application.status === 'INVITED'  && <Mail size={16} />}
+                        {(application.status === 'REJECTED' || application.status === 'QUIT' || application.status === 'REMOVED') && <XCircle size={16} />}
                         <span>
-                          {application.status === 'QUIT' ? 'Quit' : 
+                          {application.status === 'QUIT'    ? 'Quit'    :
                            application.status === 'REMOVED' ? 'Removed' :
+                           application.status === 'INVITED' ? 'Invited' :
                            application.status.charAt(0) + application.status.slice(1).toLowerCase()}
                         </span>
                       </div>
-                      
+
                       <div className="application-actions">
-                        {applicationTab === 'received' && (
-                          <button 
-                            className="view-profile-btn" 
+                        {/* Profile button — only for owner's records (type:'received'), never for invitations in member view */}
+                        {application.type === 'received' && (
+                          <button
+                            className="view-profile-btn"
                             onClick={() => handleViewProfile(application)}
                           >
                             <User size={16} />
                             Profile
                           </button>
                         )}
-                        <button 
-                          className="view-project-btn" 
+
+                        <button
+                          className="view-project-btn"
                           onClick={() => handleViewProject(application)}
                         >
                           <ExternalLink size={16} />
                           View Project
                         </button>
+
                         {application.hasResume && (
-                          <button 
-                            className="resume-btn" 
+                          <button
+                            className="resume-btn"
                             onClick={() => handleDownloadResume(application.resumeUrl, application.applicantName)}
                           >
                             <Download size={16} />
@@ -711,8 +693,10 @@ function Dashboard() {
                           </button>
                         )}
 
-                        {/* My Workspace — Received tab: always visible for project owners */}
-                        {applicationTab === 'received' && (
+                        {/* Workspace — visible when accepted or when owner has an active invitation */}
+                        {(application.status === 'ACCEPTED' ||
+                          (application.status === 'INVITED' && application.type === 'received') ||
+                          (application.status === 'INVITED' && application.type === 'sent')) && (
                           <button
                             className="workspace-btn"
                             onClick={() => handleOpenWorkspace(application)}
@@ -722,28 +706,17 @@ function Dashboard() {
                           </button>
                         )}
 
-                        {/* My Workspace — Sent tab: only when ACCEPTED or INVITED */}
-                        {applicationTab === 'sent' && (application.status === 'ACCEPTED' || application.status === 'INVITED') && (
-                          <button
-                            className="workspace-btn"
-                            onClick={() => handleOpenWorkspace(application)}
-                          >
-                            <MessageCircle size={16} />
-                            My Workspace
-                          </button>
-                        )}
-                        
-                        {/* Only show accept/reject for PENDING applications in received tab */}
-                        {application.status === 'PENDING' && applicationTab === 'received' && (
+                        {/* Accept / Reject — only for regular PENDING applications (never for invitations) */}
+                        {application.status === 'PENDING' && application.type === 'received' && (
                           <div className="decision-actions">
-                            <button 
-                              className="accept-btn" 
+                            <button
+                              className="accept-btn"
                               onClick={() => handleAcceptApplication(application.id)}
                             >
                               Accept
                             </button>
-                            <button 
-                              className="reject-btn" 
+                            <button
+                              className="reject-btn"
                               onClick={() => handleRejectApplication(application.id)}
                             >
                               Reject
@@ -759,8 +732,8 @@ function Dashboard() {
               <div className="empty-applications">
                 <p>
                   {applicationTab === 'received' 
-                    ? 'No applications received yet. When users apply to your projects, their applications will appear here in your applications_received array.' 
-                    : 'No applications sent yet. When you apply to projects, your applications will appear here in your applications_sent array.'}
+                    ? 'No applications or invitations received yet. Applications from users and invitations you accepted will appear here.' 
+                    : 'No sent applications or invitations yet. Applications you submitted and invitations you sent to members will appear here.'}
                 </p>
               </div>
             )}

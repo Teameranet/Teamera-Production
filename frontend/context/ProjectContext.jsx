@@ -774,20 +774,41 @@ export const ProjectProvider = ({ children }) => {
     return applications.filter(app => app.projectId === projectId);
   };
 
-  // Get applications received by a user (for their projects)
+  // Invitation records are identified by the INV- prefix on applicationId.
+  // This never changes even when status transitions to QUIT/REMOVED after the invite.
+  const isInvitationRecord = (app) =>
+    typeof app.applicationId === 'string' && app.applicationId.startsWith('INV-');
+
+  // "Received" tab:
+  //   - Regular inbound applications (type:'received', APP- prefix) — all statuses
+  //   - Invitation records where the current user is the MEMBER (type:'sent', INV- prefix) — all statuses
+  //     This keeps quit invitations here instead of drifting to Sent when status → QUIT
   const getReceivedApplications = (userId) => {
     if (!userId) return [];
-    
-    // Filter applications by type 'received'
-    return applications.filter(app => app.type === 'received');
+    return applications.filter(app => {
+      if (isInvitationRecord(app)) {
+        // Member's copy of the invitation lives in type:'sent'
+        return app.type === 'sent';
+      }
+      // Regular application received as project owner
+      return app.type === 'received';
+    });
   };
 
-  // Get applications sent by a user
+  // "Sent" tab:
+  //   - Regular outbound applications (type:'sent', APP- prefix) — all statuses
+  //   - Invitation records where the current user is the OWNER (type:'received', INV- prefix) — all statuses
+  //     This keeps removed-member invitations here instead of drifting to Received when status → REMOVED
   const getSentApplications = (userId) => {
     if (!userId) return [];
-    
-    // Filter applications by type 'sent'
-    return applications.filter(app => app.type === 'sent');
+    return applications.filter(app => {
+      if (isInvitationRecord(app)) {
+        // Owner's copy of the invitation lives in type:'received'
+        return app.type === 'received';
+      }
+      // Regular application sent as an applicant
+      return app.type === 'sent';
+    });
   };
 
   // Get projects for a specific user
