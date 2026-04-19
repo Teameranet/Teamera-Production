@@ -15,19 +15,23 @@ import ProjectCard from '../components/ProjectCard';
 // 
 // APPLICATION COLLECTION STRUCTURE (from SYSTEM_FLOW_DATABASE_SCHEMA.md):
 // - Each user has ONE Application document (userId is unique)
-// - applications_received[]: Applications this user received as project owner
+// - applications_received[]: Applications this user received as project owner (shown in "Sent" tab)
 //   - Contains: applicantId, applicantName, applicantEmail, applicantAvatar, applicantTitle, applicantLocation
 //   - Project info: projectId, projectName, projectStage
-//   - Application: position, message, skills, status (PENDING/ACCEPTED/REJECTED/REMOVED)
+//   - Application: position, message, skills, status (PENDING/ACCEPTED/REJECTED/REMOVED/INVITED)
 //   - Resume: hasResume, resumeUrl, resumeFileName, attachments[]
 //   - Review: reviewNotes, reviewedAt, reviewedBy, rating, removedFromTeamAt, removalReason
-// - applications_sent[]: Applications this user sent as applicant
+// - applications_sent[]: Applications this user sent as applicant (shown in "Received" tab)
 //   - Contains: projectOwnerId, projectOwnerName, projectOwnerEmail, projectOwnerAvatar
 //   - Project info: projectId, projectName, projectStage, projectIndustry
 //   - Application: position, message, skills, status (PENDING/ACCEPTED/REJECTED/QUIT/REMOVED/INVITED)
 //   - Resume: hasResume, resumeUrl, resumeFileName, attachments[]
 //   - Review: reviewNotes, reviewedAt, reviewedBy, rejectionReason, removedFromTeamAt, removalReason
 // - stats: Aggregated counts for both received and sent applications
+//
+// TAB LOGIC:
+// - "Sent" tab: Shows applications_received (invitations/applications sent TO your projects)
+// - "Received" tab: Shows applications_sent (invitations/applications you received FROM other projects)
 function Dashboard() {
   // Get current user from AuthContext
   const { user } = useAuth();
@@ -124,9 +128,9 @@ function Dashboard() {
   }, [user, applications, receivedApplications.length, sentApplications.length]);
 
   // Filter applications based on the selected tab
-  // 'received' tab shows applications_received (user is project owner)
-  // 'sent' tab shows applications_sent (user is applicant)
-  const filteredApplications = (applicationTab === 'received' ? receivedApplications : sentApplications)
+  // 'sent' tab shows applications_received (user is project owner - sent invitations)
+  // 'received' tab shows applications_sent (user is applicant - received invitations)
+  const filteredApplications = (applicationTab === 'sent' ? receivedApplications : sentApplications)
     .slice()
     .sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate));
 
@@ -168,7 +172,7 @@ function Dashboard() {
     console.log('Leave project:', projectId);
   };
 
-  // Function to handle accepting an application
+  // Function to handle accepting an application (for project owners)
   const handleAcceptApplication = async (applicationId) => {
     // Find the application
     const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
@@ -211,7 +215,71 @@ function Dashboard() {
     }
   };
 
-  // Function to handle rejecting an application
+  // Function to handle accepting an invitation (for invited members)
+  const handleAcceptInvitation = async (applicationId) => {
+    // Find the application
+    const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
+    
+    if (!application) {
+      console.error('Application not found:', applicationId);
+      return;
+    }
+    
+    // Accept the invitation using context function
+    const success = await acceptApplication(applicationId);
+    
+    if (success) {
+      showToast({
+        type: 'success',
+        title: 'Invitation accepted',
+        description: `You have joined '${application.projectName}' as ${application.position}.`,
+        action: {
+          label: 'Open Workspace',
+          onClick: () => {
+            const projectId = String(application.projectId?._id || application.projectId);
+            if (projectId) localStorage.setItem('workspace_selected_project', projectId);
+            navigate('/workspace');
+          }
+        }
+      });
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Failed to accept invitation',
+        description: 'Something went wrong. Please try again.',
+      });
+    }
+  };
+
+  // Function to handle rejecting an invitation (for invited members)
+  const handleRejectInvitation = async (applicationId) => {
+    // Find the application
+    const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
+    
+    if (!application) {
+      console.error('Application not found:', applicationId);
+      return;
+    }
+    
+    // Reject the invitation using context function
+    const success = await rejectApplication(applicationId);
+    
+    if (success) {
+      showToast({
+        type: 'warning',
+        title: 'Invitation declined',
+        description: `You have declined the invitation to join '${application.projectName}' as ${application.position}.`,
+      });
+    } else {
+      showToast({
+        type: 'error',
+        title: 'Failed to decline invitation',
+        description: 'Something went wrong. Please try again.',
+      });
+    }
+  };
+
+  // Function to handle rejecting an application (for project owners)
   const handleRejectApplication = async (applicationId) => {
     // Find the application
     const application = applications.find(app => app.id === applicationId || app.applicationId === applicationId);
@@ -250,8 +318,8 @@ function Dashboard() {
   const handleViewProfile = async (application) => {
     console.log(`Viewing details for application:`, application);
     
-    // In "Sent" tab: Show project modal (the project you applied to)
-    if (applicationTab === 'sent') {
+    // In "Received" tab: Show project modal (the project you were invited to)
+    if (applicationTab === 'received') {
       // Find the project from the projects list
       const project = projects.find(p => 
         (p.id === application.projectId || p._id === application.projectId)
@@ -286,7 +354,7 @@ function Dashboard() {
       return;
     }
     
-    // In "Received" tab: Show applicant's profile (who applied to your project)
+    // In "Sent" tab: Show applicant's profile (who you invited to your project)
     try {
       // Show loading state
       setSelectedUser({ loading: true });
@@ -571,19 +639,19 @@ function Dashboard() {
           <div className="applications-content">
             {/* <h3>Application Management</h3> */}
             
-            {/* Tabs for received and sent applications */}
+            {/* Tabs for sent invitations and received invitations */}
             <div className="myprojects-subtabs">
-              <button 
-                className={`subtab-btn ${applicationTab === 'received' ? 'active' : ''}`}
-                onClick={() => setApplicationTab('received')}
-              >
-                Received ({receivedApplicationsCount})
-              </button>
               <button 
                 className={`subtab-btn ${applicationTab === 'sent' ? 'active' : ''}`}
                 onClick={() => setApplicationTab('sent')}
               >
-                Sent ({sentApplicationsCount})
+                Sent ({receivedApplicationsCount})
+              </button>
+              <button 
+                className={`subtab-btn ${applicationTab === 'received' ? 'active' : ''}`}
+                onClick={() => setApplicationTab('received')}
+              >
+                Received ({sentApplicationsCount})
               </button>
             </div>
             
@@ -600,7 +668,7 @@ function Dashboard() {
                     <div className="applicant-info">
                       <UserAvatar 
                         user={{ 
-                          name: applicationTab === 'received' 
+                          name: applicationTab === 'sent' 
                             ? application.applicantName 
                             : application.projectOwnerName 
                         }} 
@@ -609,16 +677,16 @@ function Dashboard() {
                       />
                       <div className="applicant-details">
                         <h4>
-                          {applicationTab === 'received' 
+                          {applicationTab === 'sent' 
                             ? application.applicantName 
                             : application.projectOwnerName}
                         </h4>
                         <p className="profile-title">
-                          {applicationTab === 'received' 
+                          {applicationTab === 'sent' 
                             ? (application.applicantTitle || 'Member')
                             : 'Project Owner'}
                         </p>
-                        {applicationTab === 'received' && application.applicantLocation && (
+                        {applicationTab === 'sent' && application.applicantLocation && (
                           <span className="applicant-location">{application.applicantLocation}</span>
                         )}
                         <span>Applied {getRelativeTime(application.appliedDate)}</span>
@@ -659,7 +727,7 @@ function Dashboard() {
                       </div>
                       
                       <div className="application-actions">
-                        {applicationTab === 'received' && (
+                        {applicationTab === 'sent' && (
                           <button 
                             className="view-profile-btn" 
                             onClick={() => handleViewProfile(application)}
@@ -685,8 +753,8 @@ function Dashboard() {
                           </button>
                         )}
 
-                        {/* My Workspace — Received tab: always visible for project owners */}
-                        {applicationTab === 'received' && (
+                        {/* My Workspace — Sent tab: always visible for project owners */}
+                        {applicationTab === 'sent' && (
                           <button
                             className="workspace-btn"
                             onClick={() => handleOpenWorkspace(application)}
@@ -696,8 +764,8 @@ function Dashboard() {
                           </button>
                         )}
 
-                        {/* My Workspace — Sent tab: only when ACCEPTED or INVITED */}
-                        {applicationTab === 'sent' && (application.status === 'ACCEPTED' || application.status === 'INVITED') && (
+                        {/* My Workspace — Received tab: only when ACCEPTED or INVITED */}
+                        {applicationTab === 'received' && (application.status === 'ACCEPTED' || application.status === 'INVITED') && (
                           <button
                             className="workspace-btn"
                             onClick={() => handleOpenWorkspace(application)}
@@ -707,8 +775,8 @@ function Dashboard() {
                           </button>
                         )}
                         
-                        {/* Only show accept/reject for PENDING applications in received tab */}
-                        {application.status === 'PENDING' && applicationTab === 'received' && (
+                        {/* Only show accept/reject for PENDING applications in sent tab (project owners) */}
+                        {application.status === 'PENDING' && applicationTab === 'sent' && (
                           <div className="decision-actions">
                             <button 
                               className="accept-btn" 
@@ -724,6 +792,8 @@ function Dashboard() {
                             </button>
                           </div>
                         )}
+
+
                       </div>
                     </div>
                   </div>
@@ -732,9 +802,9 @@ function Dashboard() {
             ) : (
               <div className="empty-applications">
                 <p>
-                  {applicationTab === 'received' 
-                    ? 'No applications received yet. When users apply to your projects, their applications will appear here in your applications_received array.' 
-                    : 'No applications sent yet. When you apply to projects, your applications will appear here in your applications_sent array.'}
+                  {applicationTab === 'sent' 
+                    ? 'No invitations sent yet. When you invite users to your projects, their invitations will appear here in your applications_received array.' 
+                    : 'No invitations received yet. When project owners invite you to projects, your invitations will appear here in your applications_sent array.'}
                 </p>
               </div>
             )}

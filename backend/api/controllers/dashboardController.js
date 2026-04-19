@@ -377,10 +377,10 @@ export const updateApplicationStatus = async (req, res) => {
     const { applicationId } = req.params;
     const { status, reviewerId, reviewNotes } = req.body;
 
-    if (!['PENDING', 'ACCEPTED', 'REJECTED', 'REMOVED'].includes(status)) {
+    if (!['PENDING', 'ACCEPTED', 'REJECTED', 'REMOVED', 'INVITED'].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be PENDING, ACCEPTED, REJECTED, or REMOVED'
+        message: 'Invalid status. Must be PENDING, ACCEPTED, REJECTED, REMOVED, or INVITED'
       });
     }
 
