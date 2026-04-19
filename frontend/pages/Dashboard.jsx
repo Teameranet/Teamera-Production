@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink } from 'lucide-react';
+import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -9,6 +9,7 @@ import ProfileModal from '../components/ProfileModal';
 import ProjectModal from '../components/ProjectModal';
 import CreateProjectModal from '../components/CreateProjectModal';
 import './Dashboard.css';
+import '../components/tabs/WorkspaceTabs.css';
 import ProjectCard from '../components/ProjectCard';
 
 // Dashboard component displays the main dashboard UI for authenticated users
@@ -47,7 +48,8 @@ function Dashboard() {
     getSentApplications,
     getUserProjects,
     deleteProject,
-    editProject
+    editProject,
+    leaveProject
   } = useProjects();
   // Get notification functions
   const { addAcceptanceNotification, addRejectionNotification, showToast } = useNotifications();
@@ -70,6 +72,9 @@ function Dashboard() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   // State to track selected project for project modal (from applications)
   const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
+  // State for quit project confirmation modal
+  const [quitProjectTarget, setQuitProjectTarget] = useState(null); // { id, title }
+  const [quitLoading, setQuitLoading] = useState(false);
 
   // Fetch user's owned and participating projects
   useEffect(() => {
@@ -164,8 +169,25 @@ function Dashboard() {
   };
 
   // Function to handle leaving a project (participating)
-  const handleLeaveProject = (projectId) => {
-    console.log('Leave project:', projectId);
+  const handleLeaveProject = (project) => {
+    setQuitProjectTarget({ id: project.id || project._id, title: project.title });
+  };
+
+  const handleConfirmQuit = async () => {
+    if (!quitProjectTarget) return;
+    setQuitLoading(true);
+    const success = await leaveProject(quitProjectTarget.id, user.id);
+    setQuitLoading(false);
+    setQuitProjectTarget(null);
+    if (success) {
+      setUserProjects(prev => ({
+        ...prev,
+        participating: prev.participating.filter(p => (p.id || p._id) !== quitProjectTarget.id)
+      }));
+      showToast({ type: 'success', title: 'Left project', description: `You have left "${quitProjectTarget.title}".` });
+    } else {
+      showToast({ type: 'error', title: 'Failed to quit', description: 'Something went wrong. Please try again.' });
+    }
   };
 
   // Function to handle accepting an application
@@ -530,7 +552,7 @@ function Dashboard() {
                       key={project.id || project._id}
                       project={project}
                       isParticipating={true}
-                      onLeave={() => handleLeaveProject(project.id || project._id)}
+                      onLeave={() => handleLeaveProject(project)}
                       onClick={() => {
                         localStorage.setItem('workspace_selected_project', project.id || project._id);
                         navigate('/workspace');
@@ -789,6 +811,33 @@ function Dashboard() {
           onClose={handleCloseCreateModal}
           projectToEdit={projectToEdit}
         />
+      )}
+
+      {/* Quit Project Confirmation Modal */}
+      {quitProjectTarget && (
+        <div className="wt-modal-overlay" onClick={() => setQuitProjectTarget(null)}>
+          <div className="wt-modal wt-modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="wt-modal-header">
+              <h4 className="wt-modal-title">Quit Project</h4>
+              <button className="wt-modal-close" onClick={() => setQuitProjectTarget(null)}><X size={16} /></button>
+            </div>
+            <div className="wt-modal-body">
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.9rem' }}>
+                Are you sure you want to leave <strong>{quitProjectTarget.title}</strong>? You will lose access to this project's workspace.
+              </p>
+              <div className="wt-modal-footer">
+                <button className="wt-btn wt-btn--ghost" onClick={() => setQuitProjectTarget(null)}>Cancel</button>
+                <button
+                  className="wt-btn wt-btn--danger"
+                  onClick={handleConfirmQuit}
+                  disabled={quitLoading}
+                >
+                  {quitLoading ? 'Leaving…' : 'Quit Project'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
