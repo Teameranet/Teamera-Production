@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useNotifications } from './NotificationContext';
 
 const ProjectContext = createContext();
@@ -26,6 +26,7 @@ export const ProjectProvider = ({ children }) => {
 
   const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const { fetchNotifications, lastEvent } = useNotifications();
+  const projectsEsRef = useRef(null);
 
   // Map SSE notification types to the application status they represent
   const STATUS_EVENT_MAP = {
@@ -258,6 +259,48 @@ export const ProjectProvider = ({ children }) => {
     fetchBookmarks();
     fetchApplications();
   }, []);
+
+  // Subscribe to real-time project list updates via SSE
+  useEffect(() => {
+    const es = new EventSource(`${apiBaseUrl}/api/projects/stream`);
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'CONNECTED') return;
+
+        if (data.type === 'project_created' && data.project) {
+          const newProject = { ...data.project, id: data.project._id || data.project.id };
+          setProjects(prev => {
+            // Avoid duplicates (the creator already added it locally)
+            if (prev.some(p => String(p.id || p._id) === String(newProject.id))) return prev;
+            return [newProject, ...prev];
+          });
+        } else if (data.type === 'project_updated' && data.project) {
+          const updated = { ...data.project, id: data.project._id || data.project.id };
+          setProjects(prev => prev.map(p =>
+            String(p.id || p._id) === String(updated.id) ? updated : p
+          ));
+        } else if (data.type === 'project_deleted' && data.projectId) {
+          const deletedId = String(data.projectId);
+          setProjects(prev => prev.filter(p => String(p.id || p._id) !== deletedId));
+        }
+      } catch (e) {
+        console.error('[Projects SSE] Parse error:', e);
+      }
+    };
+
+    es.onerror = () => {
+      console.warn('[Projects SSE] Connection error, browser will auto-reconnect');
+    };
+
+    projectsEsRef.current = es;
+
+    return () => {
+      es.close();
+      projectsEsRef.current = null;
+    };
+  }, [apiBaseUrl]);
 
   const createProject = async (projectData) => {
     try {

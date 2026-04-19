@@ -3,6 +3,7 @@ import Application from '../../models/Application.js';
 import User from '../../models/User.js';
 import Project from '../../models/Project.js';
 import { createNotification } from './notificationController.js';
+import { broadcastProjectUpdate } from '../../utils/projectSseClients.js';
 
 // Get dashboard data for a user
 export const getDashboard = async (req, res) => {
@@ -352,6 +353,14 @@ export const submitApplication = async (req, res) => {
       navigationState: { tab: 'applications', subTab: 'received' }
     });
 
+    // Broadcast updated project so all clients see the new applications count
+    const updatedProject = await Project.findById(projectId)
+      .populate('ownerId', 'name email')
+      .populate('teamMembers.id', 'name email');
+    if (updatedProject) {
+      broadcastProjectUpdate({ type: 'project_updated', project: updatedProject });
+    }
+
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully',
@@ -475,6 +484,14 @@ export const updateApplicationStatus = async (req, res) => {
           applicantColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
         });
         await project.save();
+
+        // Broadcast updated project so all clients see the new team member
+        const populatedProject = await Project.findById(application.projectId)
+          .populate('ownerId', 'name email')
+          .populate('teamMembers.id', 'name email');
+        if (populatedProject) {
+          broadcastProjectUpdate({ type: 'project_updated', project: populatedProject });
+        }
       }
     }
 

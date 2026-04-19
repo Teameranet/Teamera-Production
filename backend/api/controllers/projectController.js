@@ -3,11 +3,34 @@ import User from '../../models/User.js';
 import Application from '../../models/Application.js';
 import { createNotification } from './notificationController.js';
 import { broadcastToProject } from '../../utils/chatSseClients.js';
+import { addProjectListClient, removeProjectListClient, broadcastProjectUpdate } from '../../utils/projectSseClients.js';
 import {
   successResponse,
   errorResponse,
   asyncHandler,
 } from '../../utils/helpers.js';
+
+// SSE stream for real-time project list updates (all users)
+export const streamProjects = (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  res.write(`data: ${JSON.stringify({ type: 'CONNECTED' })}\n\n`);
+
+  const heartbeat = setInterval(() => {
+    try { res.write(': heartbeat\n\n'); } catch (_) {}
+  }, 25000);
+
+  addProjectListClient(res);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    removeProjectListClient(res);
+  });
+};
 
 const projectController = {
   // Get all projects
@@ -173,6 +196,9 @@ const projectController = {
 
     const response = successResponse(newProject, 'Project created successfully');
     res.status(201).json(response);
+
+    // Broadcast to all connected clients so the project list updates in real-time
+    broadcastProjectUpdate({ type: 'project_created', project: newProject });
   }),
 
   // Update project
@@ -672,6 +698,9 @@ const projectController = {
 
     const response = successResponse(updatedProject, 'Project updated successfully');
     res.json(response);
+
+    // Broadcast to all connected clients so the project list updates in real-time
+    broadcastProjectUpdate({ type: 'project_updated', project: updatedProject });
   }),
 
   // Delete project
@@ -691,6 +720,9 @@ const projectController = {
       'Project deleted successfully'
     );
     res.json(response);
+
+    // Broadcast to all connected clients so the project list updates in real-time
+    broadcastProjectUpdate({ type: 'project_deleted', projectId: deletedProject._id });
   }),
 
   // Get projects by user ID (owned and participating)
@@ -775,6 +807,9 @@ const projectController = {
 
     const response = successResponse(updatedProject, 'Project stage updated successfully');
     res.json(response);
+
+    // Broadcast stage change to all connected clients
+    broadcastProjectUpdate({ type: 'project_updated', project: updatedProject });
   }),
 
   // Add team member to project
@@ -886,6 +921,14 @@ const projectController = {
 
     // Broadcast real-time team update to all workspace users in this project
     broadcastToProject(id, { type: 'team_updated', project: project.toObject() });
+
+    // Broadcast to global project list so Projects page updates in real-time
+    const populatedProject = await Project.findById(id)
+      .populate('ownerId', 'name email')
+      .populate('teamMembers.id', 'name email');
+    if (populatedProject) {
+      broadcastProjectUpdate({ type: 'project_updated', project: populatedProject });
+    }
 
     const response = successResponse(project, 'Team member added successfully');
     res.json(response);
@@ -1078,6 +1121,15 @@ const projectController = {
     const response = successResponse(project, isQuit === 'true' ? 'Successfully quit project' : 'Team member removed successfully');
     // Broadcast real-time team update to all workspace users in this project
     broadcastToProject(id, { type: 'team_updated', project: project.toObject() });
+
+    // Broadcast to global project list so Projects page updates in real-time
+    const populatedProject = await Project.findById(id)
+      .populate('ownerId', 'name email')
+      .populate('teamMembers.id', 'name email');
+    if (populatedProject) {
+      broadcastProjectUpdate({ type: 'project_updated', project: populatedProject });
+    }
+
     res.json(response);
   }),
 
@@ -1104,6 +1156,9 @@ const projectController = {
       'Application count incremented successfully'
     );
     res.json(response);
+
+    // Broadcast so Projects page reflects the new count in real-time
+    broadcastProjectUpdate({ type: 'project_updated', project });
   }),
 
   // ── Tasks ──────────────────────────────────────────────────────────────────
