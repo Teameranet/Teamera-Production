@@ -394,12 +394,6 @@ function Dashboard() {
     navigate('/workspace');
   };
 
-  // Function to handle sending a message to an applicant
-  const handleSendMessage = (applicantId) => {
-    console.log(`Sending message to ${applicantId}`);
-    // In a real app, this would open a messaging interface
-  };
-
   // Function to handle downloading a resume
   const handleDownloadResume = (resumeUrl, applicantName) => {
     console.log(`Downloading resume from ${resumeUrl} for ${applicantName}`);
