@@ -136,7 +136,7 @@ function Workspace() {
       </div>
 
       {/* Tabs */}
-      {userProjects.length > 0 && (
+      {selectedProject && (
         <div className="workspace-tabs">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
