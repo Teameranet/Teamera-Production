@@ -1,24 +1,53 @@
-import { Users, MapPin, Briefcase, Bookmark, Share2, Edit, Trash2, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { Users, MapPin, Briefcase, Bookmark, Flag, Edit, Trash2, LogOut } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import UserAvatar from './UserAvatar';
 import './ProjectCard.css';
 
-function ProjectCard({ project, onClick, isOwned, isParticipating, onEdit, onDelete, onLeave }) {
+const REPORT_REASONS = [
+  'Fake Details',
+  'Spam',
+  'Misleading Points',
+  'Inappropriate Content',
+];
+
+function ProjectCard({ project, onClick, isOwned, isParticipating, onEdit, onDelete, onLeave, hideReport }) {
   const { toggleBookmark, isProjectBookmarked } = useProjects();
   const projectId = project.id || project._id;
   const isBookmarked = isProjectBookmarked(projectId);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportSubmitted, setReportSubmitted] = useState(false);
 
   const handleBookmark = (e) => {
     e.stopPropagation();
     toggleBookmark(projectId);
   };
 
-  const handleShare = (e) => {
+  const handleReportOpen = (e) => {
     e.stopPropagation();
-    // Handle share functionality
-    console.log('Shared:', project.title);
+    setShowReportModal(true);
+    setReportReason('');
+    setReportDetails('');
+    setReportSubmitted(false);
   };
-  
+
+  const handleReportClose = (e) => {
+    if (e) e.stopPropagation();
+    setShowReportModal(false);
+  };
+
+  const handleReportSubmit = (e) => {
+    e.stopPropagation();
+    if (!reportReason) return;
+    // TODO: wire up to API
+    console.log('Report submitted:', { projectId, reason: reportReason, details: reportDetails });
+    setReportSubmitted(true);
+    setTimeout(() => setShowReportModal(false), 1500);
+  };
+
   const handleEdit = (e) => {
     e.stopPropagation();
     if (onEdit) onEdit(project);
@@ -37,13 +66,9 @@ function ProjectCard({ project, onClick, isOwned, isParticipating, onEdit, onDel
   // Find the founder - ensure teamMembers exists and is an array
   const teamMembers = Array.isArray(project.teamMembers) ? project.teamMembers : [];
   const founder = teamMembers.find(member => member?.role === "Founder") || teamMembers[0] || {};
-  
-  // Get the first initial of the founder's name
-  const getInitial = (name) => {
-    return name ? name.charAt(0) : "?";
-  };
 
   return (
+    <>
     <div className="project-card" onClick={() => onClick(project)}>
       <div className="project-header">
         <h3 className="project-title">{project.title}</h3>
@@ -71,9 +96,11 @@ function ProjectCard({ project, onClick, isOwned, isParticipating, onEdit, onDel
             >
               <Bookmark size={16} fill={isBookmarked ? 'currentColor' : 'none'} />
             </button>
-            <button className="action-btn share-btn" onClick={handleShare}>
-              <Share2 size={16} />
-            </button>
+            {!hideReport && (
+              <button className="action-btn report-btn" onClick={handleReportOpen} title="Report project">
+                <Flag size={16} />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -127,6 +154,59 @@ function ProjectCard({ project, onClick, isOwned, isParticipating, onEdit, onDel
         }}>View Details</button>
       </div>
     </div>
+
+    {showReportModal && (
+      <div className="report-modal-overlay" onClick={handleReportClose}>
+        <div className="report-modal" onClick={(e) => e.stopPropagation()}>
+          {reportSubmitted ? (
+            <div className="report-success">
+              <Flag size={32} color="#ef4444" />
+              <p>Report submitted. Thank you for your feedback.</p>
+            </div>
+          ) : (
+            <>
+              <div className="report-modal-header">
+                <Flag size={18} color="#ef4444" />
+                <h3>Report Project</h3>
+              </div>
+              <p className="report-modal-subtitle">Why are you reporting <strong>{project.title}</strong>?</p>
+              <div className="report-reasons">
+                {REPORT_REASONS.map((reason) => (
+                  <label key={reason} className={`report-reason-option ${reportReason === reason ? 'selected' : ''}`}>
+                    <input
+                      type="radio"
+                      name="reportReason"
+                      value={reason}
+                      checked={reportReason === reason}
+                      onChange={() => setReportReason(reason)}
+                    />
+                    {reason}
+                  </label>
+                ))}
+              </div>
+              <textarea
+                className="report-details-input"
+                placeholder="Additional details (optional)"
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                rows={3}
+              />
+              <div className="report-modal-actions">
+                <button className="report-cancel-btn" onClick={handleReportClose}>Cancel</button>
+                <button
+                  className="report-submit-btn"
+                  onClick={handleReportSubmit}
+                  disabled={!reportReason}
+                >
+                  Submit Report
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

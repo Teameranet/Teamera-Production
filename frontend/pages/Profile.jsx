@@ -870,6 +870,7 @@ function Profile() {
               <ProjectCard
                 key={project.id || project._id}
                 project={project}
+                hideReport={true}
                 onClick={handleViewProject}
               />
             ))}
@@ -883,6 +884,7 @@ function Profile() {
               <ProjectCard
                 key={project.id || project._id}
                 project={project}
+                hideReport={true}
                 onClick={handleViewProject}
               />
             ))}

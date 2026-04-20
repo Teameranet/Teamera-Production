@@ -510,6 +510,7 @@ function Dashboard() {
                       key={project.id || project._id}
                       project={project}
                       isOwned={true}
+                      hideReport={true}
                       onEdit={() => handleEditProject(project)}
                       onDelete={() => handleDeleteProject(project.id || project._id)}
                       onClick={() => {
@@ -535,6 +536,7 @@ function Dashboard() {
                       key={project.id || project._id}
                       project={project}
                       isParticipating={true}
+                      hideReport={true}
                       onLeave={() => handleLeaveProject(project)}
                       onClick={() => {
                         localStorage.setItem('workspace_selected_project', project.id || project._id);
@@ -556,6 +558,7 @@ function Dashboard() {
                   <ProjectCard
                     key={project.id}
                     project={project}
+                    hideReport={true}
                     onClick={(project) => {
                       setSelectedProject(project);
                       setShowProjectModal(true);
