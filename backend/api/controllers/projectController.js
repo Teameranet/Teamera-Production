@@ -3,11 +3,34 @@ import User from '../../models/User.js';
 import Application from '../../models/Application.js';
 import { createNotification } from './notificationController.js';
 import { broadcastToProject } from '../../utils/chatSseClients.js';
+import { addProjectListClient, removeProjectListClient, broadcastProjectUpdate } from '../../utils/projectSseClients.js';
 import {
   successResponse,
   errorResponse,
   asyncHandler,
 } from '../../utils/helpers.js';
+
+// SSE stream for real-time project list updates (all users)
+export const streamProjects = (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders();
+
+  res.write(`data: ${JSON.stringify({ type: 'CONNECTED' })}\n\n`);
+
+  const heartbeat = setInterval(() => {
+    try { res.write(': heartbeat\n\n'); } catch (_) {}
+  }, 25000);
+
+  addProjectListClient(res);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    removeProjectListClient(res);
+  });
+};
 
 const projectController = {
   // Get all projects
@@ -109,7 +132,7 @@ const projectController = {
                   projectStage: newProject.stage,
                   position: member.role,
                   positionId: member.positionId,
-                  message: 'Invited to join the project',
+                  message: `You invited ${member.name} to join ${newProject.title} as ${member.role}`,
                   status: 'INVITED',
                   appliedDate: new Date(),
                   statusUpdatedAt: new Date()
@@ -139,7 +162,7 @@ const projectController = {
                   projectIndustry: newProject.industry,
                   position: member.role,
                   positionId: member.positionId,
-                  message: 'Invited to join the project',
+                  message: `${owner.name} has invited you to join ${newProject.title} as ${member.role}`,
                   status: 'INVITED',
                   appliedDate: new Date(),
                   statusUpdatedAt: new Date()
@@ -156,13 +179,13 @@ const projectController = {
           await createNotification({
             recipientId: member.id,
             type: 'INVITATION_RECEIVED',
-            message: `${newProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+            message: `${newProject.title}: ${owner.name} has invited you to join as ${member.role}.`,
             projectId: newProject._id,
             projectName: newProject.title,
             positionName: member.role,
             actorName: owner.name,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'sent' }
+            navigationState: { tab: 'applications', subTab: 'received' }
           });
         } catch (error) {
           console.error('Error creating invitation record:', error);
@@ -173,6 +196,9 @@ const projectController = {
 
     const response = successResponse(newProject, 'Project created successfully');
     res.status(201).json(response);
+
+    // Broadcast to all connected clients so the project list updates in real-time
+    broadcastProjectUpdate({ type: 'project_created', project: newProject });
   }),
 
   // Update project
@@ -309,7 +335,7 @@ const projectController = {
                 projectName: originalProject.title,
                 positionName: removedApp.position,
                 navigationPath: '/dashboard',
-                navigationState: { tab: 'applications', subTab: 'sent' }
+                navigationState: { tab: 'applications', subTab: 'received' }
               });
             }
           } catch (err) {
@@ -470,7 +496,7 @@ const projectController = {
                     projectStage: updatedProject.stage,
                     position: member.role,
                     positionId: member.positionId,
-                    message: 'Invited to join the project',
+                    message: `You invited ${member.name} to join ${updatedProject.title} as ${member.role}`,
                     status: 'INVITED',
                     appliedDate: new Date(),
                     statusUpdatedAt: new Date()
@@ -497,7 +523,7 @@ const projectController = {
                     projectIndustry: updatedProject.industry,
                     position: member.role,
                     positionId: member.positionId,
-                    message: 'Invited to join the project',
+                    message: `${owner.name} has invited you to join ${updatedProject.title} as ${member.role}`,
                     status: 'INVITED',
                     appliedDate: new Date(),
                     statusUpdatedAt: new Date()
@@ -511,13 +537,13 @@ const projectController = {
             await createNotification({
               recipientId: member.id,
               type: 'INVITATION_RECEIVED',
-              message: `${updatedProject.title}: You have been invited to join as ${member.role} by ${owner.name}.`,
+              message: `${updatedProject.title}: ${owner.name} has invited you to join as ${member.role}.`,
               projectId: updatedProject._id,
               projectName: updatedProject.title,
               positionName: member.role,
               actorName: owner.name,
               navigationPath: '/dashboard',
-              navigationState: { tab: 'applications', subTab: 'sent' }
+              navigationState: { tab: 'applications', subTab: 'received' }
             });
           } catch (error) {
             console.error('Error creating invitation record:', error);
@@ -672,6 +698,9 @@ const projectController = {
 
     const response = successResponse(updatedProject, 'Project updated successfully');
     res.json(response);
+
+    // Broadcast to all connected clients so the project list updates in real-time
+    broadcastProjectUpdate({ type: 'project_updated', project: updatedProject });
   }),
 
   // Delete project
@@ -691,6 +720,9 @@ const projectController = {
       'Project deleted successfully'
     );
     res.json(response);
+
+    // Broadcast to all connected clients so the project list updates in real-time
+    broadcastProjectUpdate({ type: 'project_deleted', projectId: deletedProject._id });
   }),
 
   // Get projects by user ID (owned and participating)
@@ -775,6 +807,9 @@ const projectController = {
 
     const response = successResponse(updatedProject, 'Project stage updated successfully');
     res.json(response);
+
+    // Broadcast stage change to all connected clients
+    broadcastProjectUpdate({ type: 'project_updated', project: updatedProject });
   }),
 
   // Add team member to project
@@ -830,7 +865,7 @@ const projectController = {
                 projectStage: project.stage,
                 position: role,
                 positionId,
-                message: 'Invited to join the project',
+                message: `You invited ${name} to join ${project.title} as ${role}`,
                 status: 'INVITED',
                 appliedDate: new Date(),
                 statusUpdatedAt: new Date()
@@ -857,7 +892,7 @@ const projectController = {
                 projectIndustry: project.industry,
                 position: role,
                 positionId,
-                message: 'Invited to join the project',
+                message: `${owner.name} has invited you to join ${project.title} as ${role}`,
                 status: 'INVITED',
                 appliedDate: new Date(),
                 statusUpdatedAt: new Date()
@@ -871,17 +906,28 @@ const projectController = {
         await createNotification({
           recipientId: userId,
           type: 'INVITATION_RECEIVED',
-          message: `${project.title}: You have been invited to join as ${role} by ${owner.name}.`,
+          message: `${project.title}: ${owner.name} has invited you to join as ${role}.`,
           projectId: project._id,
           projectName: project.title,
           positionName: role,
           actorName: owner.name,
           navigationPath: '/dashboard',
-          navigationState: { tab: 'applications', subTab: 'sent' }
+          navigationState: { tab: 'applications', subTab: 'received' }
         });
       }
     } catch (err) {
       console.error('Error creating invitation record for direct invite:', err);
+    }
+
+    // Broadcast real-time team update to all workspace users in this project
+    broadcastToProject(id, { type: 'team_updated', project: project.toObject() });
+
+    // Broadcast to global project list so Projects page updates in real-time
+    const populatedProject = await Project.findById(id)
+      .populate('ownerId', 'name email')
+      .populate('teamMembers.id', 'name email');
+    if (populatedProject) {
+      broadcastProjectUpdate({ type: 'project_updated', project: populatedProject });
     }
 
     const response = successResponse(project, 'Team member added successfully');
@@ -1012,9 +1058,15 @@ const projectController = {
           await updatedOwnerApp.save();
         }
 
-        console.log(`Application status updated to ${status}`);
-
         // Send notification based on action type
+        // Routing depends on whether this is a regular application (APP-) or an invitation (INV-).
+        // For regular applications:
+        //   - Member quits  → owner's copy is in applications_received → redirect owner to "Received" tab
+        //   - Owner removes → member's copy is in applications_sent    → redirect member to "Sent" tab
+        // For invitations the tabs are swapped (INV- records live in the opposite arrays),
+        // so the subTab values are reversed.
+        const isInvitation = application.applicationId.startsWith('INV-');
+
         if (isQuit === 'true') {
           // Notify project owner that a member quit
           const memberUser = await User.findById(userId);
@@ -1028,7 +1080,9 @@ const projectController = {
             positionName: application.position,
             actorName: memberName,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'received' }
+            // APP-: owner sees the quit record in Received (their received applications)
+            // INV-: owner's copy lives in Sent (their sent invitations)
+            navigationState: { tab: 'applications', subTab: isInvitation ? 'sent' : 'received' }
           });
         } else {
           // Notify the removed member
@@ -1040,13 +1094,42 @@ const projectController = {
             projectName: project.title,
             positionName: application.position,
             navigationPath: '/dashboard',
-            navigationState: { tab: 'applications', subTab: 'sent' }
+            // APP-: member sees the removal in Sent (their sent applications)
+            // INV-: member's copy lives in Received (their received invitations)
+            navigationState: { tab: 'applications', subTab: isInvitation ? 'received' : 'sent' }
+          });
+          // Also notify the owner that they removed a member
+          const removedUser = await User.findById(userId);
+          const removedName = removedUser?.name || 'A member';
+          await createNotification({
+            recipientId: project.ownerId,
+            type: 'MEMBER_REMOVED_OWNER',
+            message: `You removed ${removedName} from the ${application.position} role in ${project.title}.`,
+            projectId: project._id,
+            projectName: project.title,
+            positionName: application.position,
+            actorName: removedName,
+            navigationPath: '/dashboard',
+            // APP-: owner sees the removal in Received (their received applications)
+            // INV-: owner's copy lives in Sent (their sent invitations)
+            navigationState: { tab: 'applications', subTab: isInvitation ? 'sent' : 'received' }
           });
         }
       }
     }
 
     const response = successResponse(project, isQuit === 'true' ? 'Successfully quit project' : 'Team member removed successfully');
+    // Broadcast real-time team update to all workspace users in this project
+    broadcastToProject(id, { type: 'team_updated', project: project.toObject() });
+
+    // Broadcast to global project list so Projects page updates in real-time
+    const populatedProject = await Project.findById(id)
+      .populate('ownerId', 'name email')
+      .populate('teamMembers.id', 'name email');
+    if (populatedProject) {
+      broadcastProjectUpdate({ type: 'project_updated', project: populatedProject });
+    }
+
     res.json(response);
   }),
 
@@ -1073,6 +1156,9 @@ const projectController = {
       'Application count incremented successfully'
     );
     res.json(response);
+
+    // Broadcast so Projects page reflects the new count in real-time
+    broadcastProjectUpdate({ type: 'project_updated', project });
   }),
 
   // ── Tasks ──────────────────────────────────────────────────────────────────

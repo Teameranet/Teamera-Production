@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink } from 'lucide-react';
+import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -9,6 +9,7 @@ import ProfileModal from '../components/ProfileModal';
 import ProjectModal from '../components/ProjectModal';
 import CreateProjectModal from '../components/CreateProjectModal';
 import './Dashboard.css';
+import '../components/tabs/WorkspaceTabs.css';
 import ProjectCard from '../components/ProjectCard';
 
 // Dashboard component displays the main dashboard UI for authenticated users
@@ -47,7 +48,8 @@ function Dashboard() {
     getSentApplications,
     getUserProjects,
     deleteProject,
-    editProject
+    editProject,
+    leaveProject
   } = useProjects();
   // Get notification functions
   const { addAcceptanceNotification, addRejectionNotification, showToast } = useNotifications();
@@ -70,6 +72,12 @@ function Dashboard() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   // State to track selected project for project modal (from applications)
   const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
+  // State for quit project confirmation modal
+  const [quitProjectTarget, setQuitProjectTarget] = useState(null); // { id, title }
+  const [quitLoading, setQuitLoading] = useState(false);
+  // State for delete project confirmation modal
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState(null); // { id, title }
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Fetch user's owned and participating projects
   useEffect(() => {
@@ -151,21 +159,49 @@ function Dashboard() {
     setProjectToEdit(null);
   };
 
-  // Function to handle deleting a project
-  const handleDeleteProject = async (projectId) => {
-    const success = await deleteProject(projectId);
+  // Function to handle deleting a project — opens confirmation modal
+  const handleDeleteProject = (projectId) => {
+    const project = userProjects.owned.find(p => (p.id || p._id) === projectId);
+    setDeleteProjectTarget({ id: projectId, title: project?.title || 'this project' });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteProjectTarget) return;
+    setDeleteLoading(true);
+    const success = await deleteProject(deleteProjectTarget.id);
+    setDeleteLoading(false);
+    setDeleteProjectTarget(null);
     if (success) {
       setUserProjects(prev => ({
         ...prev,
-        owned: prev.owned.filter(p => (p.id || p._id) !== projectId)
+        owned: prev.owned.filter(p => (p.id || p._id) !== deleteProjectTarget.id)
       }));
       showToast({ type: 'success', title: 'Project deleted', description: 'Your project has been removed.' });
+    } else {
+      showToast({ type: 'error', title: 'Failed to delete project', description: 'Something went wrong. Please try again.' });
     }
   };
 
   // Function to handle leaving a project (participating)
-  const handleLeaveProject = (projectId) => {
-    console.log('Leave project:', projectId);
+  const handleLeaveProject = (project) => {
+    setQuitProjectTarget({ id: project.id || project._id, title: project.title });
+  };
+
+  const handleConfirmQuit = async () => {
+    if (!quitProjectTarget) return;
+    setQuitLoading(true);
+    const success = await leaveProject(quitProjectTarget.id, user.id);
+    setQuitLoading(false);
+    setQuitProjectTarget(null);
+    if (success) {
+      setUserProjects(prev => ({
+        ...prev,
+        participating: prev.participating.filter(p => (p.id || p._id) !== quitProjectTarget.id)
+      }));
+      showToast({ type: 'success', title: 'Left project', description: `You have left "${quitProjectTarget.title}".` });
+    } else {
+      showToast({ type: 'error', title: 'Failed to quit', description: 'Something went wrong. Please try again.' });
+    }
   };
 
   // Function to handle accepting an application
@@ -250,9 +286,8 @@ function Dashboard() {
   const handleViewProfile = async (application) => {
     console.log(`Viewing details for application:`, application);
     
-    // In "Sent" tab: Show project modal (the project you applied to)
-    if (applicationTab === 'sent') {
-      // Find the project from the projects list
+    // type:'sent' = member's record → show the project they applied/were invited to
+    if (application.type === 'sent') {
       const project = projects.find(p => 
         (p.id === application.projectId || p._id === application.projectId)
       );
@@ -260,7 +295,6 @@ function Dashboard() {
       if (project) {
         setSelectedProjectForModal(project);
       } else {
-        // If project not in local state, fetch it
         try {
           const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           const projectId = typeof application.projectId === 'object' 
@@ -271,13 +305,7 @@ function Dashboard() {
           const result = await response.json();
           
           if (result.success && result.data) {
-            const projectData = {
-              ...result.data,
-              id: result.data._id || result.data.id
-            };
-            setSelectedProjectForModal(projectData);
-          } else {
-            console.error('Failed to fetch project:', result.message);
+            setSelectedProjectForModal({ ...result.data, id: result.data._id || result.data.id });
           }
         } catch (error) {
           console.error('Error fetching project:', error);
@@ -286,49 +314,26 @@ function Dashboard() {
       return;
     }
     
-    // In "Received" tab: Show applicant's profile (who applied to your project)
+    // type:'received' = owner's record → show the applicant's profile
     try {
-      // Show loading state
       setSelectedUser({ loading: true });
       
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      
-      // Convert applicantId to string for comparison
       const idToFetch = typeof application.applicantId === 'object' 
         ? application.applicantId._id || application.applicantId.toString() 
         : application.applicantId.toString();
       
-      console.log('Fetching applicant profile for ID:', idToFetch);
-      
       const response = await fetch(`${apiBaseUrl}/api/users/${idToFetch}/profile`);
       const result = await response.json();
       
-      console.log('Fetched user profile result:', result);
-      
       if (result.success && result.data) {
-        // Add id field if not present
-        const userData = {
-          ...result.data,
-          id: result.data._id || result.data.id
-        };
-        setSelectedUser(userData);
+        setSelectedUser({ ...result.data, id: result.data._id || result.data.id });
       } else {
-        console.error('Failed to fetch user profile:', result.message);
-        // Fallback to application userDetails if API fails
-        if (application.userDetails) {
-          setSelectedUser(application.userDetails);
-        } else {
-          setSelectedUser(null);
-        }
+        setSelectedUser(application.userDetails || null);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // Fallback to application userDetails
-      if (application.userDetails) {
-        setSelectedUser(application.userDetails);
-      } else {
-        setSelectedUser(null);
-      }
+      setSelectedUser(application.userDetails || null);
     }
   };
 
@@ -530,7 +535,7 @@ function Dashboard() {
                       key={project.id || project._id}
                       project={project}
                       isParticipating={true}
-                      onLeave={() => handleLeaveProject(project.id || project._id)}
+                      onLeave={() => handleLeaveProject(project)}
                       onClick={() => {
                         localStorage.setItem('workspace_selected_project', project.id || project._id);
                         navigate('/workspace');
@@ -596,88 +601,105 @@ function Dashboard() {
               <div className="applications-list">
                 {filteredApplications.map(application => (
                   <div key={application.id} className="application-item">
-                    {/* Applicant info - Display based on tab context */}
+                    {/*
+                      Display logic uses application.type (the raw backend source), NOT applicationTab.
+                      Reason: invitations are cross-tab — an invitation in the "Received" tab has
+                      type:'sent' (member's record), and one in "Sent" has type:'received' (owner's record).
+                      Using applicationTab would read the wrong fields and show undefined names.
+
+                      type:'received' = owner's record  → has applicantName, applicantTitle, applicantLocation
+                      type:'sent'     = member's record → has projectOwnerName
+                    */}
                     <div className="applicant-info">
-                      <UserAvatar 
-                        user={{ 
-                          name: applicationTab === 'received' 
-                            ? application.applicantName 
-                            : application.projectOwnerName 
-                        }} 
+                      <UserAvatar
+                        user={{
+                          name: application.type === 'received'
+                            ? application.applicantName
+                            : application.projectOwnerName
+                        }}
                         size="medium"
                         className="applicant-avatar"
                       />
                       <div className="applicant-details">
                         <h4>
-                          {applicationTab === 'received' 
-                            ? application.applicantName 
+                          {application.type === 'received'
+                            ? application.applicantName
                             : application.projectOwnerName}
                         </h4>
                         <p className="profile-title">
-                          {applicationTab === 'received' 
+                          {application.type === 'received'
                             ? (application.applicantTitle || 'Member')
                             : 'Project Owner'}
                         </p>
-                        {applicationTab === 'received' && application.applicantLocation && (
+                        {application.type === 'received' && application.applicantLocation && (
                           <span className="applicant-location">{application.applicantLocation}</span>
                         )}
-                        <span>Applied {getRelativeTime(application.appliedDate)}</span>
+                        <span>{application.status === 'INVITED' ? 'Invited' : 'Applied'} {getRelativeTime(application.appliedDate)}</span>
                       </div>
                     </div>
-                    
-                    {/* Application details from Application collection schema */}
+
+                    {/* Application details */}
                     <div className="application-details">
                       <div className="application-project">
                         <p>{application.projectName}</p>
                         <span>{application.position} position</span>
                       </div>
-                      
+
                       <div className="applicant-skills">
                         {application.skills.map((skill, index) => (
                           <span key={index} className="skill-tag">{skill}</span>
                         ))}
                       </div>
-                      
+
                       <p className="application-message">
-                        {application.message}
+                        {application.status === 'INVITED'
+                          ? (application.type === 'sent'
+                              // Member's record: they received the invite
+                              ? `${application.projectOwnerName} invited you to join as ${application.position}`
+                              // Owner's record: they sent the invite
+                              : `You invited ${application.applicantName} to join as ${application.position}`)
+                          : application.message}
                       </p>
                     </div>
-                    
-                    {/* Status and actions - Aligned with Application schema statuses */}
+
+                    {/* Status badge + action buttons */}
                     <div className="application-status-actions">
                       <div className={`application-status status-${application.status.toLowerCase()}`}>
-                        {application.status === 'PENDING' && <Clock size={16} />}
+                        {application.status === 'PENDING'  && <Clock size={16} />}
                         {application.status === 'ACCEPTED' && <CheckCircle size={16} />}
-                        {application.status === 'INVITED' && <CheckCircle size={16} />}
-                        {(application.status === 'REJECTED' || application.status === 'QUIT') && <XCircle size={16} />}
-                        {application.status === 'REMOVED' && <XCircle size={16} />}
+                        {application.status === 'INVITED'  && <Mail size={16} />}
+                        {(application.status === 'REJECTED' || application.status === 'QUIT' || application.status === 'REMOVED') && <XCircle size={16} />}
                         <span>
-                          {application.status === 'QUIT' ? 'Quit' : 
+                          {application.status === 'QUIT'    ? 'Quit'    :
                            application.status === 'REMOVED' ? 'Removed' :
+                           application.status === 'INVITED' ? 'Invited' :
                            application.status.charAt(0) + application.status.slice(1).toLowerCase()}
                         </span>
                       </div>
-                      
+
                       <div className="application-actions">
-                        {applicationTab === 'received' && (
-                          <button 
-                            className="view-profile-btn" 
+                        {/* Profile button — only for owner's records (type:'received'), never for invitations in member view */}
+                        {application.type === 'received' && (
+                          <button
+                            className="view-profile-btn"
                             onClick={() => handleViewProfile(application)}
                           >
                             <User size={16} />
                             Profile
                           </button>
                         )}
-                        <button 
-                          className="view-project-btn" 
+
+                        <button
+                          className="view-project-btn"
                           onClick={() => handleViewProject(application)}
                         >
                           <ExternalLink size={16} />
                           View Project
                         </button>
+
                         {application.hasResume && (
-                          <button 
-                            className="resume-btn" 
+                          <button
+                            className="resume-btn"
                             onClick={() => handleDownloadResume(application.resumeUrl, application.applicantName)}
                           >
                             <Download size={16} />
@@ -685,8 +707,10 @@ function Dashboard() {
                           </button>
                         )}
 
-                        {/* My Workspace — Received tab: always visible for project owners */}
-                        {applicationTab === 'received' && (
+                        {/* Workspace — visible when accepted or when owner has an active invitation */}
+                        {(application.status === 'ACCEPTED' ||
+                          (application.status === 'INVITED' && application.type === 'received') ||
+                          (application.status === 'INVITED' && application.type === 'sent')) && (
                           <button
                             className="workspace-btn"
                             onClick={() => handleOpenWorkspace(application)}
@@ -696,28 +720,17 @@ function Dashboard() {
                           </button>
                         )}
 
-                        {/* My Workspace — Sent tab: only when ACCEPTED or INVITED */}
-                        {applicationTab === 'sent' && (application.status === 'ACCEPTED' || application.status === 'INVITED') && (
-                          <button
-                            className="workspace-btn"
-                            onClick={() => handleOpenWorkspace(application)}
-                          >
-                            <MessageCircle size={16} />
-                            My Workspace
-                          </button>
-                        )}
-                        
-                        {/* Only show accept/reject for PENDING applications in received tab */}
-                        {application.status === 'PENDING' && applicationTab === 'received' && (
+                        {/* Accept / Reject — only for regular PENDING applications (never for invitations) */}
+                        {application.status === 'PENDING' && application.type === 'received' && (
                           <div className="decision-actions">
-                            <button 
-                              className="accept-btn" 
+                            <button
+                              className="accept-btn"
                               onClick={() => handleAcceptApplication(application.id)}
                             >
                               Accept
                             </button>
-                            <button 
-                              className="reject-btn" 
+                            <button
+                              className="reject-btn"
                               onClick={() => handleRejectApplication(application.id)}
                             >
                               Reject
@@ -733,8 +746,8 @@ function Dashboard() {
               <div className="empty-applications">
                 <p>
                   {applicationTab === 'received' 
-                    ? 'No applications received yet. When users apply to your projects, their applications will appear here in your applications_received array.' 
-                    : 'No applications sent yet. When you apply to projects, your applications will appear here in your applications_sent array.'}
+                    ? 'No applications or invitations received yet. Applications from users and invitations you accepted will appear here.' 
+                    : 'No sent applications or invitations yet. Applications you submitted and invitations you sent to members will appear here.'}
                 </p>
               </div>
             )}
@@ -785,6 +798,60 @@ function Dashboard() {
           onClose={handleCloseCreateModal}
           projectToEdit={projectToEdit}
         />
+      )}
+
+      {/* Delete Project Confirmation Modal */}
+      {deleteProjectTarget && (
+        <div className="wt-modal-overlay" onClick={() => setDeleteProjectTarget(null)}>
+          <div className="wt-modal wt-modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="wt-modal-header">
+              <h4 className="wt-modal-title">Delete Project</h4>
+              <button className="wt-modal-close" onClick={() => setDeleteProjectTarget(null)}><X size={16} /></button>
+            </div>
+            <div className="wt-modal-body">
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.9rem' }}>
+                Are you sure you want to delete <strong>{deleteProjectTarget.title}</strong>? This action cannot be undone.
+              </p>
+              <div className="wt-modal-footer">
+                <button className="wt-btn wt-btn--ghost" onClick={() => setDeleteProjectTarget(null)}>Cancel</button>
+                <button
+                  className="wt-btn wt-btn--danger"
+                  onClick={handleConfirmDelete}
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Deleting…' : 'Delete Project'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quit Project Confirmation Modal */}
+      {quitProjectTarget && (
+        <div className="wt-modal-overlay" onClick={() => setQuitProjectTarget(null)}>
+          <div className="wt-modal wt-modal--sm" onClick={e => e.stopPropagation()}>
+            <div className="wt-modal-header">
+              <h4 className="wt-modal-title">Quit Project</h4>
+              <button className="wt-modal-close" onClick={() => setQuitProjectTarget(null)}><X size={16} /></button>
+            </div>
+            <div className="wt-modal-body">
+              <p style={{ margin: 0, color: '#4b5563', fontSize: '0.9rem' }}>
+                Are you sure you want to leave <strong>{quitProjectTarget.title}</strong>? You will lose access to this project's workspace.
+              </p>
+              <div className="wt-modal-footer">
+                <button className="wt-btn wt-btn--ghost" onClick={() => setQuitProjectTarget(null)}>Cancel</button>
+                <button
+                  className="wt-btn wt-btn--danger"
+                  onClick={handleConfirmQuit}
+                  disabled={quitLoading}
+                >
+                  {quitLoading ? 'Leaving…' : 'Quit Project'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

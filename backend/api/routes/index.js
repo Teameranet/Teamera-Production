@@ -7,6 +7,7 @@ import contactController from "../controllers/contactController.js";
 import userController from "../controllers/userController.js";
 import dashboardController from "../controllers/dashboardController.js";
 import projectController from "../controllers/projectController.js";
+import { streamProjects } from "../controllers/projectController.js";
 import { streamNotifications, getNotifications, markAsRead, markAllAsRead, deleteNotification } from "../controllers/notificationController.js";
 import { streamMessages, getMessages, sendMessage, uploadFile, deleteMessage } from "../controllers/messageController.js";
 import { logger } from "../../middleware/auth.js";
@@ -78,6 +79,7 @@ router.post("/messages/:projectId/upload", upload.single('file'), uploadFile);
 router.delete("/messages/:messageId", deleteMessage);
 
 // Project endpoints
+router.get("/projects/stream", streamProjects);
 router.get("/projects", projectController.getAllProjects);
 router.post("/projects", projectController.createProject);
 router.get("/projects/user/:userId", projectController.getUserProjects);

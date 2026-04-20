@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { MessageSquare, CheckSquare, Users, FolderOpen, MessageCircle, CheckCircle } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +6,8 @@ import WorkspaceChatTab  from '../components/tabs/WorkspaceChatTab';
 import WorkspaceTasksTab from '../components/tabs/WorkspaceTasksTab';
 import WorkspaceTeamTab  from '../components/tabs/WorkspaceTeamTab';
 import './Workspace.css';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const TABS = [
   { id: 'chat',  label: 'Chat',  icon: MessageCircle },
@@ -18,12 +20,14 @@ function Workspace() {
   const [selectedProjectId, setSelectedProjectId] = useState(
     () => localStorage.getItem('workspace_selected_project') || ''
   );
-  const { projects, editProject } = useProjects();
+  const { projects, patchProject } = useProjects();
   const { user } = useAuth();
+  const sseRef = useRef(null);
+
+  const userId = user?.id || user?._id;
 
   const userProjects = projects.filter(p => {
-    if (!user) return false;
-    const userId = user.id || user._id;
+    if (!userId) return false;
     const ownerId = p.ownerId?._id || p.ownerId;
     if (String(ownerId) === String(userId)) return true;
     return p.teamMembers?.some(m => {
@@ -37,16 +41,59 @@ function Workspace() {
   ) || null;
 
   const isAdmin = selectedProject
-    ? String(selectedProject.ownerId?._id || selectedProject.ownerId) === String(user?.id || user?._id)
+    ? String(selectedProject.ownerId?._id || selectedProject.ownerId) === String(userId)
     : false;
 
-  // Refresh selected project after team changes
+  // Refresh selected project after team changes (called by WorkspaceTeamTab after own actions)
   const handleProjectUpdate = useCallback((updatedProject) => {
     if (!updatedProject) return;
     const id = updatedProject._id || updatedProject.id;
-    // Patch local projects state via editProject context helper
-    editProject(id, updatedProject);
-  }, [editProject]);
+    patchProject(id, { ...updatedProject, id });
+  }, [patchProject]);
+
+  // SSE stream: listen for team_updated events on the selected project.
+  // Chat and Tasks tabs manage their own SSE connections for their specific events.
+  useEffect(() => {
+    if (sseRef.current) {
+      sseRef.current.close();
+      sseRef.current = null;
+    }
+    if (!selectedProjectId) return;
+
+    const es = new EventSource(`${API_BASE}/api/messages/${selectedProjectId}/stream`);
+    sseRef.current = es;
+
+    es.onmessage = (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+        if (payload.type === 'team_updated' && payload.project) {
+          const updated = payload.project;
+          const id = updated._id || updated.id;
+          patchProject(id, { ...updated, id });
+
+          // If the current user is no longer a member, deselect the project
+          const stillMember =
+            String(updated.ownerId?._id || updated.ownerId) === String(userId) ||
+            (updated.teamMembers || []).some(m => {
+              const mId = m.id?._id || m.id || m._id;
+              return String(mId) === String(userId);
+            });
+
+          if (!stillMember) {
+            setSelectedProjectId('');
+            localStorage.removeItem('workspace_selected_project');
+          }
+        }
+      } catch (_) {}
+    };
+
+    es.onerror = () => {};
+
+    return () => {
+      es.close();
+      sseRef.current = null;
+    };
+  }, [selectedProjectId, patchProject, userId]);
 
   const renderTab = () => {
     switch (activeTab) {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useNotifications } from './NotificationContext';
 
 const ProjectContext = createContext();
@@ -25,7 +25,43 @@ export const ProjectProvider = ({ children }) => {
   const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const { fetchNotifications } = useNotifications();
+  const { fetchNotifications, lastEvent } = useNotifications();
+  const projectsEsRef = useRef(null);
+
+  // Map SSE notification types to the application status they represent
+  const STATUS_EVENT_MAP = {
+    APPLICATION_ACCEPTED: 'ACCEPTED',
+    APPLICATION_REJECTED: 'REJECTED',
+    MEMBER_REMOVED:       'REMOVED',
+    MEMBER_QUIT:          'QUIT',
+  };
+
+  // React to real-time SSE events and update application status immediately
+  useEffect(() => {
+    if (!lastEvent) return;
+    const newStatus = STATUS_EVENT_MAP[lastEvent.type];
+    if (!newStatus || !lastEvent.projectId) return;
+
+    setApplications(prev => prev.map(app => {
+      const appProjectId = String(app.projectId?._id || app.projectId);
+      const eventProjectId = String(lastEvent.projectId);
+      if (appProjectId !== eventProjectId) return app;
+
+      // For QUIT: update the owner's received copy (applicant quit → owner sees it)
+      // For REMOVED: update the member's sent copy (owner removed → member sees it)
+      // For ACCEPTED/REJECTED: update the applicant's sent copy
+      const isRelevant =
+        (newStatus === 'QUIT'     && app.type === 'received') ||
+        (newStatus === 'REMOVED'  && app.type === 'sent')     ||
+        (newStatus === 'ACCEPTED' && app.type === 'sent')     ||
+        (newStatus === 'REJECTED' && app.type === 'sent');
+
+      if (!isRelevant) return app;
+      if (app.status === newStatus) return app; // already up to date
+
+      return { ...app, status: newStatus };
+    }));
+  }, [lastEvent]);
   
   // Function to fetch applications (can be called anytime)
   const fetchApplications = async () => {
@@ -223,6 +259,48 @@ export const ProjectProvider = ({ children }) => {
     fetchBookmarks();
     fetchApplications();
   }, []);
+
+  // Subscribe to real-time project list updates via SSE
+  useEffect(() => {
+    const es = new EventSource(`${apiBaseUrl}/api/projects/stream`);
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'CONNECTED') return;
+
+        if (data.type === 'project_created' && data.project) {
+          const newProject = { ...data.project, id: data.project._id || data.project.id };
+          setProjects(prev => {
+            // Avoid duplicates (the creator already added it locally)
+            if (prev.some(p => String(p.id || p._id) === String(newProject.id))) return prev;
+            return [newProject, ...prev];
+          });
+        } else if (data.type === 'project_updated' && data.project) {
+          const updated = { ...data.project, id: data.project._id || data.project.id };
+          setProjects(prev => prev.map(p =>
+            String(p.id || p._id) === String(updated.id) ? updated : p
+          ));
+        } else if (data.type === 'project_deleted' && data.projectId) {
+          const deletedId = String(data.projectId);
+          setProjects(prev => prev.filter(p => String(p.id || p._id) !== deletedId));
+        }
+      } catch (e) {
+        console.error('[Projects SSE] Parse error:', e);
+      }
+    };
+
+    es.onerror = () => {
+      console.warn('[Projects SSE] Connection error, browser will auto-reconnect');
+    };
+
+    projectsEsRef.current = es;
+
+    return () => {
+      es.close();
+      projectsEsRef.current = null;
+    };
+  }, [apiBaseUrl]);
 
   const createProject = async (projectData) => {
     try {
@@ -774,20 +852,41 @@ export const ProjectProvider = ({ children }) => {
     return applications.filter(app => app.projectId === projectId);
   };
 
-  // Get applications received by a user (for their projects)
+  // Invitation records are identified by the INV- prefix on applicationId.
+  // This never changes even when status transitions to QUIT/REMOVED after the invite.
+  const isInvitationRecord = (app) =>
+    typeof app.applicationId === 'string' && app.applicationId.startsWith('INV-');
+
+  // "Received" tab:
+  //   - Regular inbound applications (type:'received', APP- prefix) — all statuses
+  //   - Invitation records where the current user is the MEMBER (type:'sent', INV- prefix) — all statuses
+  //     This keeps quit invitations here instead of drifting to Sent when status → QUIT
   const getReceivedApplications = (userId) => {
     if (!userId) return [];
-    
-    // Filter applications by type 'received'
-    return applications.filter(app => app.type === 'received');
+    return applications.filter(app => {
+      if (isInvitationRecord(app)) {
+        // Member's copy of the invitation lives in type:'sent'
+        return app.type === 'sent';
+      }
+      // Regular application received as project owner
+      return app.type === 'received';
+    });
   };
 
-  // Get applications sent by a user
+  // "Sent" tab:
+  //   - Regular outbound applications (type:'sent', APP- prefix) — all statuses
+  //   - Invitation records where the current user is the OWNER (type:'received', INV- prefix) — all statuses
+  //     This keeps removed-member invitations here instead of drifting to Received when status → REMOVED
   const getSentApplications = (userId) => {
     if (!userId) return [];
-    
-    // Filter applications by type 'sent'
-    return applications.filter(app => app.type === 'sent');
+    return applications.filter(app => {
+      if (isInvitationRecord(app)) {
+        // Owner's copy of the invitation lives in type:'received'
+        return app.type === 'received';
+      }
+      // Regular application sent as an applicant
+      return app.type === 'sent';
+    });
   };
 
   // Get projects for a specific user
@@ -1048,6 +1147,14 @@ export const ProjectProvider = ({ children }) => {
     fetchApplications,
     createProject,
     editProject,
+    // Lightweight local-only patch — use this for SSE-driven updates to avoid re-POSTing to backend
+    patchProject: (projectId, updatedData) => {
+      setProjects(prev => prev.map(p =>
+        String(p.id || p._id) === String(projectId)
+          ? { ...p, ...updatedData, id: p.id || p._id }
+          : p
+      ));
+    },
     deleteProject,
     leaveProject,
     applyToProject,
