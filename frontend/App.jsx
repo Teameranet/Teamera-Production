@@ -16,18 +16,45 @@ import CreateProjectModal from './components/CreateProjectModal';
 import CollaborationSpace from './components/CollaborationSpace';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import { ProjectProvider } from './context/ProjectContext';
+import { useProjects } from './context/ProjectContext';
 import { NotificationProvider } from './context/NotificationContext';
 import './styles/App.css';
 
 function AppContent() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { getUserProjects } = useProjects();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showCollaboration, setShowCollaboration] = useState(false);
   const [projectToEdit, setProjectToEdit] = useState(null);
+  const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
+
+  useEffect(() => {
+    if (user?.id) {
+      getUserProjects(user.id).then(result => {
+        setUserProjects(result || { owned: [], participating: [] });
+      });
+    } else {
+      setUserProjects({ owned: [], participating: [] });
+    }
+  }, [user]);
+
+  const isOwnedProject = (project) => {
+    if (!project || !user) return false;
+    const pid = project.id || project._id;
+    return userProjects.owned.some(p => (p.id || p._id) === pid);
+  };
+
+  const isParticipatingProject = (project) => {
+    if (!project || !user) return false;
+    const pid = project.id || project._id;
+    return userProjects.participating.some(p => (p.id || p._id) === pid);
+  };
 
   // Handle state updates with startTransition
   const handleModalState = (setter, value) => {
@@ -107,7 +134,15 @@ function AppContent() {
             {selectedProject && (
               <ProjectModal 
                 project={selectedProject}
+                isOwned={isOwnedProject(selectedProject)}
+                isParticipating={isParticipatingProject(selectedProject)}
                 onClose={() => handleModalState(setSelectedProject, null)}
+                onOpenWorkspace={(project) => {
+                  const id = project.id || project._id;
+                  if (id) localStorage.setItem('workspace_selected_project', id);
+                  handleModalState(setSelectedProject, null);
+                  navigate('/workspace');
+                }}
               />
             )}
 
