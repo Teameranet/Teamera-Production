@@ -282,12 +282,12 @@
 .empty-state h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #ffffff;
+  color: #1f2937;
   margin: 0;
 }
 
 .empty-state p {
-  color: #ffffff;
+  color: #6b7280;
   font-size: 1rem;
   margin: 0 0 1.5rem 0;
 }

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Users, MapPin, Calendar, Briefcase, Upload, Send, Clock, CheckCircle } from 'lucide-react';
+import { X, Users, MapPin, Calendar, Briefcase, Upload, Send, Clock, CheckCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
 import UserAvatar from './UserAvatar';
 import './ProjectModal.css';
 
-function ProjectModal({ project, onClose }) {
+function ProjectModal({ project, onClose, isOwned = false, isParticipating = false, onOpenWorkspace }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showApplicationForm, setShowApplicationForm] = useState(false);
@@ -480,12 +480,22 @@ function ProjectModal({ project, onClose }) {
 
         {user && !showApplicationForm && activeTab !== 'positions' && (
           <div className="modal-actions">
-            <button
-              className="apply-btn primary"
-              onClick={() => setActiveTab('positions')}
-            >
-              View Open Positions
-            </button>
+            {(isOwned || isParticipating) && onOpenWorkspace ? (
+              <button
+                className="apply-btn primary"
+                onClick={() => onOpenWorkspace(project)}
+              >
+                <ExternalLink size={16} />
+                Open Workspace
+              </button>
+            ) : (
+              <button
+                className="apply-btn primary"
+                onClick={() => setActiveTab('positions')}
+              >
+                View Open Positions
+              </button>
+            )}
           </div>
         )}
 

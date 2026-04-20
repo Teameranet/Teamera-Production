@@ -72,6 +72,9 @@ function Dashboard() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   // State to track selected project for project modal (from applications)
   const [selectedProjectForModal, setSelectedProjectForModal] = useState(null);
+  // State to track selected project for project modal (from My Projects tabs)
+  const [selectedMyProject, setSelectedMyProject] = useState(null);
+  const [selectedMyProjectType, setSelectedMyProjectType] = useState(null); // 'owned' | 'participating'
   // State for quit project confirmation modal
   const [quitProjectTarget, setQuitProjectTarget] = useState(null); // { id, title }
   const [quitLoading, setQuitLoading] = useState(false);
@@ -514,8 +517,8 @@ function Dashboard() {
                       onEdit={() => handleEditProject(project)}
                       onDelete={() => handleDeleteProject(project.id || project._id)}
                       onClick={() => {
-                        localStorage.setItem('workspace_selected_project', project.id || project._id);
-                        navigate('/workspace');
+                        setSelectedMyProject(project);
+                        setSelectedMyProjectType('owned');
                       }}
                     />
                   ))
@@ -539,8 +542,8 @@ function Dashboard() {
                       hideReport={true}
                       onLeave={() => handleLeaveProject(project)}
                       onClick={() => {
-                        localStorage.setItem('workspace_selected_project', project.id || project._id);
-                        navigate('/workspace');
+                        setSelectedMyProject(project);
+                        setSelectedMyProjectType('participating');
                       }}
                     />
                   ))
@@ -766,6 +769,24 @@ function Dashboard() {
         />
       )}
       
+      {/* Project Modal for My Projects (owned & participating) */}
+      {selectedMyProject && (
+        <ProjectModal
+          project={selectedMyProject}
+          isOwned={selectedMyProjectType === 'owned'}
+          isParticipating={selectedMyProjectType === 'participating'}
+          onClose={() => {
+            setSelectedMyProject(null);
+            setSelectedMyProjectType(null);
+          }}
+          onOpenWorkspace={(project) => {
+            const id = project.id || project._id;
+            if (id) localStorage.setItem('workspace_selected_project', id);
+            navigate('/workspace');
+          }}
+        />
+      )}
+
       {/* Project Modal for Bookmarks */}
       {showProjectModal && selectedProject && (
         <ProjectModal
