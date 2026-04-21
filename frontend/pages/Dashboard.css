@@ -13,7 +13,7 @@
   padding: 2.5rem;
   margin-bottom: 2rem;
   border-radius: 1rem;
-  background: linear-gradient(to right, #6366f1, #8b5cf6);
+  background: var(--color-gradient-header);
   width: 100%;
   flex-wrap: wrap;
   gap: 2rem;
@@ -68,26 +68,26 @@
 .notification-btn,
 .settings-btn {
   background: white;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   padding: 0.75rem;
   border-radius: 12px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   transition: all 0.3s ease;
   position: relative;
 }
 
 .notification-btn:hover,
 .settings-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .notification-badge {
   position: absolute;
   top: -8px;
   right: -8px;
-  background: #ef4444;
+  background: var(--color-error);
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
@@ -101,14 +101,14 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .tab-btn {
   background: none;
   border: none;
   padding: 1rem 2rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -117,12 +117,12 @@
 }
 
 .tab-btn:hover {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .tab-btn.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .dashboard-content {
@@ -150,11 +150,11 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--color-border-light);
 }
 
 .stat-icon {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;
   padding: 0.75rem;
   border-radius: 12px;
@@ -166,12 +166,12 @@
 .stat-info h3 {
   font-size: 2rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .stat-info p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin: 0;
   font-size: 0.9rem;
 }
@@ -187,15 +187,15 @@
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--color-border-light);
 }
 
 .dashboard-section h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 1.5rem 0;
-  border-bottom: 2px solid #f3f4f6;
+  border-bottom: 2px solid var(--color-border-light);
   padding-bottom: 0.5rem;
 }
 
@@ -209,7 +209,7 @@
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--color-bg);
   border-radius: 8px;
 }
 
@@ -230,12 +230,12 @@
 
 .activity-icon.team {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .activity-icon.milestone {
   background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .activity-content p {
@@ -246,7 +246,7 @@
 }
 
 .activity-time {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
@@ -260,12 +260,12 @@
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--color-bg);
   border-radius: 8px;
 }
 
 .event-date {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;
   padding: 0.75rem;
   border-radius: 8px;
@@ -289,19 +289,19 @@
 
 .event-info h4 {
   margin: 0 0 0.25rem 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1rem;
   font-weight: 600;
 }
 
 .event-info p {
   margin: 0 0 0.25rem 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
 .event-time {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
@@ -323,7 +323,7 @@
 .projects-header h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
 } */
  
@@ -341,7 +341,7 @@
 } */
 
 .projects-count {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   display: block;
   margin-bottom: 1rem;
@@ -354,10 +354,10 @@
 }
 
 .project-card-dashboard {
-  background: #f9fafb;
+  background: var(--color-bg);
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   transition: all 0.3s ease;
 }
 
@@ -376,14 +376,14 @@
 .project-header h4 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
   flex: 1;
   margin-right: 1rem;
 }
 
 .project-stage {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -393,7 +393,7 @@
 }
 
 .project-description {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   line-height: 1.4;
   margin: 0 0 1rem 0;
@@ -407,7 +407,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
 }
 
@@ -420,19 +420,19 @@
 .progress-bar {
   flex: 1;
   height: 6px;
-  background: #e5e7eb;
+  background: var(--color-border);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   transition: width 0.3s ease;
 }
 
 .project-progress span {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
 }
@@ -448,7 +448,7 @@
 .applications-content h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 1.5rem 0;
 }
 
@@ -456,14 +456,14 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .app-tab {
   background: none;
   border: none;
   padding: 0.75rem 1rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -471,8 +471,8 @@
 }
 
 .app-tab.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .applications-list {
@@ -486,9 +486,9 @@
   grid-template-columns: 220px 1fr 200px;
   gap: 1.5rem;
   padding: 1.5rem;
-  background: #f9fafb;
+  background: var(--color-bg);
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   transition: all 0.2s ease;
 }
 
@@ -516,7 +516,7 @@
 .applicant-details h4 {
   font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 0.25rem 0;
 }
 
@@ -528,12 +528,12 @@
 
 .applicant-details span {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .applicant-location {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   display: block;
   margin-bottom: 0.25rem;
 }
@@ -547,13 +547,13 @@
 .application-project p {
   font-size: 1rem;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 0.25rem 0;
 }
 
 .application-project span {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .applicant-skills {
@@ -565,7 +565,7 @@
 
 .skill-tag {
   background: #e0e7ff;
-  color: #4f46e5;
+  color: var(--color-accent);
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -580,7 +580,7 @@
   background: white;
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
 }
 
 .application-status-actions {
@@ -603,17 +603,17 @@
 
 .status-pending {
   background: #fef3c7;
-  color: #d97706;
+  color: var(--color-warning-dark);
 }
 
 .status-accepted {
   background: #d1fae5;
-  color: #059669;
+  color: var(--color-success-dark);
 }
 
 .status-invited {
   background: #dbeafe;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .status-rejected {
@@ -623,12 +623,12 @@
 
 .status-quit {
   background: #fef3c7;
-  color: #d97706;
+  color: var(--color-warning-dark);
 }
 
 .status-removed {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--color-border-light);
+  color: var(--color-text-secondary);
 }
 
 .application-actions {
@@ -652,17 +652,17 @@
 }
 
 .view-profile-btn {
-  background: #f3f4f6;
+  background: var(--color-border-light);
   color: #4b5563;
 }
 
 .view-profile-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
 }
 
 .view-project-btn {
   background: #dbeafe;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .view-project-btn:hover {
@@ -671,7 +671,7 @@
 
 .message-btn {
   background: #e0e7ff;
-  color: #4f46e5;
+  color: var(--color-accent);
 }
 
 .message-btn:hover {
@@ -680,7 +680,7 @@
 
 .resume-btn {
   background: #dbeafe;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .resume-btn:hover {
@@ -714,12 +714,12 @@
 }
 
 .accept-btn {
-  background: #10b981;
+  background: var(--color-success);
   color: white;
 }
 
 .accept-btn:hover {
-  background: #059669;
+  background: var(--color-success-dark);
 }
 
 .reject-btn {
@@ -736,11 +736,11 @@
   align-items: center;
   justify-content: center;
   padding: 3rem 1rem;
-  background-color: #f9fafb;
+  background-color: var(--color-bg);
   border-radius: 12px;
   text-align: center;
   min-height: 200px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 @media (max-width: 1024px) {
@@ -870,26 +870,26 @@
   align-items: center;
   justify-content: center;
   padding: 3rem 1rem;
-  background-color: #f9fafb;
+  background-color: var(--color-bg);
   border-radius: 12px;
   text-align: center;
   min-height: 300px;
 }
 
 .empty-bookmarks svg {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   margin-bottom: 1.5rem;
 }
 
 .empty-bookmarks h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 0.75rem 0;
 }
 
 .empty-bookmarks p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   max-width: 400px;
   margin: 0 auto;
 }
@@ -936,7 +936,7 @@
 
 .toast-action-btn {
   background: white;
-  color: #10b981;
+  color: var(--color-success);
   border: none;
   padding: 4px 12px;
   border-radius: 6px;
@@ -983,29 +983,29 @@
   display: flex;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .subtab-btn {
   padding: 0.5rem 1.25rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   background: white;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   transition: all 0.2s ease;
 }
 
 .subtab-btn:hover {
   border-color: #a5b4fc;
-  color: #4f46e5;
+  color: var(--color-accent);
 }
 
 .subtab-btn.active {
-  border-color: #4f46e5;
-  color: #4f46e5;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
   background: #eef2ff;
 }
 
@@ -1016,7 +1016,7 @@
   align-items: center;
   justify-content: center;
   padding: 3rem 1rem;
-  background: #f9fafb;
+  background: var(--color-bg);
   border-radius: 12px;
   text-align: center;
   gap: 1rem;
@@ -1024,14 +1024,14 @@
 }
 
 .empty-state p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.95rem;
   margin: 0;
 }
 
 .empty-state-btn {
   padding: 0.6rem 1.25rem;
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
   border: none;
   border-radius: 8px;
@@ -1042,11 +1042,11 @@
 }
 
 .empty-state-btn:hover {
-  background: #4338ca;
+  background: var(--color-accent-dark);
 }
 
 .empty-state-link {
-  color: #4f46e5;
+  color: var(--color-accent);
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
@@ -1054,6 +1054,6 @@
 }
 
 .empty-state-link:hover {
-  color: #4338ca;
+  color: var(--color-accent-dark);
   text-decoration: underline;
 }

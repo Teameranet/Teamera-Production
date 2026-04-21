@@ -64,14 +64,14 @@
 /* Form group label styling */
 .form-group label {
   display: block;
-  color: #374151;
+  color: var(--color-text-primary);
   font-weight: 500;
   margin-bottom: 0.5rem;
 }
 
 /* Description text for form fields */
 .form-description {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   margin: 0 0 1rem 0;
 }
@@ -82,7 +82,7 @@
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.3s ease;
@@ -93,7 +93,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 /* Textarea specific styling */
@@ -119,10 +119,10 @@
 /* Skill button styling */
 .skill-btn {
   padding: 0.5rem 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 6px;
   background: white;
-  color: #374151;
+  color: var(--color-text-primary);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -137,20 +137,20 @@
 
 /* Skill button hover state */
 .skill-btn:hover {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   background: rgba(37, 99, 235, 0.05);
 }
 
 /* Skill button selected state */
 .skill-btn.selected {
-  border-color: #2563eb;
-  background: #2563eb;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
   color: white;
 }
 
 /* Position form container */
 .position-form {
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -183,7 +183,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #374151;
+  color: var(--color-text-primary);
   font-weight: 500;
   margin: 0;
   cursor: pointer;
@@ -219,7 +219,7 @@
 /* Position skills label */
 .position-skills label {
   display: block;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
@@ -237,7 +237,7 @@
 .skills-dropdown {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
 }
@@ -253,7 +253,7 @@
 .custom-skill-input input {
   flex: 1;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
 }
@@ -261,7 +261,7 @@
 /* Add custom skill button */
 .add-custom-skill-btn {
   padding: 0.75rem 1.5rem;
-  background-color: #2563eb;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -282,7 +282,7 @@
 /* Skills dropdown focus state */
 .skills-dropdown:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 /* Selected skills tag container */
@@ -296,7 +296,7 @@
 /* Selected skill tag */
 .selected-skill-tag {
   background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  color: var(--color-primary);
   padding: 0.4rem 0.6rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -331,8 +331,8 @@
 /* Add position button */
 .add-position-btn {
   background: transparent;
-  color: #2563eb;
-  border: 2px dashed #2563eb;
+  color: var(--color-primary);
+  border: 2px dashed var(--color-primary);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   cursor: pointer;
@@ -355,7 +355,7 @@
   display: flex;
   gap: 1rem;
   padding: 1.5rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 12px;
   margin-bottom: 1rem;
   align-items: flex-start;
@@ -376,11 +376,11 @@
   height: 80px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f9fafb;
+  background: var(--color-bg);
 }
 
 /* Avatar image */
@@ -418,8 +418,8 @@
 
 /* Avatar upload button */
 .avatar-upload-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-border-light);
+  color: var(--color-text-primary);
   border: none;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
@@ -430,7 +430,7 @@
 
 /* Avatar upload button hover */
 .avatar-upload-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
 }
 
 /* Member details section */
@@ -451,7 +451,7 @@
 
 /* Verify email button */
 .verify-email-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   border: none;
   padding: 0.75rem 1rem;
@@ -467,12 +467,12 @@
 }
 
 .verify-email-btn:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
 .verify-email-btn.verified {
-  background: #10b981;
+  background: var(--color-success);
   cursor: default;
 }
 
@@ -483,8 +483,8 @@
 
 /* Verified input styling */
 .verified-input {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: var(--color-bg);
+  border-color: var(--color-border);
   cursor: not-allowed;
 }
 
@@ -553,8 +553,8 @@
 /* Add member button */
 .add-member-btn {
   background: transparent;
-  color: #10b981;
-  border: 2px dashed #10b981;
+  color: var(--color-success);
+  border: 2px dashed var(--color-success);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   cursor: pointer;
@@ -574,7 +574,7 @@
 
 /* Project preview section */
 .project-preview {
-  background: #f9fafb;
+  background: var(--color-bg);
   padding: 1.5rem;
   border-radius: 12px;
   margin-top: 1rem;
@@ -583,7 +583,7 @@
 /* Project preview title */
 .project-preview h4 {
   margin: 0 0 1rem 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -593,13 +593,13 @@
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
 }
 
 /* Preview card title */
 .preview-card h5 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -607,7 +607,7 @@
 /* Preview card paragraph */
 .preview-card p {
   margin: 0 0 1rem 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -622,7 +622,7 @@
 
 /* Preview meta info text */
 .preview-meta span {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
 }
 
@@ -636,7 +636,7 @@
 /* Skill tag in preview */
 .skill-tag {
   background: rgba(37, 99, 235, 0.1) !important;
-  color: #2563eb !important;
+  color: var(--color-primary) !important;
   padding: 0.25rem 0.5rem !important;
   border-radius: 12px !important;
   font-size: 0.75rem !important;
@@ -650,7 +650,7 @@
   align-items: center;
   gap: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
 }
 
 /* Previous and next button base styles */
@@ -666,19 +666,19 @@
 /* Previous button style */
 .prev-btn {
   background: transparent;
-  color: #6b7280;
-  border: 2px solid #e5e7eb;
+  color: var(--color-text-secondary);
+  border: 2px solid var(--color-border);
 }
 
 /* Previous button hover */
 .prev-btn:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: var(--color-border);
+  background: var(--color-bg);
 }
 
 /* Next button style */
 .next-btn {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;
   border: none;
   margin-left: auto;

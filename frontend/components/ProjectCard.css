@@ -6,7 +6,7 @@ div.project-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.3s ease !important;
   cursor: pointer !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid var(--color-border) !important;
   height: auto !important;
   min-height: 320px !important;
   display: flex !important;
@@ -30,7 +30,7 @@ div.project-card:hover {
 .project-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
   line-height: 1.3;
   flex: 1;
@@ -44,7 +44,7 @@ div.project-card:hover {
 }
 
 .project-stage {
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -60,12 +60,12 @@ div.project-card:hover {
 }
 
 .action-btn {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   padding: 0.5rem;
   border-radius: 8px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -73,23 +73,23 @@ div.project-card:hover {
 }
 
 .action-btn:hover {
-  background: #f3f4f6;
+  background: var(--color-border-light);
   color: #374151;
   transform: translateY(-1px);
 }
 
 .bookmark-btn:hover,
 .bookmark-btn.active {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .share-btn:hover {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .report-btn:hover {
-  color: #ef4444;
-  border-color: #ef4444;
+  color: var(--color-error);
+  border-color: var(--color-error);
   background-color: rgba(239, 68, 68, 0.08);
 }
 
@@ -100,8 +100,8 @@ div.project-card:hover {
 }
 
 .delete-btn:hover {
-  color: #ef4444;
-  border-color: #ef4444;
+  color: var(--color-error);
+  border-color: var(--color-error);
   background-color: rgba(239, 68, 68, 0.1);
 }
 
@@ -112,7 +112,7 @@ div.project-card:hover {
 }
 
 .project-description {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   line-height: 1.5;
   margin-bottom: 1.5rem;
@@ -150,7 +150,7 @@ div.project-card:hover {
 }
 
 .meta-item span {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 600;
 }
 
@@ -163,7 +163,7 @@ div.project-card:hover {
 
 .position-tag {
   background: #dbeafe;
-  color: #1d4ed8;
+  color: var(--color-primary-dark);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -174,8 +174,8 @@ div.project-card:hover {
 }
 
 .position-tag.more {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--color-border-light);
+  color: var(--color-text-secondary);
 }
 
 .position-status {
@@ -215,7 +215,7 @@ div.project-card:hover {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
   display: flex;
   align-items: center;
@@ -238,12 +238,12 @@ div.project-card:hover {
 
 .founder-role {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   line-height: 1.2;
 }
 
 .open-positions {
-  color: #10b981;
+  color: var(--color-success);
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -264,12 +264,12 @@ div.project-card:hover {
 }
 
 .applications-count {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
 }
 
 .view-details-btn {
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
   border: none;
   padding: 0.5rem 1.25rem;
@@ -281,7 +281,7 @@ div.project-card:hover {
 }
 
 .view-details-btn:hover {
-  background: #4338ca;
+  background: var(--color-accent-dark);
   transform: translateY(-1px);
 }
 
@@ -343,13 +343,13 @@ div.project-card:hover {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .report-modal-subtitle {
   margin: 0;
   font-size: 0.9rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .report-modal-subtitle strong {
@@ -368,7 +368,7 @@ div.project-card:hover {
   gap: 0.6rem;
   padding: 0.6rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   cursor: pointer;
   font-size: 0.9rem;
   color: #374151;
@@ -376,7 +376,7 @@ div.project-card:hover {
 }
 
 .report-reason-option input[type="radio"] {
-  accent-color: #ef4444;
+  accent-color: var(--color-error);
   width: 15px;
   height: 15px;
   cursor: pointer;
@@ -389,14 +389,14 @@ div.project-card:hover {
 
 .report-reason-option.selected {
   background: #fef2f2;
-  border-color: #ef4444;
+  border-color: var(--color-error);
   color: #b91c1c;
   font-weight: 500;
 }
 
 .report-details-input {
   width: 100%;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.65rem 0.85rem;
   font-size: 0.875rem;
@@ -409,7 +409,7 @@ div.project-card:hover {
 }
 
 .report-details-input:focus {
-  border-color: #ef4444;
+  border-color: var(--color-error);
 }
 
 .report-modal-actions {
@@ -419,9 +419,9 @@ div.project-card:hover {
 }
 
 .report-cancel-btn {
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #6b7280;
+  background: var(--color-border-light);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   padding: 0.5rem 1.1rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -430,12 +430,12 @@ div.project-card:hover {
 }
 
 .report-cancel-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
   color: #374151;
 }
 
 .report-submit-btn {
-  background: #ef4444;
+  background: var(--color-error);
   border: none;
   color: white;
   padding: 0.5rem 1.25rem;

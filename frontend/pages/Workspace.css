@@ -16,7 +16,7 @@
   align-items: center;
   margin-bottom: 2rem;
   gap: 2rem;
-  background: linear-gradient(to right, #6366f1, #8b5cf6);
+  background: var(--color-gradient-header);
   padding: 2.5rem;
   border-radius: 1rem;
   width: 100%;
@@ -68,7 +68,7 @@
 }
 
 .workspace-project-selector select option {
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
 }
 
@@ -78,7 +78,7 @@
   /* justify-content: center; */
   gap: 1rem;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .workspace-tab-btn {
@@ -88,7 +88,7 @@
   background: none;
   border: none;
   padding: 1rem 2rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
   font-size: 1rem;
   cursor: pointer;
@@ -98,12 +98,12 @@
 }
 
 .workspace-tab-btn:hover {
-  color: #4f46e5;
+  color: var(--color-accent);
 }
 
 .workspace-tab-btn.active {
-  color: #4f46e5;
-  border-bottom-color: #4f46e5;
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
 }
 
 /* Content area */
@@ -116,7 +116,7 @@
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--color-border-light);
   overflow: hidden;
   min-height: 500px;
 }
@@ -136,12 +136,12 @@
 .workspace-select-state h3 {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .workspace-select-state > p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1rem;
   margin: 0 0 1.5rem 0;
 }
@@ -165,7 +165,7 @@
   align-items: center;
   gap: 0.75rem;
   background: #f8f9fa;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   font-size: 0.95rem;
@@ -175,7 +175,7 @@
 }
 
 .select-card-icon {
-  color: #4f46e5;
+  color: var(--color-accent);
   flex-shrink: 0;
 }
 
@@ -198,12 +198,12 @@
 .workspace-empty-state h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .workspace-empty-state p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1rem;
   margin: 0;
   max-width: 360px;
@@ -211,7 +211,7 @@
 
 /* Features section — mirrors .featured-section */
 .workspace-features-section {
-  background: #f9fafb;
+  background: var(--color-bg);
   padding: 4rem 2rem;
   border-radius: 16px;
   margin-bottom: 4rem;
@@ -221,7 +221,7 @@
 .workspace-features-section h2 {
   font-size: 2rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 3rem 0;
 }
 
@@ -254,12 +254,12 @@
 .workspace-feature-card h3 {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 1rem 0;
 }
 
 .workspace-feature-card p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0;
 }

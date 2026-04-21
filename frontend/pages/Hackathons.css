@@ -11,7 +11,7 @@
   align-items: center;
   margin-bottom: 2rem;
   gap: 2rem;
-  background: linear-gradient(to right, #6366f1, #8b5cf6);
+  background: var(--color-gradient-header);
   padding: 2.5rem;
   border-radius: 1rem;
   width: 100%;
@@ -65,14 +65,14 @@
   justify-content: center;
   gap: 1rem;
   margin-bottom: 3rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .tab-btn {
   background: none;
   border: none;
   padding: 1rem 2rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -81,12 +81,12 @@
 }
 
 .tab-btn:hover {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .tab-btn.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .hackathons-content {
@@ -104,7 +104,7 @@
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--color-border-light);
   transition: all 0.3s ease;
 }
 
@@ -141,13 +141,13 @@
 
 .status-badge.ongoing {
   background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  color: var(--color-success);
   animation: pulse 2s infinite;
 }
 
 .status-badge.completed {
   background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 @keyframes pulse {
@@ -157,7 +157,7 @@
 
 .days-until {
   font-size: 0.8rem;
-  color: #f59e0b;
+  color: var(--color-warning);
   font-weight: 500;
 }
 
@@ -165,7 +165,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #f59e0b;
+  color: var(--color-warning);
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -173,13 +173,13 @@
 .hackathon-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 1rem 0;
   line-height: 1.3;
 }
 
 .hackathon-description {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0 0 1.5rem 0;
 }
@@ -195,12 +195,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
 .meta-item svg {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .hackathon-categories {
@@ -226,7 +226,7 @@
 
 .register-btn,
 .join-btn {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -244,7 +244,7 @@
 }
 
 .view-results-btn {
-  background: #10b981;
+  background: var(--color-success);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -256,14 +256,14 @@
 }
 
 .view-results-btn:hover {
-  background: #059669;
+  background: var(--color-success-dark);
   transform: translateY(-2px);
 }
 
 .learn-more-btn {
   background: transparent;
-  color: #6b7280;
-  border: 2px solid #e5e7eb;
+  color: var(--color-text-secondary);
+  border: 2px solid var(--color-border);
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 500;
@@ -272,8 +272,8 @@
 }
 
 .learn-more-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .empty-state {
@@ -294,18 +294,18 @@
 .empty-state h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .empty-state p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1rem;
   margin: 0;
 }
 
 .featured-section {
-  background: #f9fafb;
+  background: var(--color-bg);
   padding: 4rem 2rem;
   border-radius: 16px;
   margin-bottom: 4rem;
@@ -315,7 +315,7 @@
 .featured-section h2 {
   font-size: 2rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 3rem 0;
 }
 
@@ -341,12 +341,12 @@
 .benefit-card h3 {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 1rem 0;
 }
 
 .benefit-card p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0;
 }
@@ -361,7 +361,7 @@
 .leaderboard-section h2 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0 0 2rem 0;
   text-align: center;
 }
@@ -377,19 +377,19 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--color-bg);
   border-radius: 12px;
   transition: background 0.3s ease;
 }
 
 .leaderboard-item:hover {
-  background: #f3f4f6;
+  background: var(--color-border-light);
 }
 
 .rank {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -415,12 +415,12 @@
 
 .username {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1rem;
 }
 
 .points {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 

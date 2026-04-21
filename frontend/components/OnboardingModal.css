@@ -62,7 +62,7 @@
 }
 
 .ob-modal::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--color-border);
   border-radius: 4px;
 }
 
@@ -94,7 +94,7 @@
 .ob-logo-text {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -108,7 +108,7 @@
   margin: 0 0 4px;
   font-size: 1.35rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   letter-spacing: -0.01em;
 }
 
@@ -132,7 +132,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #e5e7eb;
+  background: var(--color-border);
   transition: all 0.3s ease;
 }
 
@@ -164,7 +164,7 @@
   align-items: flex-start;
   gap: 14px;
   padding: 14px 16px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid var(--color-border);
   border-radius: 12px;
   background: #ffffff;
   cursor: pointer;
@@ -195,14 +195,14 @@
   display: block;
   font-weight: 600;
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin-bottom: 2px;
 }
 
 .ob-role-desc {
   display: block;
   font-size: 0.82rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.4;
 }
 
@@ -218,10 +218,10 @@
   align-items: center;
   gap: 5px;
   padding: 8px 14px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid var(--color-border);
   border-radius: 20px;
   background: #ffffff;
-  color: #374151;
+  color: var(--color-text-primary);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -260,7 +260,7 @@
 .ob-field label {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .ob-field input,
@@ -270,9 +270,9 @@
   padding: 0 16px;
   height: 48px;
   font-size: 0.95rem;
-  color: #1f2937;
-  background: #f9fafb;
-  border: 1.5px solid #e5e7eb;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
   border-radius: 10px;
   transition: all 0.2s ease;
   outline: none;
@@ -298,7 +298,7 @@
 
 .ob-field input::placeholder,
 .ob-field textarea::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .ob-field input:focus,
@@ -311,8 +311,8 @@
 
 /* ─── Profile Summary ─── */
 .ob-summary {
-  background: #f9fafb;
-  border: 1.5px solid #f3f4f6;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border-light);
   padding: 18px 20px;
   border-radius: 12px;
 }
@@ -321,7 +321,7 @@
   margin: 0 0 14px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .ob-summary-row {
@@ -338,13 +338,13 @@
 
 .ob-summary-label {
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   min-width: 80px;
   flex-shrink: 0;
 }
 
 .ob-summary-value {
-  color: #374151;
+  color: var(--color-text-primary);
   word-break: break-word;
 }
 
@@ -364,9 +364,9 @@
   padding: 0 20px;
   height: 46px;
   background: #ffffff;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid var(--color-border);
   border-radius: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
   font-size: 0.92rem;
   cursor: pointer;
@@ -374,8 +374,8 @@
 }
 
 .ob-btn-secondary:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: var(--color-border);
+  background: var(--color-bg);
 }
 
 .ob-btn-primary {
@@ -423,7 +423,7 @@
 .ob-skip-btn {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -433,7 +433,7 @@
 }
 
 .ob-skip-btn:hover {
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 /* ─── Responsive ─── */

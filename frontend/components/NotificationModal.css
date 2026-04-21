@@ -37,7 +37,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 1.5rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   position: relative;
 }
 
@@ -64,7 +64,7 @@
 
 .notification-header h3 {
   margin: 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1.25rem;
   font-weight: 600;
 }
@@ -76,7 +76,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   padding: 0.5rem;
   border-radius: 6px;
   transition: all 0.2s ease;
@@ -88,7 +88,7 @@
 
 .close-btn:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .notifications-list {
@@ -110,7 +110,7 @@
 }
 
 .notification-item:hover {
-  background: #f3f4f6;
+  background: var(--color-border-light);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -132,7 +132,7 @@
 .remove-notification-btn {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
@@ -148,13 +148,13 @@
 
 .remove-notification-btn:hover {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .no-notifications {
   text-align: center;
   padding: 2rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 
@@ -180,14 +180,14 @@
 
 .notification-title {
   margin: 0 0 0.25rem 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
   line-height: 1.4;
   font-weight: 500;
 }
 
 .notification-time {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
