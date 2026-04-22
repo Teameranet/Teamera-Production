@@ -1,6 +1,6 @@
 // This is the CreateProjectModal component for creating or editing a project
 import { useState, useEffect } from 'react';
-import { X, Plus, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Plus, Upload, CheckCircle, AlertCircle, User } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 import UserAvatar from './UserAvatar';
@@ -518,16 +518,18 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                       onChange={(e) => handlePositionChange(index, 'role', e.target.value)}
                       placeholder="Position title (e.g., Frontend Developer)"
                     />
-                    <div className="position-paid-checkbox">
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={position.isPaid}
-                          onChange={(e) => handlePositionChange(index, 'isPaid', e.target.checked)}
-                        />
-                        Paid
-                      </label>
-                    </div>
+                    <label className="paid-toggle">
+                      <input
+                        type="checkbox"
+                        className="paid-toggle-input"
+                        checked={position.isPaid}
+                        onChange={(e) => handlePositionChange(index, 'isPaid', e.target.checked)}
+                      />
+                      <span className="paid-toggle-body">
+                        <span className="paid-toggle-track" />
+                        <span className="paid-toggle-label">{position.isPaid ? 'Paid' : 'Unpaid'}</span>
+                      </span>
+                    </label>
                     {formData.openPositions.length > 1 && (
                       <button
                         type="button"
@@ -636,7 +638,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                         <UserAvatar user={member} size="medium" />
                       ) : (
                         <div className="avatar-placeholder">
-                          <Upload size={24} />
+                          <User size={28} />
                         </div>
                       )}
                     </div>
