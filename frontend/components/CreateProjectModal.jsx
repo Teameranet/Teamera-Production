@@ -638,12 +638,12 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                         </div>
                       )}
                     </div>
-                    {member.verified && (
+                    {/* {member.verified && (
                       <div className="verified-badge">
                         <CheckCircle size={16} />
                         <span>Verified</span>
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   <div className="member-details">
