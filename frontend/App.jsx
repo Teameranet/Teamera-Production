@@ -122,6 +122,33 @@ function AppContent() {
           }}
         />
       )}
+            {/* Modals */}
+            {showAuthModal && (
+              <AuthModal 
+                onClose={() => handleModalState(setShowAuthModal, false)}
+                onSuccess={(userData) => {
+                  handleModalState(setShowAuthModal, false);
+                  // Only show onboarding for new users without complete profiles
+                  // Skip onboarding for User-1 (demo user)
+                  if (userData.id !== '1' && (!userData.bio || !userData.skills || userData.skills.length === 0)) {
+                    handleModalState(setShowOnboarding, true);
+                  } else {
+                    // Redirect to projects page after successful login
+                    navigate('/projects');
+                  }
+                }}
+              />
+            )}
+
+            {showOnboarding && (
+              <OnboardingModal 
+                onClose={() => {
+                  handleModalState(setShowOnboarding, false);
+                  // Redirect to projects page after onboarding
+                  navigate('/projects');
+                }}
+              />
+            )}
 
       {selectedProject && (
         <ProjectModal
