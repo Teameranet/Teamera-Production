@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { UserPlus, X, Users, Shield, LogOut, Check } from 'lucide-react';
+import { UserPlus, X, Users, LogOut, Check, UserCircle, UserMinus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import UserAvatar from '../UserAvatar';
+import ProfileModal from '../ProfileModal';
 import './WorkspaceTabs.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -20,6 +21,22 @@ function WorkspaceTeamTab({ project, onProjectUpdate }) {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyError, setVerifyError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [viewProfileUser, setViewProfileUser] = useState(null);
+
+  const handleViewProfile = async (memberId) => {
+    setViewProfileUser({ loading: true });
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${memberId}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setViewProfileUser(data.data);
+      } else {
+        setViewProfileUser(null);
+      }
+    } catch {
+      setViewProfileUser(null);
+    }
+  };
 
   const currentUserId = String(user?.id || user?._id || '');
   const teamMembers = project?.teamMembers || [];
@@ -231,15 +248,26 @@ function WorkspaceTeamTab({ project, onProjectUpdate }) {
                       </div>
                       <div className="wt-member-email">{member.role}</div>
                     </div>
-                    {/* Founder can remove non-founder members */}
+                    {/* Founder can view profile and remove non-founder members */}
                     {isFounder && !isCurrentUser && (
-                      <button
-                        className="wt-remove-btn"
-                        onClick={() => setShowConfirmModal(memberId)}
-                        title="Remove member"
-                      >
-                        <X size={14} />
-                      </button>
+                      <>
+                        <button
+                          className="wt-view-profile-btn"
+                          onClick={() => handleViewProfile(memberId)}
+                          title="View profile"
+                        >
+                          <UserCircle size={15} />
+                          View Profile
+                        </button>
+                        <button
+                          className="wt-remove-btn"
+                          onClick={() => setShowConfirmModal(memberId)}
+                          title="Remove member"
+                        >
+                          <UserMinus size={14} />
+                          Remove
+                        </button>
+                      </>
                     )}
 
                   </div>
@@ -396,6 +424,13 @@ function WorkspaceTeamTab({ project, onProjectUpdate }) {
             </div>
           </div>
         </div>
+      )}
+      {/* ── Member Profile Modal (Founder only) ─────────────────────── */}
+      {viewProfileUser && (
+        <ProfileModal
+          user={viewProfileUser}
+          onClose={() => setViewProfileUser(null)}
+        />
       )}
     </div>
   );

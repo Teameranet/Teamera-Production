@@ -572,11 +572,11 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.875rem;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
   background: var(--chip-bg);
   color: var(--chip-color);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
 }
 .wt-stat-count { font-size: 1rem; font-weight: 700; }
@@ -766,7 +766,7 @@
   border-radius: 999px;
   transition: width 0.35s ease;
 }
-.wt-progress-fill--complete { background: var(--color-success); }
+.wt-progress-fill--complete { background: var(--color-accent); }
 
 .wt-progress-label {
   font-size: 0.78rem;
@@ -803,8 +803,8 @@
 }
 .wt-step-check:hover { border-color: var(--color-accent); }
 .wt-step-check--done {
-  background: var(--color-success);
-  border-color: var(--color-success);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .wt-step-text {
@@ -1013,7 +1013,7 @@
   border-color: #e0e7ff;
 }
 .wt-member-card--self {
-  border-color: #e0e7ff;
+  border-color: #d1dcff;
   background: #fafafe;
 }
 
@@ -1056,12 +1056,30 @@
   flex-shrink: 0;
 }
 
+/* View Profile button */
+.wt-view-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border: none;
+  background: #ede9fe;
+  color: #7c3aed;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.wt-view-profile-btn:hover { background: #ddd6fe; color: #6d28d9; }
+
 /* Remove button */
 .wt-remove-btn {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.6rem;
+  padding: 0.3rem 0.75rem;
   border: none;
   background: #fee2e2;
   color: var(--color-error);
