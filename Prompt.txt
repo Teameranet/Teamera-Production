@@ -675,3 +675,17 @@ Design the Workspace page base on our design system
 As per Sr UI UX developer 
 
 When Project Owner Invite the Member The Application Status Of Invited Should be In Resived Section or Send Section of Project owner & Project Member 
+------------------------------------------------------------------------------------
+Update the 'skills-input-container' with following function
+- Replace the single-select dropdown with a multi-select input box
+- Allow users to select multiple skills without closing the dropdown
+- Show selected items with a checkmark or active state
+- Keep the dropdown open while selecting multiple items
+- Subtle background for tags (light primary color)  with a single consistent
+- Smooth hover and active states
+- Allow adding a custom skill if not listed (as per system flow "show Input field")
+
+## Redesign the CreateProjectModal's .modal-content area to improve clarity, hierarchy, and user experience by applying modern color theory and a consistent design system
+  - Remove buttons (remove-position-btn, remove-skill-btn, remove-member-btn) — all share --action-remove with matching light background and border, creating one unified danger semantic
+  - Add buttons (add-position-btn, add-member-btn) 
+  - Paid checkbox
