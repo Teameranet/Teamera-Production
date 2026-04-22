@@ -24,6 +24,35 @@
   background: var(--color-surface);
 }
 
+/* Step header: title left, badge right */
+.step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.step-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.step-counter {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background-color: #e0e8ff;
+  color: #3b5bdb;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1.0px solid #3b5bdb;
+}
+
 /* Step content spacing */
 .step-content {
   margin-bottom: 2rem;
