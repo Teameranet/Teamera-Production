@@ -21,6 +21,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
+  background: var(--color-surface);
 }
 
 /* Step content spacing */
@@ -196,24 +197,26 @@
   cursor: pointer;
 }
 
-/* Remove position button */
-.remove-position-btn {
-  background: #fca5a5;
-  color: #f85858;
+/* Remove button (shared: position, skill, member) */
+.remove-position-btn,
+.remove-member-btn {
+  background: transparent;
+  color: #e05252;
   border: none;
-  padding: 0.5rem;
+  padding: 0.4rem;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: color 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
 }
 
-/* Remove position button hover */
-.remove-position-btn:hover {
-  background: #f87171;
-  transform: translateY(-1px);
+.remove-position-btn:hover,
+.remove-member-btn:hover {
+  color: #c0392b;
+  background: rgba(224, 82, 82, 0.1);
 }
 
 /* Position skills label */
@@ -256,27 +259,31 @@
   border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.custom-skill-input input:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 /* Add custom skill button */
 .add-custom-skill-btn {
   padding: 0.75rem 1.5rem;
-  background-color: var(--color-primary);
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 /* Add custom skill button hover */
 .add-custom-skill-btn:hover {
-  background-color: #5a84f9;
-  background: #5a84f9;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-  margin-bottom: 0.75rem;
+  background: var(--color-primary-dark);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
 }
 
 /* Skills dropdown focus state */
@@ -308,10 +315,11 @@
 
 /* Remove skill button */
 .remove-skill-btn {
-  background: #fca5a5;
-  color: #fe5e5e;
+  background: transparent;
+  color: #e05252;
+  border: none;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.85rem;
   line-height: 1;
   padding: 0;
   width: 16px !important;
@@ -320,34 +328,40 @@
   align-items: center;
   justify-content: center;
   border-radius: 50% !important;
-  transition: background 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
 }
 
 /* Remove skill button hover */
 .remove-skill-btn:hover {
-  background: #f87171;
+  color: #c0392b;
+  background: rgba(224, 82, 82, 0.12);
 }
 
-/* Add position button */
-.add-position-btn {
-  background: transparent;
-  color: var(--color-primary);
-  border: 2px dashed var(--color-primary);
-  padding: 0.75rem 1rem;
+/* Add button (shared: position, member) */
+.add-position-btn,
+.add-member-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.65rem 1.25rem;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   width: 100%;
   justify-content: center;
 }
 
-/* Add position button hover */
-.add-position-btn:hover {
-  background: rgba(37, 99, 235, 0.05);
+.add-position-btn:hover,
+.add-member-btn:hover {
+  background: var(--color-primary-dark);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
 }
 
 /* Team Members Section */
@@ -399,17 +413,6 @@
 }
 
 /* Verified badge */
-/* .verified-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: #d1fae5;
-  color: #065f46;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-} */
 
 /* Hidden avatar input */
 .avatar-input {
@@ -449,8 +452,8 @@
   flex: 1;
 }
 
-/* Verify email button */
-.verify-email-btn {
+/* Verified badge button */
+.verified-badge {
   background: var(--color-primary);
   color: white;
   border: none;
@@ -466,17 +469,17 @@
   gap: 0.5rem;
 }
 
-.verify-email-btn:hover:not(:disabled) {
+.verified-badge:hover:not(:disabled) {
   background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
-.verify-email-btn.verified {
-  background: var(--color-success);
+.verified-badge.verified {
+  background: var(--color-primary);
   cursor: default;
 }
 
-.verify-email-btn:disabled {
+.verified-badge:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -528,48 +531,6 @@
 .position-input-group input {
   width: 100% !important;
   display: block;
-}
-
-/* Remove member button */
-.remove-member-btn {
-  background: #fca5a5;
-  color: #f85858;
-  border: none;
-  padding: 0.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-/* Remove member button hover */
-.remove-member-btn:hover {
-  background: #f87171;
-  transform: translateY(-1px);
-}
-
-/* Add member button */
-.add-member-btn {
-  background: transparent;
-  color: var(--color-success);
-  border: 2px dashed var(--color-success);
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-/* Add member button hover */
-.add-member-btn:hover {
-  background: rgba(16, 185, 129, 0.05);
 }
 
 /* Project preview section */
@@ -727,7 +688,7 @@
     flex-direction: column;
   }
   
-  .verify-email-btn {
+  .verified-badge {
     width: 100%;
     justify-content: center;
   }

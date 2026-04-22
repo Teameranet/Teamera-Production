@@ -1,6 +1,6 @@
 // This is the CreateProjectModal component for creating or editing a project
 import { useState, useEffect } from 'react';
-import { X, Plus, Minus, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Plus, Upload, CheckCircle, AlertCircle } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 import UserAvatar from './UserAvatar';
@@ -19,7 +19,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
     openPositions: [{ role: '', skills: [], isPaid: false }],
     funding: '',
     timeline: '',
-    teamMembers: []
+    teamMembers: [{ name: '', position: '', email: '', isCustom: false, verified: false, tempId: `temp-${Date.now()}-${Math.random()}` }]
   });
   
   // State for profile modal
@@ -437,9 +437,10 @@ function CreateProjectModal({ onClose, projectToEdit }) {
       case 1:
         return formData.openPositions.some(pos => pos.role.trim() !== '');
       case 2:
-        // All team members must be verified and have a position if any are added
-        return formData.teamMembers.length === 0 || 
-               formData.teamMembers.every(m => m.verified && m.position && m.position.trim() !== '');
+        // Optional step — allow next if all members are either fully valid or completely empty
+        return formData.teamMembers.every(m =>
+          (!m.email && !m.name) || (m.verified && m.position && m.position.trim() !== '')
+        );
       case 3:
         return formData.timeline && formData.timeline.trim() !== '';
       default:
@@ -532,8 +533,9 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                         type="button"
                         className="remove-position-btn"
                         onClick={() => removePosition(index)}
+                        aria-label="Remove position"
                       >
-                        <Minus size={14} />
+                        <X size={14} />
                       </button>
                     )}
                   </div>
@@ -602,7 +604,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                 onClick={addPosition}
               >
                 <Plus size={16} />
-                Add Another Position
+                Add Position
               </button>
             </div>
           </div>
@@ -659,7 +661,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                         />
                         <button
                           type="button"
-                          className={`verify-email-btn ${member.verified ? 'verified' : ''}`}
+                          className={`verified-badge ${member.verified ? 'verified' : ''}`}
                           onClick={() => verifyEmail(index)}
                           disabled={member.verified}
                         >
@@ -737,13 +739,16 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    className="remove-member-btn"
-                    onClick={() => removeTeamMember(index)}
-                  >
-                    <Minus size={16} />
-                  </button>
+                  {formData.teamMembers.length > 1 && (
+                    <button
+                      type="button"
+                      className="remove-member-btn"
+                      onClick={() => removeTeamMember(index)}
+                      aria-label="Remove member"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
                 </div>
               ))}
 
