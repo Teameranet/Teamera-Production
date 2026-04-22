@@ -1,6 +1,6 @@
 // This is the CreateProjectModal component for creating or editing a project
 import { useState, useEffect } from 'react';
-import { X, Plus, Upload, CheckCircle, AlertCircle, User } from 'lucide-react';
+import { X, Plus, Upload, CheckCircle, User, Info } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 import UserAvatar from './UserAvatar';
@@ -290,12 +290,11 @@ function CreateProjectModal({ onClose, projectToEdit }) {
         setSelectedUserProfile(data.data);
         setShowProfileModal(true);
       } else {
-        // User not found
-        alert('User not found. The email must be registered first.');
+        // User not found — set flag on member instead of alert
         setFormData(prev => ({
           ...prev,
           teamMembers: prev.teamMembers.map((m, i) =>
-            i === index ? { ...m, verified: false } : m
+            i === index ? { ...m, verified: false, notFound: true } : m
           )
         }));
       }
@@ -656,7 +655,10 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                         <input
                           type="email"
                           value={member.email}
-                          onChange={(e) => handleTeamMemberChange(index, 'email', e.target.value)}
+                          onChange={(e) => {
+                            handleTeamMemberChange(index, 'email', e.target.value);
+                            if (member.notFound) handleTeamMemberChange(index, 'notFound', false);
+                          }}
                           placeholder="Member email address"
                           disabled={member.verified}
                           className={member.verified ? 'verified-input' : ''}
@@ -727,17 +729,15 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                     )}
                     
                     {member.verified && (!member.position || member.position.trim() === '') && (
-                      <div className="verification-warning">
-                        <AlertCircle size={14} />
-                        <span>Please select or enter a position/role for this member</span>
-                      </div>
+                      <p className="field-message"><Info size={13} /><span>Please select or enter a position/role for this member</span></p>
                     )}
                     
-                    {!member.verified && member.email && (
-                      <div className="verification-warning">
-                        <AlertCircle size={14} />
-                        <span>Please verify this email to add the member</span>
-                      </div>
+                    {!member.verified && member.notFound && (
+                      <p className="field-error"><Info size={13} /><span>User not found. The email must be registered first.</span></p>
+                    )}
+
+                    {!member.verified && member.email && !member.notFound && (
+                      <p className="field-message"><Info size={13} /><span>Please verify this email to add the member</span></p>
                     )}
                   </div>
 
