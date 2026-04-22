@@ -22,7 +22,7 @@
 .nav-logo {
   font-size: 2rem;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--color-primary);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -30,14 +30,14 @@
 }
 
 .logo-text {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .logo-dot {
-  color: #f59e0b;
+  color: var(--color-warning);
   font-size: 1.5rem;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .nav-link {
-  color: #374151;
+  color: var(--color-text-primary);
   text-decoration: none;
   font-weight: 500;
   padding: 0.5rem 1rem;
@@ -64,12 +64,12 @@
 }
 
 .nav-link:hover {
-  color: #2563eb;
+  color: var(--color-primary);
   background: rgba(37, 99, 235, 0.1);
 }
 
 .nav-link.active {
-  color: #2563eb;
+  color: var(--color-primary);
   background: rgba(37, 99, 235, 0.1);
 }
 
@@ -80,7 +80,7 @@
 }
 
 .create-project-btn {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -100,8 +100,8 @@
 
 .auth-btn {
   background: transparent;
-  color: #2563eb;
-  border: 2px solid #2563eb;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
   padding: 0.5rem 1.5rem;
   border-radius: 8px;
   font-weight: 500;
@@ -110,14 +110,14 @@
 }
 
 .auth-btn:hover {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
 }
 
 .join-Teamera-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
-  border: 2px solid #2563eb;
+  border: 2px solid var(--color-primary);
   padding: 0.5rem 1.5rem;
   border-radius: 8px;
   font-weight: 500;
@@ -127,7 +127,7 @@
 
 .join-Teamera-btn:hover {
   background: transparent;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .join-Teamera-btn.mobile {
@@ -144,12 +144,12 @@
 }
 
 .notification-btn {
-  background: #f3f4f6;
+  background: var(--color-border-light);
   border: none;
   padding: 0.5rem;
   border-radius: 50%;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   transition: all 0.3s ease;
   position: relative;
   display: flex;
@@ -158,8 +158,8 @@
 }
 
 .notification-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .notification-btn.mobile {
@@ -174,7 +174,7 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #ef4444;
+  background: var(--color-error);
   color: white;
   font-size: 0.7rem;
   font-weight: 600;
@@ -194,7 +194,7 @@
   padding: 0.4rem;
   border-radius: 12px;
   cursor: pointer;
-  color: #374151;
+  color: var(--color-text-primary);
   font-weight: 500;
   transition: all 0.3s ease;
   position: relative;
@@ -224,13 +224,13 @@
 
 .user-name {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
 /* .user-role {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 } */
 
 .user-dropdown {
@@ -256,18 +256,18 @@
 
 .dropdown-name {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
 .dropdown-email {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .dropdown-divider {
   height: 1px;
-  background: #e5e7eb;
+  background: var(--color-border);
   margin: 0.5rem 0;
 }
 
@@ -278,7 +278,7 @@
   width: 100%;
   padding: 0.75rem 1.25rem;
   text-decoration: none;
-  color: #374151;
+  color: var(--color-text-primary);
   background: none;
   border: none;
   text-align: left;
@@ -292,7 +292,7 @@
 }
 
 .dropdown-item.logout {
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .dropdown-item.logout:hover {
@@ -306,12 +306,12 @@
 }
 
 .mobile-notification-btn {
-  background: #f3f4f6;
+  background: var(--color-border-light);
   border: none !important;
   padding: 0.45rem;
   border-radius: 50%;
   cursor: pointer;
-  color: #374151;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,7 +320,7 @@
 }
 
 .mobile-notification-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
   border-color: transparent !important;
 }
 
@@ -329,7 +329,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .mobile-menu {
@@ -386,7 +386,7 @@
     display: block;
     padding: 0.75rem;
     text-decoration: none;
-    color: #374151;
+    color: var(--color-text-primary);
     border-radius: 8px;
     transition: background 0.2s ease;
   }
@@ -394,7 +394,7 @@
   .mobile-nav-menu a:hover,
   .mobile-nav-menu a.active {
     background: rgba(37, 99, 235, 0.1);
-    color: #2563eb;
+    color: var(--color-primary);
   }
 
   .mobile-actions {
@@ -415,7 +415,7 @@
     display: block;
     padding: 0.75rem;
     text-decoration: none;
-    color: #374151;
+    color: var(--color-text-primary);
     border-radius: 8px;
     text-align: center;
     background: rgba(0, 0, 0, 0.05);
@@ -429,7 +429,7 @@
   .mobile-logout-btn {
     width: 100%;
     padding: 0.75rem;
-    background: #ef4444;
+    background: var(--color-error);
     color: white;
     border: none;
     border-radius: 8px;
@@ -443,12 +443,12 @@
   .mobile-profile-link,
   .mobile-profile-link[to="/dashboard"],
   .mobile-logout-btn {
-    background: #f3f4f6;
+    background: var(--color-border-light);
     border: none;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     cursor: pointer;
-    color: #6b7280;
+    color: var(--color-text-secondary);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -466,8 +466,8 @@
   .collaboration-btn.mobile:hover,
   .mobile-profile-link:hover,
   .mobile-profile-link[to="/dashboard"]:hover {
-    background: #e5e7eb;
-    color: #374151;
+    background: var(--color-border);
+    color: var(--color-text-primary);
     transform: translateY(-2px);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
   }
@@ -482,13 +482,13 @@
 
   /* Override any existing styles */
   .collaboration-btn.mobile {
-    background: #f3f4f6;
-    color: #6b7280;
+    background: var(--color-border-light);
+    color: var(--color-text-secondary);
   }
 
   .mobile-profile-link {
-    background: #f3f4f6;
-    color: #6b7280;
+    background: var(--color-border-light);
+    color: var(--color-text-secondary);
   }
 
   /* Special styling for logout button */
@@ -517,12 +517,12 @@
 
   /* Mobile Dashboard button specific styles */
   .dashboard-btn.mobile {
-    background: #f3f4f6;
+    background: var(--color-border-light);
     border: none;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     cursor: pointer;
-    color: #6b7280;
+    color: var(--color-text-secondary);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -537,8 +537,8 @@
   }
 
   .dashboard-btn.mobile:hover {
-    background: #e5e7eb;
-    color: #374151;
+    background: var(--color-border);
+    color: var(--color-text-primary);
     transform: translateY(-2px);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
   }

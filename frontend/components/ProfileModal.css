@@ -42,25 +42,25 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #64748b;
+  color: var(--color-text-secondary);
   transition: background-color 0.2s;
   z-index: 20;
 }
 
 .close-btn:hover {
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
 }
 
 .profile-header {
   padding: 32px 24px 24px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .profile-avatar {
-  background-color: #4f46e5;
+  background-color: var(--color-accent);
   width: 72px !important;
   height: 72px !important;
   font-size: 28px !important;
@@ -74,24 +74,24 @@
 .profile-basic-info h2 {
   margin: 0 0 4px;
   font-size: 20px;
-  color: #0f172a;
+  color: var(--color-text-primary);
 }
 
 .profile-title {
   font-size: 16px;
-  color: #334155;
+  color: var(--color-text-primary);
   margin: 0 0 4px;
 }
 
 .profile-location {
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
 .profile-tabs {
   display: flex;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
   padding: 0 16px;
 }
 
@@ -102,18 +102,18 @@
   border-bottom: 2px solid transparent;
   font-size: 14px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .profile-tab:hover {
-  color: #334155;
+  color: var(--color-text-primary);
 }
 
 .profile-tab.active {
-  color: #4f46e5;
-  border-bottom-color: #4f46e5;
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
 }
 
 .profile-content {
@@ -124,20 +124,20 @@
   margin-top: 0;
   margin-bottom: 16px;
   font-size: 18px;
-  color: #0f172a;
+  color: var(--color-text-primary);
 }
 
 .profile-content h4 {
   margin-top: 24px;
   margin-bottom: 8px;
   font-size: 16px;
-  color: #334155;
+  color: var(--color-text-primary);
 }
 
 .contact-info {
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
 }
 
 .contact-info p {
@@ -151,16 +151,16 @@
   gap: 8px;
   margin: 12px 0;
   font-size: 14px;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .contact-item svg {
-  color: #64748b;
+  color: var(--color-text-secondary);
   flex-shrink: 0;
 }
 
 .contact-item a {
-  color: #4f46e5;
+  color: var(--color-accent);
   text-decoration: none;
 }
 
@@ -171,14 +171,14 @@
 .social-media-section {
   margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-border);
 }
 
 .social-media-section h5 {
   margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: var(--color-text-primary);
 }
 
 .social-links-grid {
@@ -192,19 +192,19 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   text-decoration: none;
-  color: #475569;
+  color: var(--color-text-secondary);
   font-size: 14px;
   transition: all 0.2s;
 }
 
 .social-link:hover {
-  background-color: #f1f5f9;
+  background-color: var(--color-bg);
   border-color: #cbd5e1;
-  color: #334155;
+  color: var(--color-text-primary);
   transform: translateY(-1px);
 }
 
@@ -216,7 +216,7 @@
 .education-item {
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .experience-item:last-child,
@@ -227,14 +227,14 @@
 .company-name,
 .institution-name {
   font-weight: 500;
-  color: #334155;
+  color: var(--color-text-primary);
   margin: 4px 0;
 }
 
 .experience-duration,
 .education-duration {
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin: 4px 0 12px;
 }
 
@@ -242,7 +242,7 @@
 .education-description {
   font-size: 14px;
   line-height: 1.5;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .skills-list {
@@ -253,8 +253,8 @@
 
 .skill-tag {
   display: inline-block;
-  background-color: #f1f5f9;
-  color: #334155;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
   font-size: 14px;
   padding: 6px 12px;
   border-radius: 16px;
@@ -269,18 +269,18 @@
 
 .skill-level {
   font-size: 12px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-weight: 400;
 }
 
 .skill-years {
   font-size: 12px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-weight: 400;
 }
 
 .experience-technologies {
   margin-top: 8px;
   font-size: 14px;
-  color: #475569;
+  color: var(--color-text-secondary);
 } 

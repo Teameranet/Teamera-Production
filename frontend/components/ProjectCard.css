@@ -6,7 +6,7 @@ div.project-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.3s ease !important;
   cursor: pointer !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid var(--color-border) !important;
   height: auto !important;
   min-height: 320px !important;
   display: flex !important;
@@ -30,7 +30,7 @@ div.project-card:hover {
 .project-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
   line-height: 1.3;
   flex: 1;
@@ -44,7 +44,7 @@ div.project-card:hover {
 }
 
 .project-stage {
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -60,12 +60,12 @@ div.project-card:hover {
 }
 
 .action-btn {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   padding: 0.5rem;
   border-radius: 8px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -73,18 +73,24 @@ div.project-card:hover {
 }
 
 .action-btn:hover {
-  background: #f3f4f6;
+  background: var(--color-border-light);
   color: #374151;
   transform: translateY(-1px);
 }
 
 .bookmark-btn:hover,
 .bookmark-btn.active {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .share-btn:hover {
-  color: #10b981;
+  color: var(--color-success);
+}
+
+.report-btn:hover {
+  color: var(--color-error);
+  border-color: var(--color-error);
+  background-color: rgba(239, 68, 68, 0.08);
 }
 
 .edit-btn:hover {
@@ -94,8 +100,8 @@ div.project-card:hover {
 }
 
 .delete-btn:hover {
-  color: #ef4444;
-  border-color: #ef4444;
+  color: var(--color-error);
+  border-color: var(--color-error);
   background-color: rgba(239, 68, 68, 0.1);
 }
 
@@ -106,7 +112,7 @@ div.project-card:hover {
 }
 
 .project-description {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   line-height: 1.5;
   margin-bottom: 1.5rem;
@@ -144,7 +150,7 @@ div.project-card:hover {
 }
 
 .meta-item span {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 600;
 }
 
@@ -157,7 +163,7 @@ div.project-card:hover {
 
 .position-tag {
   background: #dbeafe;
-  color: #1d4ed8;
+  color: var(--color-primary-dark);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -168,8 +174,8 @@ div.project-card:hover {
 }
 
 .position-tag.more {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: var(--color-border-light);
+  color: var(--color-text-secondary);
 }
 
 .position-status {
@@ -209,7 +215,7 @@ div.project-card:hover {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
   display: flex;
   align-items: center;
@@ -232,12 +238,12 @@ div.project-card:hover {
 
 .founder-role {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   line-height: 1.2;
 }
 
 .open-positions {
-  color: #10b981;
+  color: var(--color-success);
   font-size: 0.85rem;
   font-weight: 500;
 }
@@ -258,12 +264,12 @@ div.project-card:hover {
 }
 
 .applications-count {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.85rem;
 }
 
 .view-details-btn {
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
   border: none;
   padding: 0.5rem 1.25rem;
@@ -275,7 +281,7 @@ div.project-card:hover {
 }
 
 .view-details-btn:hover {
-  background: #4338ca;
+  background: var(--color-accent-dark);
   transform: translateY(-1px);
 }
 
@@ -302,4 +308,160 @@ div.project-card:hover {
   .card-actions {
     flex-direction: column;
   }
+}
+
+/* Report Modal */
+.report-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.report-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.report-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.report-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.report-modal-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.report-modal-subtitle strong {
+  color: #374151;
+}
+
+.report-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.report-reason-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.report-reason-option input[type="radio"] {
+  accent-color: var(--color-error);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.report-reason-option:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.report-reason-option.selected {
+  background: #fef2f2;
+  border-color: var(--color-error);
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.report-details-input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  color: #374151;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.report-details-input:focus {
+  border-color: var(--color-error);
+}
+
+.report-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.report-cancel-btn {
+  background: var(--color-border-light);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.report-cancel-btn:hover {
+  background: var(--color-border);
+  color: #374151;
+}
+
+.report-submit-btn {
+  background: var(--color-error);
+  border: none;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.report-submit-btn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.report-submit-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.report-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  text-align: center;
+  color: #374151;
+  font-size: 0.95rem;
 }

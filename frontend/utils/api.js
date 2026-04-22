@@ -118,6 +118,14 @@ export const endpoints = {
   },
   // Contact endpoint
   contact: '/api/contact',
+  // Message (chat) endpoints
+  messages: {
+    stream: (projectId) => `/api/messages/${projectId}/stream`,
+    getAll: (projectId) => `/api/messages/${projectId}`,
+    send: (projectId) => `/api/messages/${projectId}`,
+    upload: (projectId) => `/api/messages/${projectId}/upload`,
+    delete: (messageId) => `/api/messages/${messageId}`,
+  },
   // Health check
   health: '/health',
 };

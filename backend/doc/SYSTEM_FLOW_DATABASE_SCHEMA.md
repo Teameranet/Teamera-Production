@@ -519,8 +519,6 @@ Communication system for project collaboration and team chat.
     fileType: String,
     fileSize: Number
   }],
-  isEdited: Boolean,
-  editedAt: Date,
   isDeleted: Boolean,
   deletedAt: Date,
   reactions: [{

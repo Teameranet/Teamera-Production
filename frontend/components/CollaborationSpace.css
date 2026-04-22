@@ -13,7 +13,7 @@
 
 .modal-header {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,7 +30,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   padding: 0.5rem;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -42,7 +42,7 @@
 
 .close-btn:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .collaboration-content {
@@ -59,7 +59,7 @@
   background: white;
   z-index: 5;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0; /* Prevent selector from shrinking */
 }
 
@@ -71,7 +71,7 @@
 }
 
 .selector-header label {
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-weight: 600;
   font-size: 1rem;
 }
@@ -99,12 +99,12 @@
 }
 
 .invite-members-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-border-light);
+  color: var(--color-text-primary);
 }
 
 .invite-members-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
 }
 
 .leave-project-btn {
@@ -117,21 +117,21 @@
 }
 
 .new-task-btn {
-  background: #10b981;
+  background: var(--color-success);
   color: white;
 }
 
 .new-task-btn:hover {
-  background: #059669;
+  background: var(--color-success-dark);
 }
 
 .upload-btn {
-  background: #4f46e5;
+  background: var(--color-accent);
   color: white;
 }
 
 .upload-btn:hover {
-  background: #4338ca;
+  background: var(--color-accent-dark);
 }
 
 .upload-btn.uploading {
@@ -142,22 +142,22 @@
 .project-selector select {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--color-text-primary);
   background-color: white;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .project-selector select:hover {
-  border-color: #d1d5db;
+  border-color: var(--color-border);
 }
 
 .project-selector select:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
@@ -183,17 +183,17 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
 .feature-item svg {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .feature-item span {
-  color: #374151;
+  color: var(--color-text-primary);
   font-size: 0.95rem;
 }
 
@@ -203,7 +203,7 @@
   background: white;
   z-index: 5;
   display: flex;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   padding: 0 1.5rem;
   flex-shrink: 0; /* Prevent tabs from shrinking */
   overflow-x: auto; /* Allow horizontal scrolling on small screens */
@@ -214,7 +214,7 @@
   background: none;
   border: none;
   padding: 1rem 1.5rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -225,12 +225,12 @@
 }
 
 .tab-btn:hover {
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .tab-btn.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .tab-content {
@@ -255,13 +255,13 @@
   justify-content: center;
   flex: 1;
   text-align: center;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   gap: 1rem;
   padding: 2rem;
 }
 
 .no-project-selected h3 {
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -309,17 +309,17 @@
 
 .message-user {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
 }
 
 .message-time {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
 .message-text {
-  color: #374151;
+  color: var(--color-text-primary);
   margin: 0;
   line-height: 1.4;
   font-size: 0.9rem;
@@ -330,46 +330,46 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
 }
 
 .chat-input input {
   flex: 1;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.9rem;
 }
 
 .chat-input input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .attach-btn,
 .send-btn {
-  background: #f3f4f6;
+  background: var(--color-border-light);
   border: none;
   padding: 0.75rem;
   border-radius: 8px;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   transition: all 0.3s ease;
 }
 
 .attach-btn:hover,
 .send-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--color-border);
+  color: var(--color-text-primary);
 }
 
 .send-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
 }
 
 .send-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
 }
 
 /* Tasks Section */
@@ -390,11 +390,11 @@
 
 .tasks-header h3 {
   margin: 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .add-task-btn {
-  background: #10b981;
+  background: var(--color-success);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -408,11 +408,11 @@
 }
 
 .add-task-btn:hover {
-  background: #059669;
+  background: var(--color-success-dark);
 }
 
 .task-form {
-  background: #f9fafb;
+  background: var(--color-bg);
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
@@ -421,14 +421,14 @@
 .task-form input {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   margin-bottom: 1rem;
 }
 
 .task-form input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .task-form-actions {
@@ -437,7 +437,7 @@
 }
 
 .save-task-btn {
-  background: #10b981;
+  background: var(--color-success);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -447,7 +447,7 @@
 }
 
 .cancel-task-btn {
-  background: #6b7280;
+  background: var(--color-text-secondary);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -466,9 +466,9 @@
   display: flex;
   gap: 1rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--color-bg);
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
 }
 
 .task-status {
@@ -479,7 +479,7 @@
   height: 32px;
   border-radius: 50%;
   background: white;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
 }
 
 .task-content {
@@ -488,20 +488,20 @@
 
 .task-content h4 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1rem;
 }
 
 .task-content h4.completed {
   text-decoration: line-through;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .task-meta {
   display: flex;
   gap: 1rem;
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .task-assignee {
@@ -528,7 +528,7 @@
 
 .files-header h3 {
   margin: 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .files-actions {
@@ -538,7 +538,7 @@
 
 .upload-btn,
 .invite-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -553,15 +553,15 @@
 
 .upload-btn:hover,
 .invite-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
 }
 
 .invite-btn {
-  background: #10b981;
+  background: var(--color-success);
 }
 
 .invite-btn:hover {
-  background: #059669;
+  background: var(--color-success-dark);
 }
 
 .files-list {
@@ -575,9 +575,9 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--color-bg);
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
 }
 
 .file-icon {
@@ -597,24 +597,24 @@
 
 .file-info h4 {
   margin: 0 0 0.25rem 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
 }
 
 .file-info p {
   margin: 0 0 0.25rem 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
 }
 
 .file-date {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.75rem;
 }
 
 .download-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-border-light);
+  color: var(--color-text-primary);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -624,7 +624,7 @@
 }
 
 .download-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
 }
 
 /* Comments Section */
@@ -639,12 +639,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .comments-header h3 {
   margin: 0;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -654,7 +654,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   padding: 0.5rem;
   border-radius: 6px;
   transition: all 0.2s ease;
@@ -663,7 +663,7 @@
 .back-btn:hover,
 .more-btn:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .comments-list {
@@ -700,12 +700,12 @@
 
 .comment-user {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
 }
 
 .comment-time {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
@@ -713,7 +713,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   padding: 0.25rem;
   border-radius: 4px;
   margin-left: auto;
@@ -724,7 +724,7 @@
 }
 
 .comment-text {
-  color: #374151;
+  color: var(--color-text-primary);
   margin: 0 0 0.75rem 0;
   line-height: 1.4;
   font-size: 0.9rem;
@@ -739,7 +739,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
   display: flex;
   align-items: center;
@@ -749,7 +749,7 @@
 }
 
 .comment-action:hover {
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .comment-input {
@@ -757,24 +757,24 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
 }
 
 .comment-input input {
   flex: 1;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.9rem;
 }
 
 .comment-input input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .send-comment-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   border: none;
   padding: 0.75rem;
@@ -784,7 +784,7 @@
 }
 
 .send-comment-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
 }
 
 /* Invite Modal */
@@ -824,7 +824,7 @@
 
 .invite-header h3,
 .task-modal-header h3 {
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1.25rem;
   margin: 0;
 }
@@ -837,7 +837,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   padding: 0.5rem;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -850,7 +850,7 @@
 .invite-header .close-btn:hover,
 .task-modal-header .close-btn:hover {
   background: rgba(0, 0, 0, 0.05);
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .invite-content p {
@@ -867,19 +867,19 @@
 .invite-input {
   flex: 1;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.95rem;
 }
 
 .invite-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
 }
 
 .send-invite-btn {
   padding: 0.75rem 1.5rem;
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -889,15 +889,15 @@
 }
 
 .send-invite-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
 }
 .share-section {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
   padding-top: 1.5rem;
 }
 
 .share-section h4 {
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1rem;
   margin-bottom: 1rem;
 }
@@ -911,16 +911,16 @@
 .share-input {
   flex: 1;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.9rem;
-  background: #f9fafb;
-  color: #6b7280;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
 }
 
 .share-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   background: white;
 }
 
@@ -929,9 +929,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: var(--color-border-light);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -941,8 +941,8 @@
 }
 
 .copy-btn:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
+  background: var(--color-border);
+  border-color: var(--color-text-muted);
 }
 
 .copy-btn svg {
@@ -965,7 +965,7 @@
 
 .task-modal-form .form-group label {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
 }
 
@@ -973,7 +973,7 @@
 .task-modal-form .form-group textarea,
 .task-modal-form .form-group select {
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.95rem;
   transition: border-color 0.2s ease;
@@ -983,7 +983,7 @@
 .task-modal-form .form-group textarea:focus,
 .task-modal-form .form-group select:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
@@ -1016,21 +1016,21 @@
 }
 
 .cancel-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-border-light);
+  color: var(--color-text-primary);
 }
 
 .cancel-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
 }
 
 .create-task-btn {
-  background: #10b981;
+  background: var(--color-success);
   color: white;
 }
 
 .create-task-btn:hover {
-  background: #059669;
+  background: var(--color-success-dark);
 }
 
 .no-projects {
@@ -1047,7 +1047,7 @@
 }
 
 .no-projects-content h3 {
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1.75rem;
   margin-bottom: 2rem;
 }
@@ -1060,8 +1060,8 @@
 }
 
 .message-card {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
@@ -1069,23 +1069,23 @@
 }
 
 .message-card:hover {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   transform: translateY(-2px);
 }
 
 .message-card svg {
-  color: #2563eb;
+  color: var(--color-primary);
   margin-bottom: 1rem;
 }
 
 .message-card h4 {
-  color: #1f2937;
+  color: var(--color-text-primary);
   font-size: 1.1rem;
   margin-bottom: 0.75rem;
 }
 
 .message-card p {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0;
@@ -1107,19 +1107,19 @@
 }
 
 .browse-projects-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   border: none;
 }
 
 .browse-projects-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
 }
 
 .start-project-btn {
   background: white;
-  color: #2563eb;
-  border: 2px solid #2563eb;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
 }
 
 .start-project-btn:hover {
@@ -1349,7 +1349,7 @@
 .tasks-section::-webkit-scrollbar-thumb,
 .files-section::-webkit-scrollbar-thumb,
 .team-section::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--color-border);
   border-radius: 4px;
 }
 
@@ -1358,7 +1358,7 @@
 .tasks-section::-webkit-scrollbar-thumb:hover,
 .files-section::-webkit-scrollbar-thumb:hover,
 .team-section::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--color-text-muted);
 }
 
 /* Tablet Responsive Enhancements */

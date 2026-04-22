@@ -1,0 +1,38 @@
+/* ============================================================
+   TEAMERA DESIGN TOKENS
+   Single source of truth for all colors across the app.
+   ============================================================ */
+
+:root {
+  /* Primary brand blue */
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+
+  /* Accent indigo (tabs, active states, workspace) */
+  --color-accent: #4f46e5;
+  --color-accent-dark: #4338ca;
+
+  /* Page header gradient */
+  --color-gradient-header: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+
+  /* Semantic colors */
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+  --color-error: #ef4444;
+  --color-error-dark: #dc2626;
+  --color-warning: #f59e0b;
+  --color-warning-dark: #d97706;
+
+  /* Text */
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+
+  /* Backgrounds */
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+
+  /* Borders */
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+}

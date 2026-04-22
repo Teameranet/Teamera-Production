@@ -6,14 +6,14 @@ import { useNotifications } from '../context/NotificationContext';
 import ProjectCard from '../components/ProjectCard';
 import './Projects.css';
 
-function Projects({ onProjectClick, onCreateProject, onEditProject }) {
+function Projects({ onEditProject }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedStage, setSelectedStage] = useState('');
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [showOwnedProjects, setShowOwnedProjects] = useState(true);
-  const { projects, loading, deleteProject, getUserProjects } = useProjects();
+  const { projects, loading, deleteProject, getUserProjects, setSelectedProject, setShowCreateProjectModal } = useProjects();
   const { user } = useAuth();
   const { showToast } = useNotifications();
 
@@ -106,7 +106,7 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
           <p style={{ color: 'white' }}>Find exciting startup projects and join teams that match your skills and interests</p>
         </div>
         {user && (
-          <button className="create-project-btn" onClick={onCreateProject}>
+          <button className="create-project-btn" onClick={() => setShowCreateProjectModal(true)}>
             <Plus size={20} />
             Create Project
           </button>
@@ -204,7 +204,7 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
           <h3>No projects found</h3>
           <p>Try adjusting your search criteria or create a new project</p>
           {user && (
-            <button className="create-project-btn" onClick={onCreateProject}>
+            <button className="create-project-btn" onClick={() => setShowCreateProjectModal(true)}>
               <Plus size={20} />
               Create Your First Project
             </button>
@@ -216,7 +216,7 @@ function Projects({ onProjectClick, onCreateProject, onEditProject }) {
             <ProjectCard
               key={project.id || project._id}
               project={project}
-              onClick={onProjectClick}
+              onClick={setSelectedProject}
             />
           ))}
         </div>

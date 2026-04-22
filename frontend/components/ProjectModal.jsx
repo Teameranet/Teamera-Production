@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Users, MapPin, Calendar, Briefcase, Upload, Send, Clock, CheckCircle } from 'lucide-react';
+import { X, Users, MapPin, Calendar, Briefcase, Upload, Send, Clock, CheckCircle, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
 import UserAvatar from './UserAvatar';
 import './ProjectModal.css';
 
-function ProjectModal({ project, onClose }) {
+function ProjectModal({ project: initialProject, onClose, isOwned = false, isParticipating = false, onOpenWorkspace }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showApplicationForm, setShowApplicationForm] = useState(false);
@@ -20,8 +20,35 @@ function ProjectModal({ project, onClose }) {
   const [invitations, setInvitations] = useState([]);
 
   const { user } = useAuth();
-  const { applyToProject } = useProjects();
+  const { applyToProject, projects } = useProjects();
   const { addApplicationNotification, showToast } = useNotifications();
+
+  // Always use the live version from context so SSE updates are reflected immediately
+  const projectId = initialProject._id || initialProject.id;
+  const project = projects.find(p => String(p._id || p.id) === String(projectId)) || initialProject;
+
+  // Derive ownership/membership live from the current user + live project data
+  // so the "Open Workspace" button appears immediately when the user is accepted
+  const liveIsOwned = (() => {
+    if (!user) return isOwned;
+    const ownerId = project.ownerId?._id || project.ownerId;
+    const userId = user._id || user.id;
+    return ownerId ? String(ownerId) === String(userId) : isOwned;
+  })();
+
+  const liveIsParticipating = (() => {
+    if (!user) return isParticipating;
+    const userId = user._id || user.id;
+    const onTeam = (project.teamMembers || []).some(m => {
+      const mId = m.id?._id || m.id || m._id;
+      return String(mId) === String(userId);
+    });
+    // Also check if any application for this project is ACCEPTED
+    const hasAccepted = Object.values(existingApplications).some(
+      a => a?.hasApplied && a?.application?.status === 'ACCEPTED'
+    );
+    return onTeam || hasAccepted || isParticipating;
+  })();
 
 
 
@@ -30,7 +57,7 @@ function ProjectModal({ project, onClose }) {
     const checkExistingApplications = async () => {
       if (!user) return;
 
-      const projectId = project._id || project.id;
+      const pId = project._id || project.id;
       const userId = user._id || user.id;
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -38,7 +65,7 @@ function ProjectModal({ project, onClose }) {
       //    This covers both open-position invites AND custom-position invites
       try {
         const invRes = await fetch(
-          `${apiBaseUrl}/api/applications/invitations?projectId=${projectId}&userId=${userId}`
+          `${apiBaseUrl}/api/applications/invitations?projectId=${pId}&userId=${userId}`
         );
         const invData = await invRes.json();
         if (invData.success) {
@@ -53,7 +80,7 @@ function ProjectModal({ project, onClose }) {
       for (const position of (project.openPositions || [])) {
         try {
           const response = await fetch(
-            `${apiBaseUrl}/api/applications/check?projectId=${projectId}&userId=${userId}&position=${encodeURIComponent(position.role)}&positionId=${position._id || position.id || ''}`
+            `${apiBaseUrl}/api/applications/check?projectId=${pId}&userId=${userId}&position=${encodeURIComponent(position.role)}&positionId=${position._id || position.id || ''}`
           );
           const data = await response.json();
           if (data.success) {
@@ -71,7 +98,8 @@ function ProjectModal({ project, onClose }) {
     };
 
     checkExistingApplications();
-  }, [user, project._id, project.id, project.openPositions]);
+  // Re-run when the live project's positions or team changes (SSE update)
+  }, [user, projectId, project.openPositions, project.teamMembers]);
 
   const handleApplicationSubmit = async (e) => {
     e.preventDefault();
@@ -480,12 +508,22 @@ function ProjectModal({ project, onClose }) {
 
         {user && !showApplicationForm && activeTab !== 'positions' && (
           <div className="modal-actions">
-            <button
-              className="apply-btn primary"
-              onClick={() => setActiveTab('positions')}
-            >
-              View Open Positions
-            </button>
+            {(liveIsOwned || liveIsParticipating) && onOpenWorkspace ? (
+              <button
+                className="apply-btn primary"
+                onClick={() => onOpenWorkspace(project)}
+              >
+                <ExternalLink size={16} />
+                Open Workspace
+              </button>
+            ) : (
+              <button
+                className="apply-btn primary"
+                onClick={() => setActiveTab('positions')}
+              >
+                View Open Positions
+              </button>
+            )}
           </div>
         )}
 
