@@ -4,7 +4,6 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Projects from './pages/Projects';
-import Hackathons from './pages/Hackathons';
 import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
 import Community from './pages/Community';
@@ -90,7 +89,6 @@ function AppContent() {
           <Route path="/projects" element={
             <Projects onEditProject={handleEditProject} />
           } />
-          <Route path="/hackathons" element={<Hackathons />} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/community" element={<Community />} />

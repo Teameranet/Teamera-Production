@@ -62,14 +62,6 @@ function Navbar({ onAuthClick }) {
           </li>
           <li className="nav-item">
             <Link 
-              to="/hackathons" 
-              className={`nav-link ${location.pathname === '/hackathons' ? 'active' : ''}`}
-            >
-              Hackathons
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link 
               to="/community" 
               className={`nav-link ${location.pathname === '/community' ? 'active' : ''}`}
             >
@@ -203,15 +195,6 @@ function Navbar({ onAuthClick }) {
                   onClick={() => setShowMobileMenu(false)}
                 >
                   Projects
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/hackathons" 
-                  className={location.pathname === '/hackathons' ? 'active' : ''}
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Hackathons
                 </Link>
               </li>
               <li>

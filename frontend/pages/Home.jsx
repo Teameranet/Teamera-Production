@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Rocket, Search, ArrowRight, Users, Lightbulb, Trophy, Target, GitBranch, MessageSquare, Shield, Zap } from 'lucide-react';
+import { Rocket, Search, ArrowRight, Users, Lightbulb, Target, GitBranch, MessageSquare, Shield, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Home.css';
 
@@ -37,10 +37,6 @@ function Home({ onAuthClick }) {
                 Start Building Today
               </button>
             )}
-            <Link to="/hackathons" className="cta-button secondary">
-              <Search size={20} className="button-icon" />
-              Join Hackathons
-            </Link>
           </div>
         </div>
 
@@ -91,13 +87,7 @@ function Home({ onAuthClick }) {
             <h3>Real-time Collaboration</h3>
             <p>Integrated chat, task tracking, and file sharing.</p>
           </div>
-          <div className="feature-card-new">
-            <div className="feature-icon-new">
-              <Trophy size={24} />
-            </div>
-            <h3>Hackathon Tracking</h3>
-            <p>Join hackathons, track progress, and win prizes.</p>
-          </div>
+
         </div>
       </section>
 
@@ -222,7 +212,6 @@ function Home({ onAuthClick }) {
             <p>Gain real-world experience and learn from industry professionals.</p>
             <ul>
               <li>Join learning projects</li>
-              <li>Participate in hackathons</li>
               <li>Build your network</li>
               <li>Develop practical skills</li>
             </ul>
@@ -249,10 +238,6 @@ function Home({ onAuthClick }) {
                 Get Started Free
               </button>
             )}
-            <Link to="/hackathons" className="cta-button secondary">
-              <Search size={20} className="button-icon" />
-              Join Hackathons
-            </Link>
           </div>
           <div className="trust-indicators">
             <div className="trust-item">
