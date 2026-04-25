@@ -805,12 +805,23 @@ background: var(--color-border-light);
 .cm-body {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0;
   max-width: 72%;
 }
 
 .cm-row--own .cm-body {
   align-items: flex-end;
+}
+
+/* Space between meta row and the first content element */
+.cm-body .cm-meta {
+  margin-bottom: 0.2rem;
+}
+
+/* Space between bubble/file-card and the actions row */
+.cm-body .cm-bubble,
+.cm-body .cm-file-card {
+  margin-bottom: 0.15rem;
 }
 
 .cm-meta {
@@ -861,7 +872,8 @@ background: var(--color-border-light);
   color: #fff;
 }
 
-/* ── Reply quote — matches workspace wt-reply-preview exactly ── */
+/* ── Reply quote — sits ABOVE the bubble, never inside it ─────── */
+/* Matches workspace wt-reply-preview exactly */
 .cm-reply-quote {
   display: flex;
   flex-direction: column;
@@ -871,8 +883,12 @@ background: var(--color-border-light);
   border-left: 3px solid var(--color-accent);
   border-radius: 2.8px 6px 6px 2.8px;
   font-size: 0.8rem;
+  /* Constrain width so it never stretches the card */
   max-width: 100%;
+  width: fit-content;
   overflow: hidden;
+  /* Detach from bubble — small gap below, flush above */
+  margin-bottom: 0.15rem;
 }
 
 .cm-reply-quote-name {
@@ -881,6 +897,7 @@ background: var(--color-border-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 .cm-reply-quote-text {
@@ -888,6 +905,7 @@ background: var(--color-border-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 /* ── Comment file card ───────────────────────────────────────── */

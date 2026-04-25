@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import {
-  Heart, MessageCircle, Bookmark, BookmarkMinus, Paperclip, Image,
+  Heart, MessageCircle, Bookmark, BookmarkMinus, Paperclip,
   Send, Search, Hash, TrendingUp, Users, Trash2, Download,
   ChevronDown, ChevronUp, SlidersHorizontal, X, Reply
 } from 'lucide-react';
@@ -701,14 +701,7 @@ function Community() {
                     >
                       <Paperclip size={18} />
                     </button>
-                    <button
-                      className="composer-icon-btn"
-                      title="Add image"
-                      aria-label="Add image"
-                      type="button"
-                    >
-                      <Image size={18} />
-                    </button>
+
                     <span className="composer-hint">Ctrl+Enter to post</span>
                   </div>
                   <div className="composer-right-btns">
