@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import {
-  Heart, MessageCircle, Share2, Bookmark, Paperclip, Image,
+  Heart, MessageCircle, Bookmark, BookmarkMinus, Paperclip, Image,
   Send, Search, Hash, TrendingUp, Users, Trash2, Download,
-  ChevronDown, ChevronUp, SlidersHorizontal, X
+  ChevronDown, ChevronUp, SlidersHorizontal, X, Reply
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UserAvatar from '../components/UserAvatar';
@@ -32,6 +32,7 @@ const INITIAL_POSTS = [
         text: 'Great write-up! Did you run into any issues with third-party libraries that rely on client context?',
         timestamp: '1h ago',
         likes: 3,
+        attachment: null,
       },
       {
         id: 'c2',
@@ -39,6 +40,7 @@ const INITIAL_POSTS = [
         text: 'This is super helpful, bookmarking for our next sprint.',
         timestamp: '45m ago',
         likes: 1,
+        attachment: null,
       },
     ],
     timestamp: '2h ago',
@@ -66,6 +68,7 @@ const INITIAL_POSTS = [
         text: 'We did exactly this! The Figma → CSS token pipeline is a game changer once it clicks.',
         timestamp: '3h ago',
         likes: 5,
+        attachment: { name: 'token-pipeline-guide.pdf', size: '1.1 MB' },
       },
     ],
     timestamp: '4h ago',
@@ -93,6 +96,7 @@ const INITIAL_POSTS = [
         text: 'This sounds really exciting. What\'s the target learner demographic?',
         timestamp: '5h ago',
         likes: 2,
+        attachment: null,
       },
       {
         id: 'c5',
@@ -100,6 +104,7 @@ const INITIAL_POSTS = [
         text: 'Sent you a DM — I\'ve been building in the EdTech space for 3 years.',
         timestamp: '4h ago',
         likes: 4,
+        attachment: null,
       },
     ],
     timestamp: '6h ago',
@@ -127,6 +132,7 @@ const INITIAL_POSTS = [
         text: 'UserInterviews.com worked well for us — pricey but fast. Also try posting in relevant Slack communities.',
         timestamp: '20h ago',
         likes: 6,
+        attachment: null,
       },
     ],
     timestamp: '1d ago',
@@ -183,43 +189,97 @@ function CategoryBadge({ category }) {
   );
 }
 
+function getFileExt(name) {
+  const parts = name?.split('.');
+  return parts && parts.length > 1 ? parts.pop().toUpperCase().slice(0, 4) : 'FILE';
+}
+
 function PostAttachment({ attachment }) {
   if (!attachment) return null;
+  const ext = getFileExt(attachment.name);
   return (
     <div className="post-attachment">
-      <Paperclip size={16} className="attachment-icon" />
-      <div className="attachment-info">
-        <span className="attachment-name">{attachment.name}</span>
-        <span className="attachment-size">{attachment.size}</span>
+      <div className="post-attachment-icon">
+        <div className="post-attachment-page" />
+        <span className="post-attachment-ext">{ext}</span>
       </div>
-      <button className="download-btn" title="Download" aria-label="Download attachment">
+      <div className="post-attachment-info">
+        <span className="post-attachment-name">{attachment.name}</span>
+        <span className="post-attachment-size">{attachment.size}</span>
+      </div>
+      <button className="post-attachment-dl" title="Download" aria-label="Download attachment">
         <Download size={16} />
       </button>
     </div>
   );
 }
 
-function CommentItem({ comment, onAvatarClick }) {
+function CommentItem({ comment, currentUserName, currentUserRole, onAvatarClick, onReply, onDelete }) {
+  const isOwn = comment.author.name === currentUserName;
+  const canDelete = isOwn || currentUserRole === 'admin' || currentUserRole === 'moderator';
+
   return (
-    <div className="comment-item">
-      <UserAvatar
-        user={{ name: comment.author.name }}
-        size="small"
-        style={{ cursor: 'pointer' }}
-        onClick={() => onAvatarClick(comment.author)}
-      />
-      <div className="comment-body">
-        <span
-          className="comment-author"
-          onClick={() => onAvatarClick(comment.author)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(comment.author)}
-        >
-          {comment.author.name}
-        </span>
-        <p className="comment-text">{comment.text}</p>
-        <span className="comment-meta">{comment.timestamp} · {comment.likes} likes</span>
+    <div className={`cm-row ${isOwn ? 'cm-row--own' : ''}`}>
+      {!isOwn && (
+        <div className="cm-avatar" onClick={() => onAvatarClick(comment.author)}>
+          <UserAvatar user={{ name: comment.author.name }} size="small" />
+        </div>
+      )}
+      <div className="cm-body">
+        <div className="cm-meta">
+          <span
+            className="cm-author"
+            onClick={() => onAvatarClick(comment.author)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(comment.author)}
+          >
+            {isOwn ? 'You' : comment.author.name}
+          </span>
+          <span className="cm-time">{comment.timestamp}</span>
+        </div>
+
+        {/* Text bubble */}
+        {comment.text && (
+          <div className={`cm-bubble ${isOwn ? 'cm-bubble--own' : ''}`}>
+            <p>{comment.text}</p>
+          </div>
+        )}
+
+        {/* File attachment */}
+        {comment.attachment && (
+          <div className={`cm-file-card ${isOwn ? 'cm-file-card--own' : ''}`}>
+            <div className="cm-file-icon">
+              <div className="cm-file-page" />
+              <span className="cm-file-ext">{getFileExt(comment.attachment.name)}</span>
+            </div>
+            <div className="cm-file-info">
+              <span className="cm-file-name">{comment.attachment.name}</span>
+              <span className="cm-file-size">{comment.attachment.size}</span>
+            </div>
+            <button className="cm-file-dl" title="Download" aria-label="Download">
+              <Download size={14} />
+            </button>
+          </div>
+        )}
+
+        {/* Hover actions */}
+        <div className="cm-actions">
+          <button className="cm-action-btn" onClick={() => onReply(comment)}>
+            <Reply size={12} /> Reply
+          </button>
+          {canDelete && (
+            <button
+              className="cm-action-btn cm-action-btn--danger"
+              onClick={() => onDelete(comment.id)}
+              title="Delete comment"
+              aria-label="Delete comment"
+            >
+              <Trash2 size={12} /> Delete
+            </button>
+          )}
+          <span className="cm-likes">{comment.likes > 0 && `${comment.likes} likes`}</span>
+        </div>
       </div>
     </div>
   );
@@ -244,12 +304,17 @@ function Community() {
   const [showComments, setShowComments] = useState({});
   const [expandedPosts, setExpandedPosts] = useState({});
   const [commentInputs, setCommentInputs] = useState({});
+  const [commentReplyTo, setCommentReplyTo] = useState({});   // postId → comment
+  const [commentFiles, setCommentFiles] = useState({});        // postId → { name, size }
   const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [showSavedPosts, setShowSavedPosts] = useState(false);
   // Profile modal
   const [selectedUser, setSelectedUser] = useState(null);
 
-  // File input ref
+  // File input refs
   const fileInputRef = useRef(null);
+  const commentFileRefs = useRef({});
+  const postRefs = useRef({});
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -271,6 +336,16 @@ function Community() {
 
   const handleDeletePost = (postId) => {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handleDeleteComment = (postId, commentId) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, comments: p.comments.filter((c) => c.id !== commentId) }
+          : p
+      )
+    );
   };
 
   const handlePost = () => {
@@ -307,13 +382,16 @@ function Community() {
 
   const handleAddComment = (postId) => {
     const text = (commentInputs[postId] || '').trim();
-    if (!text) return;
+    const attachment = commentFiles[postId] || null;
+    if (!text && !attachment) return;
     const newComment = {
       id: generateId(),
       author: { name: user?.name || 'You', role: user?.role || 'developer' },
       text,
       timestamp: 'Just now',
       likes: 0,
+      attachment,
+      replyTo: commentReplyTo[postId] || null,
     };
     setPosts((prev) =>
       prev.map((p) =>
@@ -321,6 +399,21 @@ function Community() {
       )
     );
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+    setCommentFiles((prev) => ({ ...prev, [postId]: null }));
+    setCommentReplyTo((prev) => ({ ...prev, [postId]: null }));
+  };
+
+  const handleCommentFileChange = (e, postId) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setCommentFiles((prev) => ({ ...prev, [postId]: { name: file.name, size: formatFileSize(file.size) } }));
+    e.target.value = '';
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const handleCommentKeyDown = (e, postId) => {
@@ -336,6 +429,22 @@ function Community() {
 
   const toggleExpanded = (postId) => {
     setExpandedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  };
+
+  const handleGoToPost = (postId) => {
+    // Switch to main feed (not saved view) so the post is visible
+    setShowSavedPosts(false);
+    setActiveCategory('All');
+    // Scroll after state update + render
+    setTimeout(() => {
+      const el = postRefs.current[postId];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Brief highlight flash
+        el.classList.add('post-card--highlight');
+        setTimeout(() => el.classList.remove('post-card--highlight'), 1500);
+      }
+    }, 80);
   };
 
   // ── Filter logic ─────────────────────────────────────────────────────────────
@@ -364,6 +473,9 @@ function Community() {
   };
 
   const filteredPosts = filterPosts();
+
+  // Saved posts derived from bookmarked state
+  const savedPosts = posts.filter((p) => p.bookmarked);
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -406,9 +518,10 @@ function Community() {
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
-                    className={`mobile-filter-chip ${activeCategory === cat ? 'active' : ''}`}
+                    className={`mobile-filter-chip ${activeCategory === cat && !showSavedPosts ? 'active' : ''}`}
                     onClick={() => {
                       setActiveCategory(cat);
+                      setShowSavedPosts(false);
                       setShowMobileFilter(false);
                     }}
                   >
@@ -421,6 +534,22 @@ function Community() {
                   </button>
                 ))}
               </div>
+
+              {/* Saved Posts divider */}
+              <div className="mobile-filter-divider" />
+              <button
+                className={`mobile-filter-chip mobile-filter-chip--saved ${showSavedPosts ? 'active' : ''}`}
+                onClick={() => {
+                  setShowSavedPosts((v) => !v);
+                  setShowMobileFilter(false);
+                }}
+              >
+                <Bookmark size={13} fill={showSavedPosts ? 'currentColor' : 'none'} />
+                Saved Posts
+                {savedPosts.length > 0 && (
+                  <span className="mobile-filter-chip-count">{savedPosts.length}</span>
+                )}
+              </button>
             </div>
           )}
         </div>
@@ -564,7 +693,99 @@ function Community() {
           </div>
 
           {/* Posts */}
-          {filteredPosts.length === 0 ? (
+          {showSavedPosts ? (
+            /* ── Saved Posts Feed ── */
+            <div>
+              <div className="saved-feed-header">
+                <Bookmark size={16} className="saved-feed-header-icon" />
+                <span>Saved Posts</span>
+                <span className="saved-feed-count">{savedPosts.length}</span>
+                <button
+                  className="saved-feed-clear"
+                  onClick={() => setShowSavedPosts(false)}
+                  aria-label="Back to feed"
+                >
+                  <X size={14} /> Back to feed
+                </button>
+              </div>
+
+              {savedPosts.length === 0 ? (
+                <div className="empty-feed">
+                  <Bookmark size={48} />
+                  <h3>No saved posts</h3>
+                  <p>Bookmark posts to find them here later.</p>
+                </div>
+              ) : (
+                savedPosts.map((post) => {
+                  const isAuthor = user && user.name === post.author.name;
+                  const isExpanded = expandedPosts[post.id];
+                  const commentsOpen = showComments[post.id];
+                  return (
+                    <article key={post.id} className="post-card">
+                      <div className="post-header">
+                        <div className="post-author-info">
+                          <UserAvatar user={{ name: post.author.name }} size="medium" style={{ cursor: 'pointer' }} onClick={() => setSelectedUser(post.author)} />
+                          <div>
+                            <div className="post-author-name" onClick={() => setSelectedUser(post.author)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSelectedUser(post.author)}>{post.author.name}</div>
+                            <div className="post-author-meta">{post.author.title} · {post.timestamp}</div>
+                          </div>
+                        </div>
+                        <div className="post-header-right">
+                          <CategoryBadge category={post.category} />
+                          {isAuthor && (
+                            <button className="delete-post-btn" onClick={() => handleDeletePost(post.id)} title="Delete post" aria-label="Delete post"><Trash2 size={15} /></button>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>{post.content}</div>
+                      {post.content.length > 200 && (
+                        <button className="show-more-btn" onClick={() => toggleExpanded(post.id)}>
+                          {isExpanded ? <><ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less</> : <><ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more</>}
+                        </button>
+                      )}
+                      <PostAttachment attachment={post.attachment} />
+                      {post.tags.length > 0 && (
+                        <div className="post-tags">
+                          {post.tags.map((tag) => (
+                            <span key={tag} className="post-tag" onClick={() => { setSearchQuery(tag); setShowSavedPosts(false); }} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSearchQuery(tag)}>{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="post-actions">
+                        <button className={`action-btn ${post.liked ? 'liked' : ''}`} onClick={() => handleLike(post.id)} aria-label={post.liked ? 'Unlike post' : 'Like post'}>
+                          <Heart size={16} fill={post.liked ? 'currentColor' : 'none'} /><span>{post.likes}</span>
+                        </button>
+                        <button className="action-btn" onClick={() => toggleComments(post.id)} aria-label="Toggle comments">
+                          <MessageCircle size={16} /><span>{post.comments.length}</span>
+                        </button>
+                        <button className={`action-btn bookmarked`} onClick={() => handleBookmark(post.id)} aria-label="Remove bookmark">
+                          <Bookmark size={16} fill="currentColor" />
+                        </button>
+                      </div>
+                      {commentsOpen && (
+                        <div className="comments-section">
+                          {post.comments.length > 0 && (
+                            <div className="cm-list">
+                              {post.comments.map((comment) => (
+                                <CommentItem key={comment.id} comment={comment} currentUserName={user?.name} currentUserRole={user?.role} onAvatarClick={(author) => setSelectedUser(author)} onReply={(c) => setCommentReplyTo((prev) => ({ ...prev, [post.id]: c }))} onDelete={(commentId) => handleDeleteComment(post.id, commentId)} />
+                              ))}
+                            </div>
+                          )}
+                          <div className="cm-input-bar">
+                            <UserAvatar user={user || { name: 'You' }} size="small" />
+                            <div className="cm-input-wrap">
+                              <input type="text" className="cm-input" placeholder="Write a comment…" value={commentInputs[post.id] || ''} onChange={(e) => setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))} onKeyDown={(e) => handleCommentKeyDown(e, post.id)} aria-label="Write a comment" />
+                            </div>
+                            <button className="cm-send-btn" onClick={() => handleAddComment(post.id)} disabled={!(commentInputs[post.id] || '').trim()} aria-label="Send comment" type="button"><Send size={15} /></button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          ) : filteredPosts.length === 0 ? (
             <div className="empty-feed">
               <Users size={48} />
               <h3>No posts found</h3>
@@ -581,7 +802,7 @@ function Community() {
               const commentsOpen = showComments[post.id];
 
               return (
-                <article key={post.id} className="post-card">
+                <article key={post.id} className="post-card" ref={(el) => { postRefs.current[post.id] = el; }}>
                   {/* Post header */}
                   <div className="post-header">
                     <div className="post-author-info">
@@ -684,12 +905,7 @@ function Community() {
                       <span>{post.comments.length}</span>
                     </button>
 
-                    <button className="action-btn" aria-label="Share post">
-                      <Share2 size={16} />
-                      <span>Share</span>
-                    </button>
-
-                    <button
+<button
                       className={`action-btn ${post.bookmarked ? 'bookmarked' : ''}`}
                       onClick={() => handleBookmark(post.id)}
                       aria-label={post.bookmarked ? 'Remove bookmark' : 'Bookmark post'}
@@ -701,38 +917,105 @@ function Community() {
                   {/* Comments section */}
                   {commentsOpen && (
                     <div className="comments-section">
-                      {post.comments.map((comment) => (
-                        <CommentItem
-                          key={comment.id}
-                          comment={comment}
-                          onAvatarClick={(author) => setSelectedUser(author)}
-                        />
-                      ))}
+                      {/* Comment list */}
+                      {post.comments.length > 0 && (
+                        <div className="cm-list">
+                          {post.comments.map((comment) => (
+                            <CommentItem
+                              key={comment.id}
+                              comment={comment}
+                              currentUserName={user?.name}
+                              currentUserRole={user?.role}
+                              onAvatarClick={(author) => setSelectedUser(author)}
+                              onReply={(c) => setCommentReplyTo((prev) => ({ ...prev, [post.id]: c }))}
+                              onDelete={(commentId) => handleDeleteComment(post.id, commentId)}
+                            />
+                          ))}
+                        </div>
+                      )}
 
-                      {/* Comment input */}
-                      <div className="comment-input-row">
+                      {/* Reply bar */}
+                      {commentReplyTo[post.id] && (
+                        <div className="cm-reply-bar">
+                          <Reply size={14} className="cm-reply-bar-icon" />
+                          <div className="cm-reply-bar-content">
+                            <span className="cm-reply-bar-name">{commentReplyTo[post.id].author.name}</span>
+                            <span className="cm-reply-bar-text">{commentReplyTo[post.id].text}</span>
+                          </div>
+                          <button
+                            className="cm-reply-bar-close"
+                            onClick={() => setCommentReplyTo((prev) => ({ ...prev, [post.id]: null }))}
+                            aria-label="Cancel reply"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Pending file preview */}
+                      {commentFiles[post.id] && (
+                        <div className="cm-pending-file">
+                          <div className="cm-file-card">
+                            <div className="cm-file-icon">
+                              <div className="cm-file-page" />
+                              <span className="cm-file-ext">{getFileExt(commentFiles[post.id].name)}</span>
+                            </div>
+                            <div className="cm-file-info">
+                              <span className="cm-file-name">{commentFiles[post.id].name}</span>
+                              <span className="cm-file-size">{commentFiles[post.id].size}</span>
+                            </div>
+                            <button
+                              className="cm-reply-bar-close"
+                              onClick={() => setCommentFiles((prev) => ({ ...prev, [post.id]: null }))}
+                              aria-label="Remove file"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Comment input bar */}
+                      <div className="cm-input-bar">
                         <UserAvatar user={user || { name: 'You' }} size="small" />
+                        <div className="cm-input-wrap">
+                          <input
+                            type="text"
+                            className="cm-input"
+                            placeholder="Write a comment…"
+                            value={commentInputs[post.id] || ''}
+                            onChange={(e) =>
+                              setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
+                            }
+                            onKeyDown={(e) => handleCommentKeyDown(e, post.id)}
+                            aria-label="Write a comment"
+                          />
+                        </div>
+                        {/* Hidden file input per post */}
                         <input
-                          type="text"
-                          className="comment-input"
-                          placeholder="Write a comment…"
-                          value={commentInputs[post.id] || ''}
-                          onChange={(e) =>
-                            setCommentInputs((prev) => ({
-                              ...prev,
-                              [post.id]: e.target.value,
-                            }))
-                          }
-                          onKeyDown={(e) => handleCommentKeyDown(e, post.id)}
-                          aria-label="Write a comment"
+                          type="file"
+                          style={{ display: 'none' }}
+                          ref={(el) => { commentFileRefs.current[post.id] = el; }}
+                          onChange={(e) => handleCommentFileChange(e, post.id)}
+                          aria-hidden="true"
                         />
                         <button
-                          className="send-comment-btn"
-                          onClick={() => handleAddComment(post.id)}
-                          disabled={!(commentInputs[post.id] || '').trim()}
-                          aria-label="Send comment"
+                          className="cm-attach-btn"
+                          title="Attach file"
+                          aria-label="Attach file"
+                          onClick={() => commentFileRefs.current[post.id]?.click()}
+                          type="button"
                         >
-                          <Send size={16} />
+                          <Paperclip size={16} />
+                        </button>
+                        <button
+                          className="cm-send-btn"
+                          onClick={() => handleAddComment(post.id)}
+                          disabled={!(commentInputs[post.id] || '').trim() && !commentFiles[post.id]}
+                          aria-label="Send comment"
+                          type="button"
+                        >
+                          <Send size={15} />
                         </button>
                       </div>
                     </div>
@@ -762,6 +1045,55 @@ function Community() {
                 <div className="stat-label">Posts This Week</div>
               </div>
             </div>
+          </div>
+
+          {/* Saved Posts */}
+          <div className="sidebar-card">
+            <h3 className="sidebar-title">
+              <Bookmark size={13} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
+              Saved Posts
+              {savedPosts.length > 0 && (
+                <span className="saved-posts-count">{savedPosts.length}</span>
+              )}
+            </h3>
+
+            {savedPosts.length === 0 ? (
+              <div className="saved-posts-empty">
+                <Bookmark size={28} className="saved-posts-empty-icon" />
+                <p>No saved posts yet</p>
+                <span>Tap the bookmark icon on any post to save it here</span>
+              </div>
+            ) : (
+              <div className="saved-posts-list">
+                {savedPosts.map((post) => (
+                  <div key={post.id} className="saved-post-item">
+                    <div
+                      className="saved-post-info"
+                      onClick={() => handleGoToPost(post.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && handleGoToPost(post.id)}
+                      title="Go to post"
+                    >
+                      <span className="saved-post-author">{post.author.name}</span>
+                      <p className="saved-post-preview">{post.content.slice(0, 72)}{post.content.length > 72 ? '…' : ''}</p>
+                      <div className="saved-post-meta">
+                        <span className={`saved-post-badge ${getCategoryBadgeClass(post.category)}`}>{post.category}</span>
+                        <span className="saved-post-time">{post.timestamp}</span>
+                      </div>
+                    </div>
+                    <button
+                      className="saved-post-remove"
+                      title="Remove bookmark"
+                      aria-label="Remove bookmark"
+                      onClick={() => handleBookmark(post.id)}
+                    >
+                      <BookmarkMinus size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </aside>
       </div>
