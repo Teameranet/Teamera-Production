@@ -239,6 +239,14 @@ function CommentItem({ comment, currentUserName, currentUserRole, onAvatarClick,
           <span className="cm-time">{comment.timestamp}</span>
         </div>
 
+        {/* Reply quote — always outside the bubble, same as workspace wt-reply-preview */}
+        {comment.replyTo && (
+          <div className="cm-reply-quote">
+            <span className="cm-reply-quote-name">{comment.replyTo.author.name}</span>
+            <span className="cm-reply-quote-text">{comment.replyTo.text}</span>
+          </div>
+        )}
+
         {/* Text bubble */}
         {comment.text && (
           <div className={`cm-bubble ${isOwn ? 'cm-bubble--own' : ''}`}>

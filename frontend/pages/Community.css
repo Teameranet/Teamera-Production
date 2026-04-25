@@ -861,6 +861,35 @@ background: var(--color-border-light);
   color: #fff;
 }
 
+/* ── Reply quote — matches workspace wt-reply-preview exactly ── */
+.cm-reply-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.75rem;
+  background: #f0f0ff;
+  border-left: 3px solid var(--color-accent);
+  border-radius: 2.8px 6px 6px 2.8px;
+  font-size: 0.8rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.cm-reply-quote-name {
+  font-weight: 700;
+  color: var(--color-accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cm-reply-quote-text {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ── Comment file card ───────────────────────────────────────── */
 .cm-file-card {
   display: flex;
@@ -1044,6 +1073,7 @@ background: var(--color-border-light);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  position: relative;
 }
 
 /* ── Reply bar ───────────────────────────────────────────────── */
@@ -1054,9 +1084,14 @@ background: var(--color-border-light);
   padding: 0.5rem 0.875rem;
   background: #f0f0ff;
   border: 1px solid #e0e7ff;
-  border-radius: 10px 10px 0 0;
-  font-size: 0.82rem;
   border-bottom: none;
+  font-size: 0.82rem;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  border-radius: 10px 10px 0 0;
+  z-index: 1;
 }
 
 .cm-reply-bar-icon {
