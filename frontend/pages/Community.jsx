@@ -720,6 +720,7 @@ function Community() {
                       disabled={!newPostText.trim()}
                       type="button"
                     >
+                      <Send size={15} />
                       Post
                     </button>
                   </div>
@@ -824,11 +825,17 @@ function Community() {
                             </div>
                           )}
                           <div className="cm-input-bar">
-                            <UserAvatar user={user || { name: 'You' }} size="small" />
                             <div className="cm-input-wrap">
-                              <input type="text" className="cm-input" placeholder="Write a comment…"
+                              <textarea
+                                rows={1}
+                                className="cm-input"
+                                placeholder="Write a comment… (Enter to send)"
                                 value={commentInputs[post.id] || ''}
-                                onChange={(e) => setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                onChange={(e) => {
+                                  setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }));
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+                                }}
                                 onKeyDown={(e) => handleCommentKeyDown(e, post.id)}
                                 aria-label="Write a comment"
                               />
@@ -924,9 +931,20 @@ function Community() {
                             </div>
                           )}
                           <div className="cm-input-bar">
-                            <UserAvatar user={user || { name: 'You' }} size="small" />
                             <div className="cm-input-wrap">
-                              <input type="text" className="cm-input" placeholder="Write a comment…" value={commentInputs[post.id] || ''} onChange={(e) => setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))} onKeyDown={(e) => handleCommentKeyDown(e, post.id)} aria-label="Write a comment" />
+                              <textarea
+                                rows={1}
+                                className="cm-input"
+                                placeholder="Write a comment… (Enter to send)"
+                                value={commentInputs[post.id] || ''}
+                                onChange={(e) => {
+                                  setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }));
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+                                }}
+                                onKeyDown={(e) => handleCommentKeyDown(e, post.id)}
+                                aria-label="Write a comment"
+                              />
                             </div>
                             <button className="cm-send-btn" onClick={() => handleAddComment(post.id)} disabled={!(commentInputs[post.id] || '').trim()} aria-label="Send comment" type="button"><Send size={15} /></button>
                           </div>
@@ -1129,28 +1147,6 @@ function Community() {
 
                       {/* Comment input bar */}
                       <div className="cm-input-bar">
-                        <UserAvatar user={user || { name: 'You' }} size="small" />
-                        <div className="cm-input-wrap">
-                          <input
-                            type="text"
-                            className="cm-input"
-                            placeholder="Write a comment…"
-                            value={commentInputs[post.id] || ''}
-                            onChange={(e) =>
-                              setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
-                            }
-                            onKeyDown={(e) => handleCommentKeyDown(e, post.id)}
-                            aria-label="Write a comment"
-                          />
-                        </div>
-                        {/* Hidden file input per post */}
-                        <input
-                          type="file"
-                          style={{ display: 'none' }}
-                          ref={(el) => { commentFileRefs.current[post.id] = el; }}
-                          onChange={(e) => handleCommentFileChange(e, post.id)}
-                          aria-hidden="true"
-                        />
                         <button
                           className="cm-attach-btn"
                           title="Attach file"
@@ -1160,6 +1156,29 @@ function Community() {
                         >
                           <Paperclip size={16} />
                         </button>
+                        {/* Hidden file input per post */}
+                        <input
+                          type="file"
+                          style={{ display: 'none' }}
+                          ref={(el) => { commentFileRefs.current[post.id] = el; }}
+                          onChange={(e) => handleCommentFileChange(e, post.id)}
+                          aria-hidden="true"
+                        />
+                        <div className="cm-input-wrap">
+                          <textarea
+                            rows={1}
+                            className="cm-input"
+                            placeholder="Write a comment… (Enter to send)"
+                            value={commentInputs[post.id] || ''}
+                            onChange={(e) => {
+                              setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }));
+                              e.target.style.height = 'auto';
+                              e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+                            }}
+                            onKeyDown={(e) => handleCommentKeyDown(e, post.id)}
+                            aria-label="Write a comment"
+                          />
+                        </div>
                         <button
                           className="cm-send-btn"
                           onClick={() => handleAddComment(post.id)}
