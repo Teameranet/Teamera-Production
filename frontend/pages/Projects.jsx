@@ -156,49 +156,50 @@ function Projects({ onEditProject }) {
       {/* ── Expanded Filter Panel ── */}
       {showFilters && (
         <div className="pf-panel">
-          {/* Industry */}
-          <div className="pf-section">
-            <div className="pf-section-label">
-              <Briefcase size={13} />
-              Industry
+          {/* Industry + Stage row */}
+          <div className="pf-row">
+            {/* Industry */}
+            <div className="pf-section">
+              <div className="pf-section-label">
+                <Briefcase size={13} />
+                Industry
+              </div>
+              <div className="pf-dropdown-wrapper">
+                <select
+                  className="pf-dropdown"
+                  value={selectedIndustry}
+                  onChange={e => setSelectedIndustry(e.target.value)}
+                  aria-label="Filter by industry"
+                >
+                  <option value="">All Industries</option>
+                  {industries.map(industry => (
+                    <option key={industry} value={industry}>{industry}</option>
+                  ))}
+                </select>
+                <ChevronDown size={15} className="pf-dropdown-icon" />
+              </div>
             </div>
-            <div className="pf-dropdown-wrapper">
-              <select
-                className="pf-dropdown"
-                value={selectedIndustry}
-                onChange={e => setSelectedIndustry(e.target.value)}
-                aria-label="Filter by industry"
-              >
-                <option value="">All Industries</option>
-                {industries.map(industry => (
-                  <option key={industry} value={industry}>{industry}</option>
-                ))}
-              </select>
-              <ChevronDown size={15} className="pf-dropdown-icon" />
-            </div>
-          </div>
 
-          <div className="pf-divider" />
-
-          {/* Stage */}
-          <div className="pf-section">
-            <div className="pf-section-label">
-              <Layers size={13} />
-              Stage
-            </div>
-            <div className="pf-dropdown-wrapper">
-              <select
-                className="pf-dropdown"
-                value={selectedStage}
-                onChange={e => setSelectedStage(e.target.value)}
-                aria-label="Filter by stage"
-              >
-                <option value="">All Stages</option>
-                {stages.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </select>
-              <ChevronDown size={15} className="pf-dropdown-icon" />
+            {/* Stage */}
+            <div className="pf-section">
+              <div className="pf-section-label">
+                <Layers size={13} />
+                Stage
+              </div>
+              <div className="pf-dropdown-wrapper">
+                <select
+                  className="pf-dropdown"
+                  value={selectedStage}
+                  onChange={e => setSelectedStage(e.target.value)}
+                  aria-label="Filter by stage"
+                >
+                  <option value="">All Stages</option>
+                  {stages.map(stage => (
+                    <option key={stage} value={stage}>{stage}</option>
+                  ))}
+                </select>
+                <ChevronDown size={15} className="pf-dropdown-icon" />
+              </div>
             </div>
           </div>
 
@@ -237,11 +238,6 @@ function Projects({ onEditProject }) {
 
       <div className="projects-stats">
         <span>{filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''} found</span>
-        {(selectedIndustry || selectedStage || selectedView || searchTerm) && (
-          <button className="pf-clear-btn pf-clear-btn--inline" onClick={clearFilters}>
-            <X size={13} /> Clear filters
-          </button>
-        )}
       </div>
 
       {filteredProjects.length === 0 ? (
