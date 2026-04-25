@@ -308,6 +308,7 @@ function Community() {
   const [commentFiles, setCommentFiles] = useState({});        // postId → { name, size }
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const [showSavedPosts, setShowSavedPosts] = useState(false);
+  const [showMyPosts, setShowMyPosts] = useState(false);
   // Profile modal
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -477,6 +478,9 @@ function Community() {
   // Saved posts derived from bookmarked state
   const savedPosts = posts.filter((p) => p.bookmarked);
 
+  // My posts — posts authored by the current user
+  const myPosts = posts.filter((p) => p.author.name === (user?.name || ''));
+
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
@@ -490,23 +494,41 @@ function Community() {
           </div>
         </header>
         <div className="community-search-bar">
-          <div className="community-search-wrapper">
-            <Search size={18} className="community-search-icon" />
-            <input
-              type="text"
-              className="community-search"
-              placeholder="Search posts, topics, or members…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search community"
-            />
+          <div className="community-search-bar-row">
+            <div className="community-search-wrapper">
+              <Search size={18} className="community-search-icon" />
+              <input
+                type="text"
+                className="community-search"
+                placeholder="Search posts, topics, or members…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search community"
+              />
+              <button
+                className="mobile-filter-btn"
+                onClick={() => setShowMobileFilter((v) => !v)}
+                aria-label="Toggle filters"
+                aria-expanded={showMobileFilter}
+              >
+                {showMobileFilter ? <X size={18} /> : <SlidersHorizontal size={18} />}
+              </button>
+            </div>
+
+            {/* Your Posts button — desktop only */}
             <button
-              className="mobile-filter-btn"
-              onClick={() => setShowMobileFilter((v) => !v)}
-              aria-label="Toggle filters"
-              aria-expanded={showMobileFilter}
+              className={`your-posts-btn ${showMyPosts ? 'your-posts-btn--active' : ''}`}
+              onClick={() => {
+                setShowMyPosts((v) => !v);
+                setShowSavedPosts(false);
+              }}
+              aria-pressed={showMyPosts}
             >
-              {showMobileFilter ? <X size={18} /> : <SlidersHorizontal size={18} />}
+              <Users size={15} />
+              Your Posts
+              {myPosts.length > 0 && (
+                <span className="your-posts-count">{myPosts.length}</span>
+              )}
             </button>
           </div>
 
@@ -518,10 +540,11 @@ function Community() {
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
-                    className={`mobile-filter-chip ${activeCategory === cat && !showSavedPosts ? 'active' : ''}`}
+                    className={`mobile-filter-chip ${activeCategory === cat && !showSavedPosts && !showMyPosts ? 'active' : ''}`}
                     onClick={() => {
                       setActiveCategory(cat);
                       setShowSavedPosts(false);
+                      setShowMyPosts(false);
                       setShowMobileFilter(false);
                     }}
                   >
@@ -535,21 +558,41 @@ function Community() {
                 ))}
               </div>
 
-              {/* Saved Posts divider */}
               <div className="mobile-filter-divider" />
-              <button
-                className={`mobile-filter-chip mobile-filter-chip--saved ${showSavedPosts ? 'active' : ''}`}
-                onClick={() => {
-                  setShowSavedPosts((v) => !v);
-                  setShowMobileFilter(false);
-                }}
-              >
-                <Bookmark size={13} fill={showSavedPosts ? 'currentColor' : 'none'} />
-                Saved Posts
-                {savedPosts.length > 0 && (
-                  <span className="mobile-filter-chip-count">{savedPosts.length}</span>
-                )}
-              </button>
+
+              <div className="mobile-filter-chips">
+                {/* Saved Posts chip */}
+                <button
+                  className={`mobile-filter-chip mobile-filter-chip--saved ${showSavedPosts ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowSavedPosts((v) => !v);
+                    setShowMyPosts(false);
+                    setShowMobileFilter(false);
+                  }}
+                >
+                  <Bookmark size={13} fill={showSavedPosts ? 'currentColor' : 'none'} />
+                  Saved Posts
+                  {savedPosts.length > 0 && (
+                    <span className="mobile-filter-chip-count">{savedPosts.length}</span>
+                  )}
+                </button>
+
+                {/* Your Posts chip */}
+                <button
+                  className={`mobile-filter-chip mobile-filter-chip--myposts ${showMyPosts ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowMyPosts((v) => !v);
+                    setShowSavedPosts(false);
+                    setShowMobileFilter(false);
+                  }}
+                >
+                  <Users size={13} />
+                  Your Posts
+                  {myPosts.length > 0 && (
+                    <span className="mobile-filter-chip-count">{myPosts.length}</span>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -693,7 +736,116 @@ function Community() {
           </div>
 
           {/* Posts */}
-          {showSavedPosts ? (
+          {showMyPosts ? (
+            /* ── Your Posts Feed ── */
+            <div>
+              <div className="saved-feed-header saved-feed-header--myposts">
+                <Users size={16} className="saved-feed-header-icon saved-feed-header-icon--myposts" />
+                <span>Your Posts</span>
+                <span className="saved-feed-count saved-feed-count--myposts">{myPosts.length}</span>
+                <button
+                  className="saved-feed-clear saved-feed-clear--myposts"
+                  onClick={() => setShowMyPosts(false)}
+                  aria-label="Back to feed"
+                >
+                  <X size={14} /> Back to feed
+                </button>
+              </div>
+
+              {myPosts.length === 0 ? (
+                <div className="empty-feed">
+                  <Users size={48} />
+                  <h3>No posts yet</h3>
+                  <p>Posts you create will appear here.</p>
+                </div>
+              ) : (
+                myPosts.map((post) => {
+                  const isExpanded = expandedPosts[post.id];
+                  const commentsOpen = showComments[post.id];
+                  return (
+                    <article key={post.id} className="post-card">
+                      <div className="post-header">
+                        <div className="post-author-info">
+                          <UserAvatar user={{ name: post.author.name }} size="medium" />
+                          <div>
+                            <div className="post-author-name">{post.author.name}</div>
+                            <div className="post-author-meta">{post.author.title} · {post.timestamp}</div>
+                          </div>
+                        </div>
+                        <div className="post-header-right">
+                          <CategoryBadge category={post.category} />
+                          <button className="delete-post-btn" onClick={() => handleDeletePost(post.id)} title="Delete post" aria-label="Delete post">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>{post.content}</div>
+                      {post.content.length > 200 && (
+                        <button className="show-more-btn" onClick={() => toggleExpanded(post.id)}>
+                          {isExpanded
+                            ? <><ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less</>
+                            : <><ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more</>}
+                        </button>
+                      )}
+                      <PostAttachment attachment={post.attachment} />
+                      {post.tags.length > 0 && (
+                        <div className="post-tags">
+                          {post.tags.map((tag) => (
+                            <span key={tag} className="post-tag"
+                              onClick={() => { setSearchQuery(tag); setShowMyPosts(false); }}
+                              role="button" tabIndex={0}
+                              onKeyDown={(e) => e.key === 'Enter' && setSearchQuery(tag)}
+                            >{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="post-actions">
+                        <button className={`action-btn ${post.liked ? 'liked' : ''}`} onClick={() => handleLike(post.id)} aria-label={post.liked ? 'Unlike' : 'Like'}>
+                          <Heart size={16} fill={post.liked ? 'currentColor' : 'none'} /><span>{post.likes}</span>
+                        </button>
+                        <button className="action-btn" onClick={() => toggleComments(post.id)} aria-label="Toggle comments">
+                          <MessageCircle size={16} /><span>{post.comments.length}</span>
+                        </button>
+                        <button className={`action-btn ${post.bookmarked ? 'bookmarked' : ''}`} onClick={() => handleBookmark(post.id)} aria-label={post.bookmarked ? 'Remove bookmark' : 'Bookmark'}>
+                          <Bookmark size={16} fill={post.bookmarked ? 'currentColor' : 'none'} />
+                        </button>
+                      </div>
+                      {commentsOpen && (
+                        <div className="comments-section">
+                          {post.comments.length > 0 && (
+                            <div className="cm-list">
+                              {post.comments.map((comment) => (
+                                <CommentItem key={comment.id} comment={comment} currentUserName={user?.name} currentUserRole={user?.role}
+                                  onAvatarClick={(author) => setSelectedUser(author)}
+                                  onReply={(c) => setCommentReplyTo((prev) => ({ ...prev, [post.id]: c }))}
+                                  onDelete={(commentId) => handleDeleteComment(post.id, commentId)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <div className="cm-input-bar">
+                            <UserAvatar user={user || { name: 'You' }} size="small" />
+                            <div className="cm-input-wrap">
+                              <input type="text" className="cm-input" placeholder="Write a comment…"
+                                value={commentInputs[post.id] || ''}
+                                onChange={(e) => setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                onKeyDown={(e) => handleCommentKeyDown(e, post.id)}
+                                aria-label="Write a comment"
+                              />
+                            </div>
+                            <button className="cm-send-btn" onClick={() => handleAddComment(post.id)}
+                              disabled={!(commentInputs[post.id] || '').trim()}
+                              aria-label="Send comment" type="button"
+                            ><Send size={15} /></button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          ) : showSavedPosts ? (
             /* ── Saved Posts Feed ── */
             <div>
               <div className="saved-feed-header">
