@@ -502,7 +502,7 @@ function Profile() {
         </div>
       </div>
 
-      {/* Stats bar */}
+      {/* Profile stats section */}
       <div className="profile-stats-container">
         {stats.map((stat, index) => (
           <div key={index} className="stat-item">
@@ -512,7 +512,32 @@ function Profile() {
         ))}
       </div>
 
-      {/* Tab navigation — mirrors Dashboard & Workspace */}
+      {/* Mobile navigation grid */}
+      <div className="mobile-nav-grid">
+        <div
+          className={`mobile-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          <User size={24} />
+          <span>Overview</span>
+        </div>
+        <div
+          className={`mobile-nav-item ${activeTab === 'projects' ? 'active' : ''}`}
+          onClick={() => setActiveTab('projects')}
+        >
+          <Briefcase size={24} />
+          <span>Projects</span>
+        </div>
+        <div
+          className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          <Settings size={24} />
+          <span>Settings</span>
+        </div>
+      </div>
+
+      {/* Desktop tab navigation */}
       <div className="tabs-container">
         <button
           className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
@@ -541,6 +566,7 @@ function Profile() {
       <div className="tab-content">
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'projects' && renderProjects()}
+        {/* {activeTab === 'achievements' && renderAchievements()} */}
         {activeTab === 'settings' && renderSettings()}
       </div>
 
@@ -755,75 +781,6 @@ function Profile() {
                 )}
               </div>
             </div>
-
-            {/* Skills section (mobile only — shown below education in left column) */}
-            <div className="skills-section mobile-only">
-              <h3>Skills</h3>
-              {isEditing ? (
-                <div className="edit-skills-form">
-                  {formData.skills.map((skill, index) => (
-                    <div key={index} className="edit-skill-item">
-                      <div className="skill-form-row">
-                        <input
-                          type="text"
-                          className="skill-name-input"
-                          value={skill.name}
-                          onChange={(e) => {
-                            const updatedSkills = [...formData.skills];
-                            updatedSkills[index] = { ...skill, name: e.target.value };
-                            handleInputChange('skills', updatedSkills);
-                          }}
-                          placeholder="Skill name"
-                        />
-                        <select
-                          className="skill-level-select"
-                          value={skill.level}
-                          onChange={(e) => {
-                            const updatedSkills = [...formData.skills];
-                            updatedSkills[index] = { ...skill, level: e.target.value };
-                            handleInputChange('skills', updatedSkills);
-                          }}
-                        >
-                          <option value="BEGINNER">Beginner</option>
-                          <option value="INTERMEDIATE">Intermediate</option>
-                          <option value="ADVANCED">Advanced</option>
-                          <option value="EXPERT">Expert</option>
-                        </select>
-                        <button
-                          className="remove-skill-btn"
-                          onClick={() => {
-                            const updatedSkills = formData.skills.filter((_, i) => i !== index);
-                            handleInputChange('skills', updatedSkills);
-                          }}
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <button
-                    className="add-skill-btn"
-                    onClick={() => {
-                      const updatedSkills = [...formData.skills, { name: '', level: 'BEGINNER' }];
-                      handleInputChange('skills', updatedSkills);
-                    }}
-                  >
-                    <Plus size={16} /> Add Skill
-                  </button>
-                </div>
-              ) : (
-                <div className="skills-overview">
-                  {formData.skills.map((skill, index) => (
-                    <div key={index} className="skill-item">
-                      <div className="skill-header">
-                        <span className="skill-name">{skill.name}</span>
-                        <span className={`skill-level ${skill.level.toLowerCase()}`}>{skill.level}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Skills section (desktop only) */}
@@ -913,7 +870,6 @@ function Profile() {
               <ProjectCard
                 key={project.id || project._id}
                 project={project}
-                hideReport={true}
                 onClick={handleViewProject}
               />
             ))}
@@ -927,7 +883,6 @@ function Profile() {
               <ProjectCard
                 key={project.id || project._id}
                 project={project}
-                hideReport={true}
                 onClick={handleViewProject}
               />
             ))}
