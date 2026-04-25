@@ -319,7 +319,6 @@
   font-weight: 500;
 }
 
-/* ── Tabs — mirrors Dashboard & Workspace tabs ── */
 .mobile-nav-grid {
   display: none;
 }
@@ -348,12 +347,12 @@
 }
 
 .tab-button:hover {
-  color: var(--color-accent);
+  color: var(--color-primary);
 }
 
 .tab-button.active {
-  color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 /* ── Tab Content Wrapper ── */
