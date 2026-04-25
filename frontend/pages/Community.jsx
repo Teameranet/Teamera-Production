@@ -1104,49 +1104,51 @@ function Community() {
                         </div>
                       )}
 
-                      {/* Reply bar */}
-                      {commentReplyTo[post.id] && (
-                        <div className="cm-reply-bar">
-                          <Reply size={14} className="cm-reply-bar-icon" />
-                          <div className="cm-reply-bar-content">
-                            <span className="cm-reply-bar-name">{commentReplyTo[post.id].author.name}</span>
-                            <span className="cm-reply-bar-text">{commentReplyTo[post.id].text}</span>
-                          </div>
-                          <button
-                            className="cm-reply-bar-close"
-                            onClick={() => setCommentReplyTo((prev) => ({ ...prev, [post.id]: null }))}
-                            aria-label="Cancel reply"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Pending file preview */}
-                      {commentFiles[post.id] && (
-                        <div className="cm-pending-file">
-                          <div className="cm-file-card">
-                            <div className="cm-file-icon">
-                              <div className="cm-file-page" />
-                              <span className="cm-file-ext">{getFileExt(commentFiles[post.id].name)}</span>
-                            </div>
-                            <div className="cm-file-info">
-                              <span className="cm-file-name">{commentFiles[post.id].name}</span>
-                              <span className="cm-file-size">{commentFiles[post.id].size}</span>
+                      {/* Bottom: reply bar + pending file + input bar */}
+                      <div className="cm-input-footer">
+                        {/* Reply bar */}
+                        {commentReplyTo[post.id] && (
+                          <div className="cm-reply-bar">
+                            <Reply size={14} className="cm-reply-bar-icon" />
+                            <div className="cm-reply-bar-content">
+                              <span className="cm-reply-bar-name">{commentReplyTo[post.id].author.name}</span>
+                              <span className="cm-reply-bar-text">{commentReplyTo[post.id].text}</span>
                             </div>
                             <button
                               className="cm-reply-bar-close"
-                              onClick={() => setCommentFiles((prev) => ({ ...prev, [post.id]: null }))}
-                              aria-label="Remove file"
+                              onClick={() => setCommentReplyTo((prev) => ({ ...prev, [post.id]: null }))}
+                              aria-label="Cancel reply"
                             >
                               <X size={14} />
                             </button>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Comment input bar */}
-                      <div className="cm-input-bar">
+                        {/* Pending file preview */}
+                        {commentFiles[post.id] && (
+                          <div className="cm-pending-file">
+                            <div className="cm-file-card">
+                              <div className="cm-file-icon">
+                                <div className="cm-file-page" />
+                                <span className="cm-file-ext">{getFileExt(commentFiles[post.id].name)}</span>
+                              </div>
+                              <div className="cm-file-info">
+                                <span className="cm-file-name">{commentFiles[post.id].name}</span>
+                                <span className="cm-file-size">{commentFiles[post.id].size}</span>
+                              </div>
+                              <button
+                                className="cm-reply-bar-close"
+                                onClick={() => setCommentFiles((prev) => ({ ...prev, [post.id]: null }))}
+                                aria-label="Remove file"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Comment input bar */}
+                        <div className="cm-input-bar">
                         <button
                           className="cm-attach-btn"
                           title="Attach file"
@@ -1188,6 +1190,7 @@ function Community() {
                         >
                           <Send size={15} />
                         </button>
+                        </div>
                       </div>
                     </div>
                   )}
