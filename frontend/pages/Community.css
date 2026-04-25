@@ -56,12 +56,12 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
 }
 
 .community-search-wrapper {
   position: relative;
   flex: 1;
-  max-width: 500px;
 }
 
 /* ── Your Posts button (desktop) ─────────────────────────────── */

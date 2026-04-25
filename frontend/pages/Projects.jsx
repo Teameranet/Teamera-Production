@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, ChevronDown, ChevronUp, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, ChevronDown, ChevronUp, Edit, Trash2, SlidersHorizontal, X, Layers, Briefcase, Bookmark, FolderKanban, Users } from 'lucide-react';
 import { useProjects } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -10,16 +10,20 @@ function Projects({ onEditProject }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedStage, setSelectedStage] = useState('');
-  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [selectedView, setSelectedView] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showOwnedProjects, setShowOwnedProjects] = useState(true);
-  const { projects, loading, deleteProject, getUserProjects, setSelectedProject, setShowCreateProjectModal } = useProjects();
+  const { projects, loading, deleteProject, getUserProjects, setSelectedProject, setShowCreateProjectModal, bookmarkedProjects } = useProjects();
   const { user } = useAuth();
   const { showToast } = useNotifications();
 
   const industries = ['Technology', 'Healthcare', 'Finance', 'Education', 'E-commerce', 'Entertainment'];
   const stages = ['Idea Validation', 'MVP Development', 'Beta Testing', 'Market Ready', 'Scaling'];
-  const skills = ['React', 'Node.js', 'Python', 'UI/UX Design', 'Marketing', 'Sales', 'Data Science'];
+  const viewOptions = [
+    { value: 'saved',         label: 'Saved Projects',   icon: Bookmark },
+    { value: 'owned',         label: 'Projects I Own',   icon: FolderKanban },
+    { value: 'participating', label: "Projects I'm In",  icon: Users },
+  ];
 
   // Get user's owned projects
   const [userProjects, setUserProjects] = useState({ owned: [], participating: [] });
@@ -41,25 +45,26 @@ function Projects({ onEditProject }) {
                          project.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesIndustry = !selectedIndustry || project.industry === selectedIndustry;
     const matchesStage = !selectedStage || project.stage === selectedStage;
-    const matchesSkills = selectedSkills.length === 0 || 
-                         selectedSkills.some(skill => project.requiredSkills.includes(skill));
 
-    return matchesSearch && matchesIndustry && matchesStage && matchesSkills;
+    const projectId = (project.id || project._id)?.toString();
+    let matchesView = true;
+    if (selectedView === 'saved') {
+      matchesView = bookmarkedProjects.map(id => id.toString()).includes(projectId);
+    } else if (selectedView === 'owned') {
+      matchesView = userProjects.owned.some(p => (p.id || p._id)?.toString() === projectId);
+    } else if (selectedView === 'participating') {
+      matchesView = userProjects.participating.some(p => (p.id || p._id)?.toString() === projectId);
+    }
+
+    return matchesSearch && matchesIndustry && matchesStage && matchesView;
   });
 
-  const handleSkillToggle = (skill) => {
-    setSelectedSkills(prev => 
-      prev.includes(skill) 
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
-    );
-  };
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedIndustry('');
     setSelectedStage('');
-    setSelectedSkills([]);
+    setSelectedView('');
   };
 
   const handleDeleteProject = (projectId, e) => {
@@ -115,85 +120,126 @@ function Projects({ onEditProject }) {
 
       {/* Projects You Own Section has been removed */}
 
+      {/* ── Filters Bar ── */}
       <div className="projects-filters">
-        <div className="search-bar">
-          <Search size={20} />
+        <div className="pf-search-wrapper">
+          <Search size={18} className="pf-search-icon" />
           <input
             type="text"
-            placeholder="Search projects..."
+            className="pf-search-input"
+            placeholder="Search projects by name, description…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search projects"
           />
+          {searchTerm && (
+            <button className="pf-search-clear" onClick={() => setSearchTerm('')} aria-label="Clear search">
+              <X size={15} />
+            </button>
+          )}
         </div>
-        
-        <button 
-          className="filter-toggle"
+
+        <button
+          className={`pf-filter-btn ${showFilters ? 'pf-filter-btn--active' : ''}`}
           onClick={() => setShowFilters(!showFilters)}
+          aria-expanded={showFilters}
+          aria-label="Toggle filters"
         >
-          <Filter size={20} />
-          <span className="filter-text">Filters</span>
-          {(selectedIndustry || selectedStage || selectedSkills.length > 0) && (
-            <span className="filter-indicator"></span>
+          <SlidersHorizontal size={16} />
+          <span>Filters</span>
+          {(selectedIndustry || selectedStage || selectedView) && (
+            <span className="pf-active-dot" />
           )}
         </button>
       </div>
 
+      {/* ── Expanded Filter Panel ── */}
       {showFilters && (
-        <div className="filters-panel">
-          <div className="filter-group">
-            <label>Industry</label>
-            <select
-              value={selectedIndustry}
-              onChange={(e) => setSelectedIndustry(e.target.value)}
-            >
-              <option value="">All Industries</option>
-              {industries.map(industry => (
-                <option key={industry} value={industry}>{industry}</option>
-              ))}
-            </select>
+        <div className="pf-panel">
+          {/* Industry */}
+          <div className="pf-section">
+            <div className="pf-section-label">
+              <Briefcase size={13} />
+              Industry
+            </div>
+            <div className="pf-dropdown-wrapper">
+              <select
+                className="pf-dropdown"
+                value={selectedIndustry}
+                onChange={e => setSelectedIndustry(e.target.value)}
+                aria-label="Filter by industry"
+              >
+                <option value="">All Industries</option>
+                {industries.map(industry => (
+                  <option key={industry} value={industry}>{industry}</option>
+                ))}
+              </select>
+              <ChevronDown size={15} className="pf-dropdown-icon" />
+            </div>
           </div>
 
-          <div className="filter-group">
-            <label>Stage</label>
-            <select
-              value={selectedStage}
-              onChange={(e) => setSelectedStage(e.target.value)}
-            >
-              <option value="">All Stages</option>
-              {stages.map(stage => (
-                <option key={stage} value={stage}>{stage}</option>
-              ))}
-            </select>
+          <div className="pf-divider" />
+
+          {/* Stage */}
+          <div className="pf-section">
+            <div className="pf-section-label">
+              <Layers size={13} />
+              Stage
+            </div>
+            <div className="pf-dropdown-wrapper">
+              <select
+                className="pf-dropdown"
+                value={selectedStage}
+                onChange={e => setSelectedStage(e.target.value)}
+                aria-label="Filter by stage"
+              >
+                <option value="">All Stages</option>
+                {stages.map(stage => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
+              </select>
+              <ChevronDown size={15} className="pf-dropdown-icon" />
+            </div>
           </div>
 
-          <div className="filter-group">
-            <label>Skills</label>
-            <div className="skills-filter">
-              {skills.map(skill => (
+          <div className="pf-divider" />
+
+          {/* View */}
+          <div className="pf-section">
+            <div className="pf-section-label">
+              <FolderKanban size={13} />
+              Show
+            </div>
+            <div className="pf-chips">
+              {viewOptions.map(({ value, label, icon: Icon }) => (
                 <button
-                  key={skill}
-                  className={`skill-filter-btn ${selectedSkills.includes(skill) ? 'active' : ''}`}
-                  onClick={() => handleSkillToggle(skill)}
+                  key={value}
+                  className={`pf-chip pf-chip--view ${selectedView === value ? 'pf-chip--active' : ''}`}
+                  onClick={() => setSelectedView(prev => prev === value ? '' : value)}
                 >
-                  {skill}
+                  <Icon size={13} />
+                  {label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="filter-actions">
-            <button className="clear-filters-btn" onClick={clearFilters}>
-              Clear All
-            </button>
-          </div>
+          {/* Footer */}
+          {(selectedIndustry || selectedStage || selectedView) && (
+            <div className="pf-panel-footer">
+              <button className="pf-clear-btn" onClick={clearFilters}>
+                <X size={13} /> Clear all filters
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       <div className="projects-stats">
-        <span>{filteredProjects.length} projects found</span>
-        {(selectedIndustry || selectedStage || selectedSkills.length > 0 || searchTerm) && (
-          <button className="clear-filters-btn small" onClick={clearFilters}>
-            Clear filters
+        <span>{filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''} found</span>
+        {(selectedIndustry || selectedStage || selectedView || searchTerm) && (
+          <button className="pf-clear-btn pf-clear-btn--inline" onClick={clearFilters}>
+            <X size={13} /> Clear filters
           </button>
         )}
       </div>
