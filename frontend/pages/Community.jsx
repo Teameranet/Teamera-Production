@@ -651,21 +651,23 @@ function Community() {
               </button>
             </div>
 
-            {/* Your Posts button — desktop only */}
-            <button
-              className={`your-posts-btn ${showMyPosts ? 'your-posts-btn--active' : ''}`}
-              onClick={() => {
-                setShowMyPosts((v) => !v);
-                setShowSavedPosts(false);
-              }}
-              aria-pressed={showMyPosts}
-            >
-              <Users size={15} />
-              Your Posts
-              {myPosts.length > 0 && (
-                <span className="your-posts-count">{myPosts.length}</span>
-              )}
-            </button>
+            {/* Your Posts button — desktop only, show only when logged in */}
+            {user && (
+              <button
+                className={`your-posts-btn ${showMyPosts ? 'your-posts-btn--active' : ''}`}
+                onClick={() => {
+                  setShowMyPosts((v) => !v);
+                  setShowSavedPosts(false);
+                }}
+                aria-pressed={showMyPosts}
+              >
+                <Users size={15} />
+                Your Posts
+                {myPosts.length > 0 && (
+                  <span className="your-posts-count">{myPosts.length}</span>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Mobile filter drawer */}
@@ -713,21 +715,23 @@ function Community() {
                   )}
                 </button>
 
-                {/* Your Posts chip */}
-                <button
-                  className={`mobile-filter-chip mobile-filter-chip--myposts ${showMyPosts ? 'active' : ''}`}
-                  onClick={() => {
-                    setShowMyPosts((v) => !v);
-                    setShowSavedPosts(false);
-                    setShowMobileFilter(false);
-                  }}
-                >
-                  <Users size={13} />
-                  Your Posts
-                  {myPosts.length > 0 && (
-                    <span className="mobile-filter-chip-count">{myPosts.length}</span>
-                  )}
-                </button>
+                {/* Your Posts chip - show only when logged in */}
+                {user && (
+                  <button
+                    className={`mobile-filter-chip mobile-filter-chip--myposts ${showMyPosts ? 'active' : ''}`}
+                    onClick={() => {
+                      setShowMyPosts((v) => !v);
+                      setShowSavedPosts(false);
+                      setShowMobileFilter(false);
+                    }}
+                  >
+                    <Users size={13} />
+                    Your Posts
+                    {myPosts.length > 0 && (
+                      <span className="mobile-filter-chip-count">{myPosts.length}</span>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -789,8 +793,9 @@ function Community() {
 
         {/* ── Main Feed ── */}
         <main className="community-feed">
-          {/* Post Composer */}
-          <div className="post-composer">
+          {/* Post Composer - show only when logged in */}
+          {user && (
+            <div className="post-composer">
             <div className="composer-top">
               <UserAvatar user={user || { name: 'You' }} size="medium" />
               <textarea
@@ -895,6 +900,7 @@ function Community() {
               </>
             )}
           </div>
+          )}
 
           {/* Posts */}
           {loading ? (
