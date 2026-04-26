@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Heart, MessageCircle, Bookmark, BookmarkMinus, Paperclip,
   Send, Search, Hash, TrendingUp, Users, Trash2, Download,
@@ -7,159 +7,15 @@ import {
 import { useAuth } from '../context/AuthContext';
 import UserAvatar from '../components/UserAvatar';
 import ProfileModal from '../components/ProfileModal';
+import api, { endpoints } from '../utils/api.js';
 import './Community.css';
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const INITIAL_POSTS = [
-  {
-    id: '1',
-    author: {
-      name: 'Alex Rivera',
-      title: 'Full Stack Developer',
-      role: 'developer',
-    },
-    category: 'Tech',
-    content:
-      'Just shipped a new feature using React Server Components and I have to say — the mental model shift is real. Moving data-fetching to the server cuts client bundle size dramatically and makes async waterfalls a thing of the past. If you haven\'t tried RSC yet, now is a great time to experiment. Happy to answer questions or share the approach we used!',
-    likes: 24,
-    liked: false,
-    bookmarked: false,
-    comments: [
-      {
-        id: 'c1',
-        author: { name: 'Jordan Lee', role: 'developer' },
-        text: 'Great write-up! Did you run into any issues with third-party libraries that rely on client context?',
-        timestamp: '1h ago',
-        likes: 3,
-        attachment: null,
-      },
-      {
-        id: 'c2',
-        author: { name: 'Mia Torres', role: 'designer' },
-        text: 'This is super helpful, bookmarking for our next sprint.',
-        timestamp: '45m ago',
-        likes: 1,
-        attachment: null,
-      },
-    ],
-    timestamp: '2h ago',
-    tags: ['#react', '#webdev', '#rsc'],
-    attachment: null,
-    image: null,
-  },
-  {
-    id: '2',
-    author: {
-      name: 'Sarah Chen',
-      title: 'UI/UX Designer',
-      role: 'designer',
-    },
-    category: 'Design',
-    content:
-      'Working on a new design system for our startup and the hardest part isn\'t the components — it\'s the tokens. Getting spacing, typography, and color scales to feel cohesive across light and dark modes takes way more iteration than expected. Currently using Figma Variables synced to CSS custom properties. Anyone else gone through this process? Would love to compare notes.',
-    likes: 18,
-    liked: false,
-    bookmarked: false,
-    comments: [
-      {
-        id: 'c3',
-        author: { name: 'Alex Rivera', role: 'developer' },
-        text: 'We did exactly this! The Figma → CSS token pipeline is a game changer once it clicks.',
-        timestamp: '3h ago',
-        likes: 5,
-        attachment: { name: 'token-pipeline-guide.pdf', size: '1.1 MB' },
-      },
-    ],
-    timestamp: '4h ago',
-    tags: ['#design', '#ux', '#designsystem'],
-    attachment: null,
-    image: null,
-  },
-  {
-    id: '3',
-    author: {
-      name: 'Marcus Johnson',
-      title: 'Startup Founder',
-      role: 'founder',
-    },
-    category: 'Project Ideas',
-    content:
-      'Looking for a technical co-founder for my EdTech startup. We\'re building an adaptive learning platform that uses spaced repetition and AI-generated practice problems to help adult learners upskill faster. I have the product vision, early user research, and a small seed round lined up. What I need is someone who loves education, can architect a scalable backend, and wants to own the technical roadmap. DM me if this resonates!',
-    likes: 31,
-    liked: false,
-    bookmarked: false,
-    comments: [
-      {
-        id: 'c4',
-        author: { name: 'Priya Patel', role: 'professional' },
-        text: 'This sounds really exciting. What\'s the target learner demographic?',
-        timestamp: '5h ago',
-        likes: 2,
-        attachment: null,
-      },
-      {
-        id: 'c5',
-        author: { name: 'Jordan Lee', role: 'developer' },
-        text: 'Sent you a DM — I\'ve been building in the EdTech space for 3 years.',
-        timestamp: '4h ago',
-        likes: 4,
-        attachment: null,
-      },
-    ],
-    timestamp: '6h ago',
-    tags: ['#startup', '#edtech', '#cofounders'],
-    attachment: { name: 'pitch-deck-v2.pdf', size: '2.4 MB' },
-    image: null,
-  },
-  {
-    id: '4',
-    author: {
-      name: 'Priya Patel',
-      title: 'Product Manager',
-      role: 'professional',
-    },
-    category: 'Help',
-    content:
-      'Anyone have experience with user research for B2B products? I\'m trying to figure out the best way to recruit enterprise users for discovery interviews. Cold outreach has a terrible response rate and our sales team is protective of their relationships. Considering LinkedIn, UserInterviews.com, or partnering with industry communities. What\'s worked for you?',
-    likes: 9,
-    liked: false,
-    bookmarked: false,
-    comments: [
-      {
-        id: 'c6',
-        author: { name: 'Sarah Chen', role: 'designer' },
-        text: 'UserInterviews.com worked well for us — pricey but fast. Also try posting in relevant Slack communities.',
-        timestamp: '20h ago',
-        likes: 6,
-        attachment: null,
-      },
-    ],
-    timestamp: '1d ago',
-    tags: ['#productmanagement', '#research', '#b2b'],
-    attachment: null,
-    image: null,
-  },
-];
-
-const TRENDING_TOPICS = [
-  { tag: '#buildinpublic', count: 142 },
-  { tag: '#reactjs', count: 98 },
-  { tag: '#startup', count: 87 },
-  { tag: '#designsystem', count: 64 },
-  { tag: '#aitools', count: 59 },
-  { tag: '#remotework', count: 41 },
-];
-
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORIES = ['All', 'General', 'Tech', 'Design', 'Marketing', 'Project Ideas', 'Help'];
 const COMPOSER_CATEGORIES = ['General', 'Tech', 'Design', 'Marketing', 'Project Ideas', 'Help'];
 
-const COMMUNITY_STATS = {
-  totalPosts: 1284,
-  members: 3471,
-  thisWeek: 94,
-};
+const DEFAULT_STATS = { totalPosts: 0, members: 0, thisWeek: 0 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -175,8 +31,18 @@ function getCategoryBadgeClass(category) {
   return map[category] || 'badge-general';
 }
 
-function generateId() {
-  return Math.random().toString(36).slice(2, 10);
+/** Format a relative timestamp from an ISO date string */
+function formatTimestamp(dateStr) {
+  if (!dateStr) return 'Just now';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -195,7 +61,7 @@ function getFileExt(name) {
 }
 
 function PostAttachment({ attachment }) {
-  if (!attachment) return null;
+  if (!attachment || !attachment.name) return null;
   const ext = getFileExt(attachment.name);
   return (
     <div className="post-attachment">
@@ -255,7 +121,7 @@ function CommentItem({ comment, currentUserName, currentUserRole, onAvatarClick,
         )}
 
         {/* File attachment */}
-        {comment.attachment && (
+        {comment.attachment && comment.attachment.name && (
           <div className={`cm-file-card ${isOwn ? 'cm-file-card--own' : ''}`}>
             <div className="cm-file-icon">
               <div className="cm-file-page" />
@@ -299,14 +165,22 @@ function Community() {
   const { user } = useAuth();
 
   // Feed state
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Sidebar data
+  const [trendingTopics, setTrendingTopics] = useState([]);
+  const [communityStats, setCommunityStats] = useState(DEFAULT_STATS);
 
   // Post composer state
   const [newPostText, setNewPostText] = useState('');
   const [newPostCategory, setNewPostCategory] = useState('General');
+  const [newPostFile, setNewPostFile] = useState(null); // { name, size, file }
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [posting, setPosting] = useState(false);
 
   // UI state
   const [showComments, setShowComments] = useState({});
@@ -325,9 +199,49 @@ function Community() {
   const commentFileRefs = useRef({});
   const postRefs = useRef({});
 
+  const userId = user?.id || user?._id || null;
+
+  // ── Data fetching ────────────────────────────────────────────────────────────
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams({ limit: 50 });
+      if (userId) params.append('userId', userId);
+      const res = await api.get(`${endpoints.community.getPosts}?${params}`);
+      setPosts(res.data?.posts || []);
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
+      setError('Failed to load posts. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  const fetchSidebar = useCallback(async () => {
+    try {
+      const [trendRes, statsRes] = await Promise.all([
+        api.get(endpoints.community.trending),
+        api.get(endpoints.community.stats),
+      ]);
+      setTrendingTopics(trendRes.data || []);
+      setCommunityStats(statsRes.data || DEFAULT_STATS);
+    } catch (err) {
+      console.error('Failed to fetch sidebar data:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPosts();
+    fetchSidebar();
+  }, [fetchPosts, fetchSidebar]);
+
   // ── Handlers ────────────────────────────────────────────────────────────────
 
-  const handleLike = (postId) => {
+  const handleLike = async (postId) => {
+    if (!userId) return;
+    // Optimistic update
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -335,19 +249,54 @@ function Community() {
           : p
       )
     );
+    try {
+      await api.post(endpoints.community.likePost(postId), { userId });
+    } catch (err) {
+      console.error('Like failed:', err);
+      // Revert on error
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
+            : p
+        )
+      );
+    }
   };
 
-  const handleBookmark = (postId) => {
+  const handleBookmark = async (postId) => {
+    if (!userId) return;
+    // Optimistic update
     setPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, bookmarked: !p.bookmarked } : p))
     );
+    try {
+      await api.post(endpoints.community.bookmarkPost(postId), { userId });
+    } catch (err) {
+      console.error('Bookmark failed:', err);
+      // Revert on error
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, bookmarked: !p.bookmarked } : p))
+      );
+    }
   };
 
-  const handleDeletePost = (postId) => {
+  const handleDeletePost = async (postId) => {
+    // Optimistic removal
     setPosts((prev) => prev.filter((p) => p.id !== postId));
+    try {
+      const params = userId ? `?userId=${userId}` : '';
+      await api.delete(`${endpoints.community.deletePost(postId)}${params}`);
+      // Refresh stats
+      fetchSidebar();
+    } catch (err) {
+      console.error('Delete post failed:', err);
+      fetchPosts(); // Re-fetch to restore state
+    }
   };
 
-  const handleDeleteComment = (postId, commentId) => {
+  const handleDeleteComment = async (postId, commentId) => {
+    // Optimistic removal
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -355,32 +304,69 @@ function Community() {
           : p
       )
     );
+    try {
+      const params = userId ? `?userId=${userId}` : '';
+      await api.delete(`${endpoints.community.deleteComment(postId, commentId)}${params}`);
+    } catch (err) {
+      console.error('Delete comment failed:', err);
+      fetchPosts(); // Re-fetch to restore state
+    }
   };
 
-  const handlePost = () => {
-    if (!newPostText.trim()) return;
-    const newPost = {
-      id: generateId(),
-      author: {
-        name: user?.name || 'You',
-        title: user?.title || '',
-        role: user?.role || 'developer',
-      },
-      category: newPostCategory,
-      content: newPostText.trim(),
-      likes: 0,
-      liked: false,
-      bookmarked: false,
-      comments: [],
-      timestamp: 'Just now',
-      tags: [],
-      attachment: null,
-      image: null,
-    };
-    setPosts((prev) => [newPost, ...prev]);
-    setNewPostText('');
-    setNewPostCategory('General');
-    setShowCreatePost(false);
+  const handlePost = async () => {
+    if (!newPostText.trim() || posting) return;
+    setPosting(true);
+    try {
+      const postData = {
+        content: newPostText.trim(),
+        category: newPostCategory,
+        author: {
+          userId: userId || null,
+          name: user?.name || 'Anonymous',
+          title: user?.title || '',
+          role: user?.role || 'user',
+          avatar: user?.avatar || null,
+        },
+      };
+
+      // Add attachment if file is selected
+      if (newPostFile) {
+        postData.attachment = {
+          name: newPostFile.name,
+          size: newPostFile.size,
+          url: null, // TODO: Upload to server and get URL
+        };
+      }
+
+      const res = await api.post(endpoints.community.createPost, postData);
+      const newPost = res.data;
+      setPosts((prev) => [newPost, ...prev]);
+      setNewPostText('');
+      setNewPostCategory('General');
+      setNewPostFile(null);
+      setShowCreatePost(false);
+      // Refresh stats
+      fetchSidebar();
+    } catch (err) {
+      console.error('Create post failed:', err);
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handlePostFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setNewPostFile({
+      name: file.name,
+      size: formatFileSize(file.size),
+      file: file,
+    });
+    e.target.value = ''; // Reset input
+  };
+
+  const handleRemovePostFile = () => {
+    setNewPostFile(null);
   };
 
   const handleComposerKeyDown = (e) => {
@@ -389,27 +375,71 @@ function Community() {
     }
   };
 
-  const handleAddComment = (postId) => {
+  const handleAddComment = async (postId) => {
     const text = (commentInputs[postId] || '').trim();
     const attachment = commentFiles[postId] || null;
     if (!text && !attachment) return;
-    const newComment = {
-      id: generateId(),
-      author: { name: user?.name || 'You', role: user?.role || 'developer' },
+
+    const replyTo = commentReplyTo[postId] || null;
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment = {
+      id: tempId,
+      author: { name: user?.name || 'You', role: user?.role || 'user' },
       text,
       timestamp: 'Just now',
       likes: 0,
       attachment,
-      replyTo: commentReplyTo[postId] || null,
+      replyTo,
     };
     setPosts((prev) =>
       prev.map((p) =>
-        p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p
+        p.id === postId ? { ...p, comments: [...p.comments, optimisticComment] } : p
       )
     );
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
     setCommentFiles((prev) => ({ ...prev, [postId]: null }));
     setCommentReplyTo((prev) => ({ ...prev, [postId]: null }));
+
+    try {
+      const res = await api.post(endpoints.community.addComment(postId), {
+        text,
+        attachment,
+        replyTo: replyTo
+          ? { commentId: replyTo.id, author: replyTo.author, text: replyTo.text }
+          : null,
+        author: {
+          userId: userId || null,
+          name: user?.name || 'Anonymous',
+          title: user?.title || '',
+          role: user?.role || 'user',
+          avatar: user?.avatar || null,
+        },
+      });
+      const savedComment = { ...res.data, timestamp: 'Just now' };
+      // Replace temp comment with real one
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: p.comments.map((c) => (c.id === tempId ? savedComment : c)),
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error('Add comment failed:', err);
+      // Remove optimistic comment on failure
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, comments: p.comments.filter((c) => c.id !== tempId) }
+            : p
+        )
+      );
+    }
   };
 
   const handleCommentFileChange = (e, postId) => {
@@ -474,7 +504,7 @@ function Community() {
           p.content.toLowerCase().includes(q) ||
           p.author.name.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
-          p.tags.some((t) => t.toLowerCase().includes(q))
+          (p.tags || []).some((t) => t.toLowerCase().includes(q))
       );
     }
 
@@ -487,7 +517,9 @@ function Community() {
   const savedPosts = posts.filter((p) => p.bookmarked);
 
   // My posts — posts authored by the current user
-  const myPosts = posts.filter((p) => p.author.name === (user?.name || ''));
+  const myPosts = posts.filter(
+    (p) => userId && p.author.userId && p.author.userId.toString() === userId.toString()
+  );
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -636,22 +668,26 @@ function Community() {
               <TrendingUp size={14} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} />
               Trending Topics
             </h3>
-            {TRENDING_TOPICS.map((item) => (
-              <div
-                key={item.tag}
-                className="trending-item"
-                onClick={() => setSearchQuery(item.tag)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setSearchQuery(item.tag)}
-              >
-                <Hash size={14} style={{ color: 'var(--color-accent)', flexShrink: 0, marginTop: '2px' }} />
-                <div>
-                  <div className="trending-tag">{item.tag}</div>
-                  <div className="trending-count">{item.count} posts</div>
+            {trendingTopics.length === 0 ? (
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', padding: '0.5rem 0' }}>No trending topics yet.</p>
+            ) : (
+              trendingTopics.map((item) => (
+                <div
+                  key={item.tag}
+                  className="trending-item"
+                  onClick={() => setSearchQuery(item.tag)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSearchQuery(item.tag)}
+                >
+                  <Hash size={14} style={{ color: 'var(--color-accent)', flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <div className="trending-tag">{item.tag}</div>
+                    <div className="trending-count">{item.count} posts</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </aside>
 
@@ -689,6 +725,31 @@ function Community() {
                   ))}
                 </div>
 
+                {/* File preview */}
+                {newPostFile && (
+                  <div className="composer-file-preview">
+                    <div className="post-attachment">
+                      <div className="post-attachment-icon">
+                        <div className="post-attachment-page" />
+                        <span className="post-attachment-ext">{getFileExt(newPostFile.name)}</span>
+                      </div>
+                      <div className="post-attachment-info">
+                        <span className="post-attachment-name">{newPostFile.name}</span>
+                        <span className="post-attachment-size">{newPostFile.size}</span>
+                      </div>
+                      <button 
+                        className="post-attachment-dl" 
+                        onClick={handleRemovePostFile}
+                        title="Remove file" 
+                        aria-label="Remove file"
+                        type="button"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Actions row */}
                 <div className="composer-actions">
                   <div className="composer-media-btns">
@@ -710,6 +771,7 @@ function Community() {
                       onClick={() => {
                         setShowCreatePost(false);
                         setNewPostText('');
+                        setNewPostFile(null);
                       }}
                       type="button"
                     >
@@ -718,11 +780,11 @@ function Community() {
                     <button
                       className="post-btn"
                       onClick={handlePost}
-                      disabled={!newPostText.trim()}
+                      disabled={!newPostText.trim() || posting}
                       type="button"
                     >
                       <Send size={15} />
-                      Post
+                      {posting ? 'Posting…' : 'Post'}
                     </button>
                   </div>
                 </div>
@@ -731,6 +793,7 @@ function Community() {
                   ref={fileInputRef}
                   type="file"
                   style={{ display: 'none' }}
+                  onChange={handlePostFileChange}
                   aria-hidden="true"
                 />
               </>
@@ -738,7 +801,16 @@ function Community() {
           </div>
 
           {/* Posts */}
-          {showMyPosts ? (
+          {loading ? (
+            <div className="empty-feed">
+              <div style={{ fontSize: '1rem', color: 'var(--color-text-muted)' }}>Loading posts…</div>
+            </div>
+          ) : error ? (
+            <div className="empty-feed">
+              <p style={{ color: 'var(--color-danger, #e53e3e)' }}>{error}</p>
+              <button className="post-btn" onClick={fetchPosts} style={{ marginTop: '1rem' }}>Retry</button>
+            </div>
+          ) : showMyPosts ? (
             /* ── Your Posts Feed ── */
             <div>
               <div className="saved-feed-header saved-feed-header--myposts">
@@ -771,7 +843,7 @@ function Community() {
                           <UserAvatar user={{ name: post.author.name }} size="medium" />
                           <div>
                             <div className="post-author-name">{post.author.name}</div>
-                            <div className="post-author-meta">{post.author.title} · {post.timestamp}</div>
+                            <div className="post-author-meta">{post.author.title} · {formatTimestamp(post.createdAt)}</div>
                           </div>
                         </div>
                         <div className="post-header-right">
@@ -887,7 +959,7 @@ function Community() {
                           <UserAvatar user={{ name: post.author.name }} size="medium" style={{ cursor: 'pointer' }} onClick={() => setSelectedUser(post.author)} />
                           <div>
                             <div className="post-author-name" onClick={() => setSelectedUser(post.author)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSelectedUser(post.author)}>{post.author.name}</div>
-                            <div className="post-author-meta">{post.author.title} · {post.timestamp}</div>
+                            <div className="post-author-meta">{post.author.title} · {formatTimestamp(post.createdAt)}</div>
                           </div>
                         </div>
                         <div className="post-header-right">
@@ -994,7 +1066,7 @@ function Community() {
                           {post.author.name}
                         </div>
                         <div className="post-author-meta">
-                          {post.author.title} · {post.timestamp}
+                          {post.author.title} · {formatTimestamp(post.createdAt)}
                         </div>
                       </div>
                     </div>
@@ -1208,15 +1280,15 @@ function Community() {
             <h3 className="sidebar-title">Community Stats</h3>
             <div className="stats-grid-community">
               <div className="stat-item-community">
-                <div className="stat-number">{COMMUNITY_STATS.totalPosts.toLocaleString()}</div>
+                <div className="stat-number">{communityStats.totalPosts.toLocaleString()}</div>
                 <div className="stat-label">Total Posts</div>
               </div>
               <div className="stat-item-community">
-                <div className="stat-number">{COMMUNITY_STATS.members.toLocaleString()}</div>
+                <div className="stat-number">{communityStats.members.toLocaleString()}</div>
                 <div className="stat-label">Members</div>
               </div>
               <div className="stat-item-community" style={{ gridColumn: '1 / -1' }}>
-                <div className="stat-number">{COMMUNITY_STATS.thisWeek}</div>
+                <div className="stat-number">{communityStats.thisWeek}</div>
                 <div className="stat-label">Posts This Week</div>
               </div>
             </div>
@@ -1254,7 +1326,7 @@ function Community() {
                       <p className="saved-post-preview">{post.content.slice(0, 72)}{post.content.length > 72 ? '…' : ''}</p>
                       <div className="saved-post-meta">
                         <span className={`saved-post-badge ${getCategoryBadgeClass(post.category)}`}>{post.category}</span>
-                        <span className="saved-post-time">{post.timestamp}</span>
+                        <span className="saved-post-time">{formatTimestamp(post.createdAt)}</span>
                       </div>
                     </div>
                     <button

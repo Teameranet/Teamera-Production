@@ -10,6 +10,18 @@ import projectController from "../controllers/projectController.js";
 import { streamProjects } from "../controllers/projectController.js";
 import { streamNotifications, getNotifications, markAsRead, markAllAsRead, deleteNotification } from "../controllers/notificationController.js";
 import { streamMessages, getMessages, sendMessage, uploadFile, deleteMessage } from "../controllers/messageController.js";
+import {
+  getPosts,
+  createPost,
+  deletePost,
+  toggleLike,
+  toggleBookmark,
+  addComment,
+  deleteComment,
+  getTrending,
+  getStats,
+  getBookmarkedPosts,
+} from "../controllers/communityController.js";
 import { logger } from "../../middleware/auth.js";
 import { validateRegistration } from "../../middleware/validation.js";
 
@@ -96,6 +108,19 @@ router.get("/projects/:id/tasks", projectController.getTasks);
 router.post("/projects/:id/tasks", projectController.createTask);
 router.put("/projects/:id/tasks/:taskId", projectController.updateTask);
 router.delete("/projects/:id/tasks/:taskId", projectController.deleteTask);
+
+// Community endpoints
+// Static/specific routes MUST come before parameterised ones
+router.get("/community/stats", getStats);
+router.get("/community/trending", getTrending);
+router.get("/community/posts/bookmarked", getBookmarkedPosts);
+router.get("/community/posts", getPosts);
+router.post("/community/posts", createPost);
+router.delete("/community/posts/:postId", deletePost);
+router.post("/community/posts/:postId/like", toggleLike);
+router.post("/community/posts/:postId/bookmark", toggleBookmark);
+router.post("/community/posts/:postId/comments", addComment);
+router.delete("/community/posts/:postId/comments/:commentId", deleteComment);
 
 // API info endpoint
 router.get("/", (req, res) => {
