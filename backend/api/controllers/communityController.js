@@ -1,5 +1,10 @@
 import Post from '../../models/Post.js';
 import { successResponse, errorResponse, asyncHandler, sanitizeInput } from '../../utils/helpers.js';
+import { 
+  addCommunityClient, 
+  removeCommunityClient, 
+  broadcastToCommunity 
+} from '../../utils/communitySseClients.js';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -25,6 +30,37 @@ const formatPost = (post, userId) => {
     })),
   };
 };
+
+// ── SSE Stream ────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/community/stream
+ * Server-Sent Events endpoint for real-time community updates
+ */
+export const streamCommunity = asyncHandler(async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json(errorResponse('userId is required', 'MISSING_USER_ID'));
+  }
+
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+
+  // Send initial connection message
+  res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Community stream connected' })}\n\n`);
+
+  // Add client to the community SSE clients map
+  addCommunityClient(userId, res);
+
+  // Handle client disconnect
+  req.on('close', () => {
+    removeCommunityClient(userId);
+  });
+});
 
 // ── Posts ─────────────────────────────────────────────────────────────────────
 
@@ -127,7 +163,15 @@ export const createPost = asyncHandler(async (req, res) => {
 
   await post.save();
 
-  res.status(201).json(successResponse(formatPost(post, author.userId), 'Post created successfully'));
+  const formattedPost = formatPost(post, author.userId);
+
+  // Broadcast new post to all connected clients
+  broadcastToCommunity({
+    type: 'newPost',
+    payload: formattedPost,
+  });
+
+  res.status(201).json(successResponse(formattedPost, 'Post created successfully'));
 });
 
 /**
@@ -149,6 +193,12 @@ export const deletePost = asyncHandler(async (req, res) => {
   }
 
   await Post.findByIdAndDelete(postId);
+
+  // Broadcast post deletion to all connected clients
+  broadcastToCommunity({
+    type: 'deletePost',
+    payload: { postId },
+  });
 
   res.json(successResponse({ postId }, 'Post deleted successfully'));
 });
@@ -183,6 +233,16 @@ export const toggleLike = asyncHandler(async (req, res) => {
   }
 
   await post.save();
+
+  // Broadcast like update to all connected clients
+  broadcastToCommunity({
+    type: 'likeUpdate',
+    payload: {
+      postId,
+      liked: !alreadyLiked,
+      likes: post.likes,
+    },
+  });
 
   res.json(
     successResponse(
@@ -276,10 +336,20 @@ export const addComment = asyncHandler(async (req, res) => {
   await post.save();
 
   const savedComment = post.comments[post.comments.length - 1];
+  const formattedComment = { ...savedComment.toObject(), id: savedComment._id.toString() };
+
+  // Broadcast new comment to all connected clients
+  broadcastToCommunity({
+    type: 'newComment',
+    payload: {
+      postId,
+      comment: formattedComment,
+    },
+  });
 
   res.status(201).json(
     successResponse(
-      { ...savedComment.toObject(), id: savedComment._id.toString() },
+      formattedComment,
       'Comment added successfully'
     )
   );
@@ -310,6 +380,15 @@ export const deleteComment = asyncHandler(async (req, res) => {
 
   post.comments = post.comments.filter((c) => c._id.toString() !== commentId);
   await post.save();
+
+  // Broadcast comment deletion to all connected clients
+  broadcastToCommunity({
+    type: 'deleteComment',
+    payload: {
+      postId,
+      commentId,
+    },
+  });
 
   res.json(successResponse({ commentId }, 'Comment deleted successfully'));
 });

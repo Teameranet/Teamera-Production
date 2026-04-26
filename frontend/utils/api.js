@@ -130,6 +130,7 @@ export const endpoints = {
   health: '/health',
   // Community endpoints
   community: {
+    stream: (userId) => `/api/community/stream?userId=${userId}`,
     getPosts: '/api/community/posts',
     createPost: '/api/community/posts',
     deletePost: (postId) => `/api/community/posts/${postId}`,

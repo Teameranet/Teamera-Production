@@ -11,6 +11,7 @@ import { streamProjects } from "../controllers/projectController.js";
 import { streamNotifications, getNotifications, markAsRead, markAllAsRead, deleteNotification } from "../controllers/notificationController.js";
 import { streamMessages, getMessages, sendMessage, uploadFile, deleteMessage } from "../controllers/messageController.js";
 import {
+  streamCommunity,
   getPosts,
   createPost,
   deletePost,
@@ -111,6 +112,7 @@ router.delete("/projects/:id/tasks/:taskId", projectController.deleteTask);
 
 // Community endpoints
 // Static/specific routes MUST come before parameterised ones
+router.get("/community/stream", streamCommunity);
 router.get("/community/stats", getStats);
 router.get("/community/trending", getTrending);
 router.get("/community/posts/bookmarked", getBookmarkedPosts);

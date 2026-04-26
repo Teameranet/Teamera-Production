@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import UserAvatar from '../components/UserAvatar';
 import ProfileModal from '../components/ProfileModal';
-import api, { endpoints } from '../utils/api.js';
+import api, { endpoints, API_BASE_URL } from '../utils/api.js';
 import './Community.css';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -193,6 +193,8 @@ function Community() {
   const [showMyPosts, setShowMyPosts] = useState(false);
   // Profile modal
   const [selectedUser, setSelectedUser] = useState(null);
+  // SSE connection status
+  const [sseConnected, setSseConnected] = useState(false);
 
   // File input refs
   const fileInputRef = useRef(null);
@@ -236,6 +238,124 @@ function Community() {
     fetchPosts();
     fetchSidebar();
   }, [fetchPosts, fetchSidebar]);
+
+  // ── SSE Connection for real-time updates ─────────────────────────────────────
+
+  useEffect(() => {
+    if (!userId) return;
+
+    let eventSource = null;
+
+    const connectSSE = () => {
+      try {
+        const streamUrl = `${API_BASE_URL}${endpoints.community.stream(userId)}`;
+        eventSource = new EventSource(streamUrl);
+
+        eventSource.onopen = () => {
+          console.log('[Community SSE] Connected');
+          setSseConnected(true);
+        };
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('[Community SSE] Received:', data.type, data);
+
+            switch (data.type) {
+              case 'connected':
+                console.log('[Community SSE]', data.message);
+                break;
+
+              case 'newPost':
+                // Add new post to the top of the feed
+                setPosts((prev) => {
+                  // Avoid duplicates
+                  if (prev.some((p) => p.id === data.payload.id)) return prev;
+                  return [data.payload, ...prev];
+                });
+                // Refresh stats
+                fetchSidebar();
+                break;
+
+              case 'deletePost':
+                // Remove deleted post
+                setPosts((prev) => prev.filter((p) => p.id !== data.payload.postId));
+                // Refresh stats
+                fetchSidebar();
+                break;
+
+              case 'likeUpdate':
+                // Update like count for the post
+                setPosts((prev) =>
+                  prev.map((p) =>
+                    p.id === data.payload.postId
+                      ? { ...p, likes: data.payload.likes }
+                      : p
+                  )
+                );
+                break;
+
+              case 'newComment':
+                // Add new comment to the post (avoid duplicates)
+                setPosts((prev) =>
+                  prev.map((p) => {
+                    if (p.id !== data.payload.postId) return p;
+                    // Check if comment already exists
+                    const commentExists = p.comments.some((c) => c.id === data.payload.comment.id);
+                    if (commentExists) return p;
+                    return { ...p, comments: [...p.comments, data.payload.comment] };
+                  })
+                );
+                break;
+
+              case 'deleteComment':
+                // Remove deleted comment
+                setPosts((prev) =>
+                  prev.map((p) =>
+                    p.id === data.payload.postId
+                      ? {
+                          ...p,
+                          comments: p.comments.filter((c) => c.id !== data.payload.commentId),
+                        }
+                      : p
+                  )
+                );
+                break;
+
+              default:
+                console.log('[Community SSE] Unknown event type:', data.type);
+            }
+          } catch (err) {
+            console.error('[Community SSE] Parse error:', err);
+          }
+        };
+
+        eventSource.onerror = (err) => {
+          console.error('[Community SSE] Error:', err);
+          setSseConnected(false);
+          eventSource.close();
+          // Attempt to reconnect after 3 seconds
+          setTimeout(() => {
+            console.log('[Community SSE] Reconnecting...');
+            connectSSE();
+          }, 3000);
+        };
+      } catch (err) {
+        console.error('[Community SSE] Connection error:', err);
+      }
+    };
+
+    connectSSE();
+
+    // Cleanup on unmount
+    return () => {
+      if (eventSource) {
+        console.log('[Community SSE] Disconnecting');
+        setSseConnected(false);
+        eventSource.close();
+      }
+    };
+  }, [userId, fetchSidebar]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -338,9 +458,8 @@ function Community() {
         };
       }
 
-      const res = await api.post(endpoints.community.createPost, postData);
-      const newPost = res.data;
-      setPosts((prev) => [newPost, ...prev]);
+      await api.post(endpoints.community.createPost, postData);
+      // Don't add post locally - SSE will broadcast it to all clients including this one
       setNewPostText('');
       setNewPostCategory('General');
       setNewPostFile(null);
@@ -382,28 +501,13 @@ function Community() {
 
     const replyTo = commentReplyTo[postId] || null;
 
-    // Optimistic update
-    const tempId = `temp-${Date.now()}`;
-    const optimisticComment = {
-      id: tempId,
-      author: { name: user?.name || 'You', role: user?.role || 'user' },
-      text,
-      timestamp: 'Just now',
-      likes: 0,
-      attachment,
-      replyTo,
-    };
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, comments: [...p.comments, optimisticComment] } : p
-      )
-    );
+    // Clear inputs immediately for better UX
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
     setCommentFiles((prev) => ({ ...prev, [postId]: null }));
     setCommentReplyTo((prev) => ({ ...prev, [postId]: null }));
 
     try {
-      const res = await api.post(endpoints.community.addComment(postId), {
+      await api.post(endpoints.community.addComment(postId), {
         text,
         attachment,
         replyTo: replyTo
@@ -417,28 +521,13 @@ function Community() {
           avatar: user?.avatar || null,
         },
       });
-      const savedComment = { ...res.data, timestamp: 'Just now' };
-      // Replace temp comment with real one
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                comments: p.comments.map((c) => (c.id === tempId ? savedComment : c)),
-              }
-            : p
-        )
-      );
+      // Don't add comment locally - SSE will broadcast it to all clients including this one
     } catch (err) {
       console.error('Add comment failed:', err);
-      // Remove optimistic comment on failure
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? { ...p, comments: p.comments.filter((c) => c.id !== tempId) }
-            : p
-        )
-      );
+      // On error, restore the input values
+      setCommentInputs((prev) => ({ ...prev, [postId]: text }));
+      if (attachment) setCommentFiles((prev) => ({ ...prev, [postId]: attachment }));
+      if (replyTo) setCommentReplyTo((prev) => ({ ...prev, [postId]: replyTo }));
     }
   };
 
@@ -532,6 +621,13 @@ function Community() {
             <h1 className="community-title">Community</h1>
             <p className="community-subtitle">Connect, share, and grow with fellow builders</p>
           </div>
+          {/* Real-time connection indicator */}
+          {userId && (
+            <div className={`realtime-indicator ${sseConnected ? 'connected' : 'disconnected'}`} title={sseConnected ? 'Real-time updates active' : 'Connecting...'}>
+              <span className="realtime-dot"></span>
+              <span className="realtime-text">{sseConnected ? 'Live' : 'Connecting...'}</span>
+            </div>
+          )}
         </header>
         <div className="community-search-bar">
           <div className="community-search-bar-row">
