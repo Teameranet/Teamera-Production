@@ -111,7 +111,7 @@ function Profile() {
   // function: stats, if you want to fetch stats from API, do it here
   const stats = [
     { label: "Projects Created", value: userProjects.owned?.length.toString() || "0" },
-    { label: "Hackathons Won", value: user?.hackathonsWon?.toString() || user?.metrics?.hackathonsWon?.toString() || "0" },
+    { label: "Applications Sent", value: "0" },
     { label: "Projects Joined", value: userProjects.participating?.length.toString() || "0" }
   ];
 

@@ -13,7 +13,6 @@ export const useProjects = () => {
 
 export const ProjectProvider = ({ children }) => {
   const [projects, setProjects] = useState([]);
-  const [hackathons, setHackathons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userProjectMap, setUserProjectMap] = useState({});
   const [bookmarkedProjects, setBookmarkedProjects] = useState([]);
@@ -1140,7 +1139,6 @@ export const ProjectProvider = ({ children }) => {
 
   const value = {
     projects,
-    hackathons,
     loading,
     applications,
     applicationsLoading,
