@@ -689,3 +689,105 @@ Update the 'skills-input-container' with following function
   - Remove buttons (remove-position-btn, remove-skill-btn, remove-member-btn) — all share --action-remove with matching light background and border, creating one unified danger semantic
   - Add buttons (add-position-btn, add-member-btn) 
   - Paid checkbox
+  ---------------------------------------------------------------------------------------
+## Teamera.net — Clean 10-Slide PowerPoint Outline
+Slide 1 — Title
+Teamera.net
+Build Your Dream Team and Launch Your Next Big Idea
+
+Full-Stack Web Application
+[Team Member Names]
+[Course Name]
+[Submission Date]
+
+
+Slide 2 — Problem Statement
+The Problem
+
+Founders struggle to find teammates
+Students need real project experience
+Professionals seek meaningful projects
+Existing platforms are too general
+Slide 3 — Our Solution
+What is Teamera.net?
+
+Platform for startup team building
+Connects ideas with skilled people
+Supports founders, students, professionals
+From discovery to collaboration
+
+
+Slide 4 — Core Features
+Main Features
+
+Secure login and signup
+User profiles and resumes
+Project posting and discovery
+Application system
+Workspace with chat, tasks, files
+Real-time notifications
+
+
+Slide 5 — User Flow
+How the System Works
+
+Register account
+Complete profile
+Browse projects
+Apply for a role
+Founder reviews application
+Accepted users join workspace
+
+
+Slide 6 — System Architecture
+System Architecture
+
+Frontend: React + Vite
+Backend: Node.js + Express
+Database: MongoDB Atlas
+Real-time chat: Socket.io
+Notifications: SSE
+Frontend deployed on Vercel
+
+
+Slide 7 — Database & Backend
+Backend and Database Design
+
+REST API-based backend
+MongoDB with 7 collections
+Users, Projects, Applications
+Dashboards, Notifications, Messages
+Hackathons collection
+Mongoose for schema handling
+
+
+Slide 8 — Key Technical Decisions
+Technical Choices
+
+JWT for authentication
+bcryptjs for password security
+Multer for resume uploads
+MongoDB for flexible data
+Socket.io for real-time chat
+Helmet and rate limiting for security
+
+
+Slide 9 — Results
+Results and Outcomes
+
+Fully functional full-stack app
+6 frontend pages completed
+Real-time chat implemented
+Resume upload working
+Private routes protected
+Frontend and backend deployed
+
+
+Slide 10 — Conclusion / Future Scope
+Conclusion and Future Scope
+
+Solves team-building and collaboration problems
+Combines discovery, application, and workspace
+Learned full-stack development in practice
+Future: OAuth, AI matching, mobile app
+Thank you / Q&A
