@@ -16,7 +16,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
     description: '',
     industry: '',
     stage: '',
-    openPositions: [{ role: '', skills: [], isPaid: false }],
+    openPositions: [{ role: '', description: '', skills: [], isPaid: false }],
     funding: '',
     timeline: '',
     teamMembers: [{ name: '', position: '', email: '', isCustom: false, verified: false, tempId: `temp-${Date.now()}-${Math.random()}` }]
@@ -182,7 +182,7 @@ function CreateProjectModal({ onClose, projectToEdit }) {
   const addPosition = () => {
     setFormData(prev => ({
       ...prev,
-      openPositions: [...prev.openPositions, { role: '', skills: [], isPaid: false }]
+      openPositions: [...prev.openPositions, { role: '', description: '', skills: [], isPaid: false }]
     }));
   };
 
@@ -539,6 +539,15 @@ function CreateProjectModal({ onClose, projectToEdit }) {
                         <X size={14} />
                       </button>
                     )}
+                  </div>
+                  <div className="position-description">
+                    <label>Description</label>
+                    <textarea
+                      value={position.description || ''}
+                      onChange={(e) => handlePositionChange(index, 'description', e.target.value)}
+                      placeholder="Describe the responsibilities and expectations for this role..."
+                      rows={2}
+                    />
                   </div>
                   <div className="position-skills">
                     <label>Required skills for this position:</label>

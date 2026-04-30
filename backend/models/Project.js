@@ -49,6 +49,7 @@ const projectSchema = new mongoose.Schema({
   }],
   openPositions: [{
     role: String,
+    description: String,
     skills: [String],
     isPaid: Boolean
   }],

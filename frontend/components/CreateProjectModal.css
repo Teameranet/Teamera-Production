@@ -295,6 +295,38 @@
   margin-bottom: 0.5rem;
 }
 
+/* Position description textarea */
+.position-description {
+  margin-bottom: 0.75rem;
+}
+
+.position-description label {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.position-description textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  resize: vertical;
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.position-description textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
 /* Skills input container */
 .skills-input-container {
   display: flex;

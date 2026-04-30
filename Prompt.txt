@@ -691,7 +691,10 @@ Update the 'skills-input-container' with following function
   - Paid checkbox
 ----------------------------------------------------------------------------------------
 - On Team Requirements Add Description for skills section 
-- AI base Description on skill Description
+- Replaced the plain description label with a position-description-header row containing the label on the left and the ✨ AI Suggest button on the right
+Button is disabled until a position title is typed
+Shows a spinner + "Generating..." while loading
+Disables all suggest buttons while any one is in-flight
   ---------------------------------------------------------------------------------------
 ## Teamera.net — Clean 10-Slide PowerPoint Outline
 Slide 1 — Title

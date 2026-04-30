@@ -316,6 +316,13 @@
   margin-bottom: 1rem;
 }
 
+.position-description {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
 .apply-position-btn {
   background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
   color: white;

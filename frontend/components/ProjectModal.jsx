@@ -391,6 +391,9 @@ function ProjectModal({ project: initialProject, onClose, isOwned = false, isPar
                         {position.isPaid ? 'Paid' : 'Unpaid'}
                       </span>
                     </div>
+                    {position.description && (
+                      <p className="position-description">{position.description}</p>
+                    )}
                     <div className="position-skills">
                       {(position.skills || []).map((skill, skillIndex) => (
                         <span key={skillIndex} className="skill-tag small">{skill}</span>
