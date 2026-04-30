@@ -690,7 +690,7 @@ Update the 'skills-input-container' with following function
   - Add buttons (add-position-btn, add-member-btn) 
   - Paid checkbox
 ----------------------------------------------------------------------------------------
-- Add Description for skills section 
+- On Team Requirements Add Description for skills section 
 - AI base Description on skill Description
   ---------------------------------------------------------------------------------------
 ## Teamera.net — Clean 10-Slide PowerPoint Outline
