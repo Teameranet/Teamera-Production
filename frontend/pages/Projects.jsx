@@ -48,11 +48,11 @@ function Projects({ onEditProject }) {
 
     const projectId = (project.id || project._id)?.toString();
     let matchesView = true;
-    if (selectedView === 'saved') {
+    if (user && selectedView === 'saved') {
       matchesView = bookmarkedProjects.map(id => id.toString()).includes(projectId);
-    } else if (selectedView === 'owned') {
+    } else if (user && selectedView === 'owned') {
       matchesView = userProjects.owned.some(p => (p.id || p._id)?.toString() === projectId);
-    } else if (selectedView === 'participating') {
+    } else if (user && selectedView === 'participating') {
       matchesView = userProjects.participating.some(p => (p.id || p._id)?.toString() === projectId);
     }
 
@@ -203,27 +203,29 @@ function Projects({ onEditProject }) {
             </div>
           </div>
 
-          <div className="pf-divider" />
+          {user && <div className="pf-divider" />}
 
-          {/* View */}
-          <div className="pf-section">
-            <div className="pf-section-label">
-              <FolderKanban size={13} />
-              Show
+          {/* View — only visible when logged in */}
+          {user && (
+            <div className="pf-section">
+              <div className="pf-section-label">
+                <FolderKanban size={13} />
+                Show
+              </div>
+              <div className="pf-chips">
+                {viewOptions.map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    className={`pf-chip pf-chip--view ${selectedView === value ? 'pf-chip--active' : ''}`}
+                    onClick={() => setSelectedView(prev => prev === value ? '' : value)}
+                  >
+                    <Icon size={13} />
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="pf-chips">
-              {viewOptions.map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  className={`pf-chip pf-chip--view ${selectedView === value ? 'pf-chip--active' : ''}`}
-                  onClick={() => setSelectedView(prev => prev === value ? '' : value)}
-                >
-                  <Icon size={13} />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Footer */}
           {(selectedIndustry || selectedStage || selectedView) && (
