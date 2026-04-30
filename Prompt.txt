@@ -689,6 +689,9 @@ Update the 'skills-input-container' with following function
   - Remove buttons (remove-position-btn, remove-skill-btn, remove-member-btn) — all share --action-remove with matching light background and border, creating one unified danger semantic
   - Add buttons (add-position-btn, add-member-btn) 
   - Paid checkbox
+----------------------------------------------------------------------------------------
+- Add Description for skills section 
+- AI base Description on skill Description
   ---------------------------------------------------------------------------------------
 ## Teamera.net — Clean 10-Slide PowerPoint Outline
 Slide 1 — Title
