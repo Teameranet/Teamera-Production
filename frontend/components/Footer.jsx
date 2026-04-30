@@ -8,8 +8,35 @@ function Footer() {
         <div className="footer-main">
           {/* Logo */}
           <div className="footer-logo">
-            {/* <div className="logo-icon"></div> */}
-            <span className="logo-text">Teamera.net</span>
+            <span className="footer-logo-mark">
+              <svg width="34" height="34" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                  <linearGradient id="footerLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#60a5fa"/>
+                    <stop offset="1" stopColor="#a78bfa"/>
+                  </linearGradient>
+                </defs>
+                {/* Three connected people forming a team circle */}
+                {/* Person 1 - Top */}
+                <circle cx="18" cy="8" r="3.5" fill="url(#footerLogoGrad)"/>
+                <path d="M18 12 Q18 16 18 18" stroke="url(#footerLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+                
+                {/* Person 2 - Bottom Left */}
+                <circle cx="8" cy="24" r="3.5" fill="url(#footerLogoGrad)"/>
+                <path d="M10.5 21.5 Q14 19 18 18" stroke="url(#footerLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+                
+                {/* Person 3 - Bottom Right */}
+                <circle cx="28" cy="24" r="3.5" fill="url(#footerLogoGrad)"/>
+                <path d="M25.5 21.5 Q22 19 18 18" stroke="url(#footerLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+                
+                {/* Central connection hub */}
+                <circle cx="18" cy="18" r="2.5" fill="url(#footerLogoGrad)"/>
+              </svg>
+            </span>
+            <span className="footer-logo-wordmark">
+              <span className="footer-logo-name">Teamera</span>
+              <span className="footer-logo-slogan">Teamwork Simplified</span>
+            </span>
           </div>
           
           {/* Navigation */}

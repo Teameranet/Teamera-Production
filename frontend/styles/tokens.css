@@ -13,7 +13,10 @@
   --color-accent-dark: #4338ca;
 
   /* Page header gradient */
-  --color-gradient-header: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --color-gradient-header: linear-gradient(120deg, #1d4ed8 0%, #2563eb 45%, #7c3aed 100%);
+
+  /* Brand logo gradient */
+  --color-gradient-brand: linear-gradient(120deg, #1d4ed8 0%, #2563eb 45%, #7c3aed 100%);
 
   /* Semantic colors */
   --color-success: #10b981;

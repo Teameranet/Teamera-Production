@@ -191,11 +191,34 @@ function AuthModal({ onClose, onSuccess }) {
         {/* Logo Section */}
         <div className="auth-logo-section">
           <div className="auth-logo-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13 2L4.09 12.11C3.68 12.59 3.45 13 3.45 13.5C3.45 14.33 4.12 15 4.95 15H10L9 22L17.91 11.89C18.32 11.41 18.55 11 18.55 10.5C18.55 9.67 17.88 9 17.05 9H14L13 2Z" fill="white" />
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="authLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#2563eb"/>
+                  <stop offset="1" stopColor="#7c3aed"/>
+                </linearGradient>
+              </defs>
+              {/* Three connected people forming a team circle */}
+              {/* Person 1 - Top */}
+              <circle cx="18" cy="8" r="3.5" fill="url(#authLogoGrad)"/>
+              <path d="M18 12 Q18 16 18 18" stroke="url(#authLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+              
+              {/* Person 2 - Bottom Left */}
+              <circle cx="8" cy="24" r="3.5" fill="url(#authLogoGrad)"/>
+              <path d="M10.5 21.5 Q14 19 18 18" stroke="url(#authLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+              
+              {/* Person 3 - Bottom Right */}
+              <circle cx="28" cy="24" r="3.5" fill="url(#authLogoGrad)"/>
+              <path d="M25.5 21.5 Q22 19 18 18" stroke="url(#authLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+              
+              {/* Central connection hub */}
+              <circle cx="18" cy="18" r="2.5" fill="url(#authLogoGrad)"/>
             </svg>
           </div>
-          <span className="auth-logo-text">Teamera</span>
+          <span className="auth-logo-wordmark">
+            <span className="auth-logo-text">Teamera</span>
+            <span className="auth-logo-slogan">Teamwork Simplified</span>
+          </span>
         </div>
 
         {/* Heading */}

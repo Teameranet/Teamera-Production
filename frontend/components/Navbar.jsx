@@ -38,8 +38,35 @@ function Navbar({ onAuthClick }) {
       <div className="nav-container">
         {/* Logo Section */}
         <Link to="/" className="nav-logo">
-          <span className="logo-text">Teamera</span>
-          <span className="logo-dot">.net</span>
+          <span className="logo-mark">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="navLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#2563eb"/>
+                  <stop offset="1" stopColor="#7c3aed"/>
+                </linearGradient>
+              </defs>
+              {/* Three connected people forming a team circle */}
+              {/* Person 1 - Top */}
+              <circle cx="18" cy="8" r="3.5" fill="url(#navLogoGrad)"/>
+              <path d="M18 12 Q18 16 18 18" stroke="url(#navLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+              
+              {/* Person 2 - Bottom Left */}
+              <circle cx="8" cy="24" r="3.5" fill="url(#navLogoGrad)"/>
+              <path d="M10.5 21.5 Q14 19 18 18" stroke="url(#navLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+              
+              {/* Person 3 - Bottom Right */}
+              <circle cx="28" cy="24" r="3.5" fill="url(#navLogoGrad)"/>
+              <path d="M25.5 21.5 Q22 19 18 18" stroke="url(#navLogoGrad)" strokeWidth="2.5" strokeLinecap="round"/>
+              
+              {/* Central connection hub */}
+              <circle cx="18" cy="18" r="2.5" fill="url(#navLogoGrad)"/>
+            </svg>
+          </span>
+          <span className="logo-wordmark">
+            <span className="logo-text">Teamera</span>
+            <span className="logo-slogan">Teamwork Simplified</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation Menu */}

@@ -26,19 +26,44 @@
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 10px;
+}
+
+.logo-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.28));
+}
+
+.logo-wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1;
 }
 
 .logo-text {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(120deg, #1d4ed8 0%, #2563eb 45%, #7c3aed 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.1;
 }
 
-.logo-dot {
-  color: var(--color-warning);
-  font-size: 1.5rem;
+.logo-slogan {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  -webkit-text-fill-color: var(--color-text-muted);
+  line-height: 1.2;
+  margin-top: 1px;
 }
 
 .nav-menu {
