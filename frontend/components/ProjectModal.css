@@ -199,13 +199,13 @@
   font-size: 0.8rem;
 }
 
-.team-members {
+.project-modal .team-members {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.team-member-card {
+.project-modal .team-member-card {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -214,20 +214,22 @@
   border-radius: 12px;
 }
 
-.member-avatar {
+/* Override Tabs.css .member-avatar (40px) — modal needs 60px */
+.project-modal .member-avatar {
   width: 60px;
   height: 60px;
   border-radius: 50%;
 }
 
-.member-info h4 {
+/* Override Tabs.css .member-info h4 / p */
+.project-modal .member-info h4 {
   margin: 0 0 0.25rem 0;
   color: var(--color-text-primary);
   font-size: 1rem;
   font-weight: 600;
 }
 
-.member-info p {
+.project-modal .member-info p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.9rem;
@@ -504,18 +506,20 @@
   padding-bottom: 1rem;
 }
 
-.form-group {
+/* Override Tabs.css .form-group (flex/column) — modal uses margin-bottom layout */
+.application-form .form-group {
   margin-bottom: 1.5rem;
+  display: block;
 }
 
-.form-group label {
+.application-form .form-group label {
   display: block;
   color: #374151;
   font-weight: 500;
   margin-bottom: 0.5rem;
 }
 
-.form-group textarea {
+.application-form .form-group textarea {
   width: 100%;
   padding: 0.75rem;
   border: 2px solid var(--color-border);
@@ -527,7 +531,7 @@
   min-height: 120px;
 }
 
-.form-group textarea:focus {
+.application-form .form-group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
 }
@@ -888,7 +892,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.status-icon {
+.application-status-message .status-icon {
   font-size: 1.25rem;
   flex-shrink: 0;
   line-height: 1;
@@ -897,14 +901,14 @@
   margin-top: 1px;
 }
 
-.status-content {
+.application-status-message .status-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
 }
 
-.status-text {
+.application-status-message .status-text {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 500;
@@ -950,15 +954,15 @@
     gap: 0.625rem;
   }
 
-  .status-icon {
+  .application-status-message .status-icon {
     font-size: 1.25rem;
   }
 
-  .status-text {
+  .application-status-message .status-text {
     font-size: 0.85rem;
   }
 
-  .view-application-link {
+  .application-status-message .view-application-link {
     font-size: 0.8rem;
   }
 }

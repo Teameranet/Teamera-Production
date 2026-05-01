@@ -271,7 +271,8 @@ export const ProjectProvider = ({ children }) => {
         if (data.type === 'project_created' && data.project) {
           const newProject = { ...data.project, id: data.project._id || data.project.id };
           setProjects(prev => {
-            // Avoid duplicates (the creator already added it locally)
+            // SSE is the single source of truth for new projects — guard against
+            // any edge-case double-fire by checking for an existing entry first.
             if (prev.some(p => String(p.id || p._id) === String(newProject.id))) return prev;
             return [newProject, ...prev];
           });
@@ -329,7 +330,9 @@ export const ProjectProvider = ({ children }) => {
           id: result.data._id || result.data.id
         };
 
-        setProjects(prev => [newProject, ...prev]);
+        // Do NOT add to projects state here — the SSE 'project_created' event
+        // will broadcast to all clients (including the creator) and add it there.
+        // Adding it here AND via SSE causes duplicates due to async state timing.
 
         // Update user project mapping
         if (founderId) {
