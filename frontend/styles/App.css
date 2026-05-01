@@ -15,6 +15,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Prevent page scroll when a modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
 .app {
   min-height: 100vh;
   display: flex;

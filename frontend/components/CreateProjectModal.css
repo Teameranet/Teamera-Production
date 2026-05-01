@@ -17,7 +17,7 @@
 }
 
 /* Modal content area */
-.modal-content {
+.create-project-modal .modal-content {
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
@@ -66,7 +66,7 @@
 }
 
 /* Form group spacing */
-.form-group {
+.create-project-modal .form-group {
   margin-bottom: 1.5rem;
   flex: 1;
 }
@@ -92,7 +92,7 @@
 }
 
 /* Form group label styling */
-.form-group label {
+.create-project-modal .form-group label {
   display: block;
   color: var(--color-text-primary);
   font-weight: 500;
@@ -107,9 +107,9 @@
 }
 
 /* Inputs, selects, and textareas styling */
-.form-group input,
-.form-group select,
-.form-group textarea {
+.create-project-modal .form-group input,
+.create-project-modal .form-group select,
+.create-project-modal .form-group textarea {
   width: 100%;
   padding: 0.75rem !important;
   border: 2px solid var(--color-border);
@@ -119,15 +119,15 @@
 }
 
 /* Focus state for form fields */
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.create-project-modal .form-group input:focus,
+.create-project-modal .form-group select:focus,
+.create-project-modal .form-group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
 }
 
 /* Textarea specific styling */
-.form-group textarea {
+.create-project-modal .form-group textarea {
   resize: vertical;
   font-family: inherit;
 }
@@ -317,7 +317,7 @@
   resize: vertical;
   font-family: inherit;
   color: var(--color-text-primary);
-  background: var(--color-bg-primary);
+  background: var(--color-bg);
   transition: border-color 0.2s;
   box-sizing: border-box;
 }
@@ -704,7 +704,7 @@
 }
 
 /* Skill tag in preview */
-.skill-tag {
+.create-project-modal .skill-tag {
   background: rgba(37, 99, 235, 0.1) !important;
   color: var(--color-primary) !important;
   padding: 0.25rem 0.5rem !important;
@@ -864,8 +864,8 @@
 @media (max-width: 768px) {
   .modal-overlay {
     padding: 0.5rem;
-    align-items: flex-start;
-    padding-top: 2rem;
+    align-items: center;
+    padding-top: 0.5rem;
   }
   
   .create-project-modal {
@@ -873,7 +873,7 @@
     flex-shrink: 1;
   }
   
-  .modal-content {
+  .create-project-modal .modal-content {
     max-height: calc(85vh - 120px);
     overflow-y: auto;
   }
@@ -883,7 +883,7 @@
 @media (max-width: 480px) {
   .modal-overlay {
     padding: 0.25rem;
-    padding-top: 1rem;
+    padding-top: 0.25rem;
   }
   
   .create-project-modal {
@@ -891,7 +891,7 @@
     margin: 0;
   }
   
-  .modal-content {
+  .create-project-modal .modal-content {
     max-height: calc(90vh - 100px);
     padding: 1rem;
   }
