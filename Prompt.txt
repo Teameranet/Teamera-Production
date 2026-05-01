@@ -695,6 +695,9 @@ Update the 'skills-input-container' with following function
 Button is disabled until a position title is typed
 Shows a spinner + "Generating..." while loading
 Disables all suggest buttons while any one is in-flight
+----------------------------------------------------------------------------------------
+From this system is there Problem where affected or causing the modal's & page layout to break 
+Ignor the 'CollaborationSpace' section 
   ---------------------------------------------------------------------------------------
 ## Teamera.net — Clean 10-Slide PowerPoint Outline
 Slide 1 — Title
