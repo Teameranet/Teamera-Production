@@ -14,6 +14,7 @@ import ProjectModal from './components/ProjectModal';
 import CreateProjectModal from './components/CreateProjectModal';
 import CollaborationSpace from './components/CollaborationSpace';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProfileCompletionToast from './components/ProfileCompletionToast';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import { ProjectProvider } from './context/ProjectContext';
@@ -148,6 +149,9 @@ function AppContent() {
           onClose={() => startTransition(() => setShowCollaboration(false))}
         />
       )}
+
+      {/* Profile completion reminder — shown bottom-right when profile is incomplete */}
+      <ProfileCompletionToast />
     </div>
   );
 }
