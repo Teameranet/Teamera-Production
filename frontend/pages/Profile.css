@@ -93,7 +93,7 @@
 .user-meta {
   display: flex;
   gap: 1.5rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.0rem;
   justify-content: center;
 }
 
@@ -1335,8 +1335,8 @@
   display: flex;
   flex-direction: row;
   gap: 8px;
-  width: 100%;
-  max-width: 300px;
+  width: 431.1px;
+  max-width: 431.1px;
 }
 
 .social-input-group {
@@ -1411,7 +1411,7 @@
   border-radius: 6px;
   font-size: 0.95rem;
   backdrop-filter: blur(4px);
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.0rem;
 }
 
 .title-input::placeholder,

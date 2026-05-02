@@ -420,7 +420,7 @@ function Profile() {
                 )}
                 <div className="profile-meta-item">
                   <Calendar size={16} />
-                  <span>Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }) : 'Recently'}</span>
+                  <span>Joined {user?.createdAt ? (() => { const d = new Date(user.createdAt); const dd = String(d.getDate()).padStart(2,'0'); const mm = String(d.getMonth()+1).padStart(2,'0'); const yyyy = d.getFullYear(); return `${dd}/${mm}/${yyyy}`; })() : 'Recently'}</span>
                 </div>
               </div>
 
