@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut, Mail, Search, SlidersHorizontal } from 'lucide-react';
+import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut, Mail, Search, SlidersHorizontal, Briefcase, Layers, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -86,8 +86,20 @@ function Dashboard() {
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('ALL');
   const [showAppFilters, setShowAppFilters] = useState(false);
-  // State for My Projects search
+  // State for My Projects search and filter
   const [myProjectSearch, setMyProjectSearch] = useState('');
+  const [myProjectIndustry, setMyProjectIndustry] = useState('');
+  const [myProjectStage, setMyProjectStage] = useState('');
+  const [showMyProjectFilters, setShowMyProjectFilters] = useState(false);
+
+  const MY_PROJECT_INDUSTRIES = ['Technology', 'Healthcare', 'Finance', 'Education', 'E-commerce', 'Entertainment'];
+  const MY_PROJECT_STAGES = ['Idea Validation', 'MVP Development', 'Beta Testing', 'Market Ready', 'Scaling'];
+
+  const clearMyProjectFilters = () => {
+    setMyProjectSearch('');
+    setMyProjectIndustry('');
+    setMyProjectStage('');
+  };
 
   // Fetch user's owned and participating projects
   useEffect(() => {
@@ -502,19 +514,19 @@ function Dashboard() {
             <div className="myprojects-subtabs">
               <button
                 className={`subtab-btn ${myProjectsSubTab === 'owned' ? 'active' : ''}`}
-                onClick={() => { setMyProjectsSubTab('owned'); setMyProjectSearch(''); }}
+                onClick={() => { setMyProjectsSubTab('owned'); clearMyProjectFilters(); setShowMyProjectFilters(false); }}
               >
                 Projects I Own ({userProjects.owned.length})
               </button>
               <button
                 className={`subtab-btn ${myProjectsSubTab === 'participating' ? 'active' : ''}`}
-                onClick={() => { setMyProjectsSubTab('participating'); setMyProjectSearch(''); }}
+                onClick={() => { setMyProjectsSubTab('participating'); clearMyProjectFilters(); setShowMyProjectFilters(false); }}
               >
                 Projects I'm In ({userProjects.participating.length})
               </button>
             </div>
 
-            {/* Search bar */}
+            {/* Search & Filter bar */}
             <div className="projects-filters">
               <div className="pf-search-wrapper">
                 <Search size={18} className="pf-search-icon" />
@@ -532,14 +544,89 @@ function Dashboard() {
                   </button>
                 )}
               </div>
+              <button
+                className={`pf-filter-btn ${(myProjectIndustry || myProjectStage) ? 'pf-filter-btn--active' : ''}`}
+                onClick={() => setShowMyProjectFilters(v => !v)}
+                aria-expanded={showMyProjectFilters}
+                aria-label="Toggle filters"
+              >
+                <SlidersHorizontal size={16} />
+                <span>Filters</span>
+                {(myProjectIndustry || myProjectStage) && <span className="pf-active-dot" />}
+              </button>
             </div>
 
+            {/* Expanded filter panel */}
+            {showMyProjectFilters && (
+              <div className="pf-panel">
+                <div className="pf-row">
+                  {/* Industry */}
+                  <div className="pf-section">
+                    <div className="pf-section-label">
+                      <Briefcase size={13} />
+                      Industry
+                    </div>
+                    <div className="pf-dropdown-wrapper">
+                      <select
+                        className="pf-dropdown"
+                        value={myProjectIndustry}
+                        onChange={e => setMyProjectIndustry(e.target.value)}
+                        aria-label="Filter by industry"
+                      >
+                        <option value="">All Industries</option>
+                        {MY_PROJECT_INDUSTRIES.map(ind => (
+                          <option key={ind} value={ind}>{ind}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={15} className="pf-dropdown-icon" />
+                    </div>
+                  </div>
+                  {/* Stage */}
+                  <div className="pf-section">
+                    <div className="pf-section-label">
+                      <Layers size={13} />
+                      Stage
+                    </div>
+                    <div className="pf-dropdown-wrapper">
+                      <select
+                        className="pf-dropdown"
+                        value={myProjectStage}
+                        onChange={e => setMyProjectStage(e.target.value)}
+                        aria-label="Filter by stage"
+                      >
+                        <option value="">All Stages</option>
+                        {MY_PROJECT_STAGES.map(stage => (
+                          <option key={stage} value={stage}>{stage}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={15} className="pf-dropdown-icon" />
+                    </div>
+                  </div>
+                </div>
+                {(myProjectIndustry || myProjectStage) && (
+                  <div className="pf-panel-footer">
+                    <button className="pf-clear-btn" onClick={clearMyProjectFilters}>
+                      <X size={13} /> Clear all filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {myProjectsSubTab === 'owned' && (() => {
-              const list = userProjects.owned.filter(p =>
-                !myProjectSearch.trim() ||
-                (p.title || '').toLowerCase().includes(myProjectSearch.toLowerCase()) ||
-                (p.description || '').toLowerCase().includes(myProjectSearch.toLowerCase())
-              );
+              const list = userProjects.owned.filter(p => {
+                if (myProjectSearch.trim()) {
+                  const q = myProjectSearch.toLowerCase();
+                  if (
+                    !(p.title || '').toLowerCase().includes(q) &&
+                    !(p.description || '').toLowerCase().includes(q)
+                  ) return false;
+                }
+                if (myProjectIndustry && p.industry !== myProjectIndustry) return false;
+                if (myProjectStage && p.stage !== myProjectStage) return false;
+                return true;
+              });
+              const hasFilters = myProjectSearch.trim() || myProjectIndustry || myProjectStage;
               return (
                 <>
                   <div className="projects-stats">
@@ -553,9 +640,9 @@ function Dashboard() {
                       </div>
                     ) : list.length === 0 ? (
                       <div className="empty-state">
-                        <p>No projects match your search.</p>
-                        <button className="pf-clear-btn" onClick={() => setMyProjectSearch('')}>
-                          <X size={13} /> Clear search
+                        <p>No projects match your search or filters.</p>
+                        <button className="pf-clear-btn" onClick={clearMyProjectFilters}>
+                          <X size={13} /> Clear filters
                         </button>
                       </div>
                     ) : (
