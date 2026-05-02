@@ -156,7 +156,7 @@ function ProjectModal({ project: initialProject, onClose, isOwned = false, isPar
       showToast({
         type: 'success',
         title: 'Application submitted',
-        description: `You applied for '${selectedPosition.role}' on '${project.title}'. Track it in Dashboard → Applications → Sent.`,
+        description: `You applied for ${selectedPosition.role} on ${project.title}.`,
         action: {
           label: 'View My Applications',
           onClick: () => { onClose(); navigate('/dashboard', { state: { tab: 'applications', subTab: 'sent' } }); }
