@@ -1382,16 +1382,16 @@ function Community() {
             <h3 className="sidebar-title">Community Stats</h3>
             <div className="stats-grid-community">
               <div className="stat-item-community">
-                <div className="stat-number">{communityStats.totalPosts.toLocaleString()}</div>
-                <div className="stat-label">Total Posts</div>
+                <div className="stat-number-community">{communityStats.totalPosts.toLocaleString()}</div>
+                <div className="stat-label-community">Total Posts</div>
               </div>
               <div className="stat-item-community">
-                <div className="stat-number">{communityStats.members.toLocaleString()}</div>
-                <div className="stat-label">Members</div>
+                <div className="stat-number-community">{communityStats.members.toLocaleString()}</div>
+                <div className="stat-label-community">Members</div>
               </div>
               <div className="stat-item-community" style={{ gridColumn: '1 / -1' }}>
-                <div className="stat-number">{communityStats.thisWeek}</div>
-                <div className="stat-label">Posts This Week</div>
+                <div className="stat-number-community">{communityStats.thisWeek}</div>
+                <div className="stat-label-community">Posts This Week</div>
               </div>
             </div>
           </div>
