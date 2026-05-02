@@ -1427,12 +1427,47 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
-/* Location input: remove the meta-item wrapper glass when editing */
-.profile-meta-item:has(.location-input) {
-  background: transparent;
-  border-color: transparent;
-  backdrop-filter: none;
+/* Location input styled like social input groups */
+.location-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 6px 10px;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.location-input-group:focus-within {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.location-input-group .edit-input {
+  margin: 0;
+  border: none;
   padding: 0;
+  flex: 1;
+  background: transparent;
+  color: white;
+  font-size: 0.95rem;
+}
+
+.location-input-group .edit-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.location-input-group .edit-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.location-input-group svg {
+  color: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
 }
 
 .social-links-display {

@@ -401,20 +401,23 @@ function Profile() {
               )}
 
               <div className="user-meta">
-                <div className="profile-meta-item">
-                  <MapPin size={16} />
-                  {isEditing ? (
+                {isEditing ? (
+                  <div className="social-input-group location-input-group">
+                    <MapPin size={16} />
                     <input
                       type="text"
-                      className="edit-input location-input"
+                      className="edit-input social-input"
                       value={formData.location}
                       onChange={(e) => handleInputChange('location', e.target.value)}
                       placeholder="Enter your location"
                     />
-                  ) : (
+                  </div>
+                ) : (
+                  <div className="profile-meta-item">
+                    <MapPin size={16} />
                     <span>{formData.location}</span>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div className="profile-meta-item">
                   <Calendar size={16} />
                   <span>Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }) : 'Recently'}</span>
