@@ -173,7 +173,7 @@
   gap: 1.5rem;
 }
 
-.stat-item {
+.project-stats .stat-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -182,7 +182,7 @@
   border-radius: 12px;
 }
 
-.stat-item svg {
+.project-stats .stat-item svg {
   color: var(--color-primary);
 }
 
@@ -193,7 +193,7 @@
   font-size: 0.9rem;
 }
 
-.stat-label {
+.project-stats .stat-label {
   display: block;
   color: var(--color-text-secondary);
   font-size: 0.8rem;

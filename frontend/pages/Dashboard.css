@@ -563,7 +563,7 @@
   margin-top: 0.25rem;
 }
 
-.skill-tag {
+.applicant-skills .skill-tag {
   background: #e0e7ff;
   color: var(--color-accent);
   font-size: 0.75rem;

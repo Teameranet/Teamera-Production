@@ -1674,7 +1674,7 @@
   gap: 0.5rem;
 }
 
-.action-btn {
+.card-actions .action-btn {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   padding: 0.5rem;
@@ -1687,19 +1687,19 @@
   justify-content: center;
 }
 
-.action-btn:hover {
+.card-actions .action-btn:hover {
   background: #f3f4f6;
   color: #374151;
   transform: translateY(-1px);
 }
 
-.edit-btn:hover {
+.card-actions .edit-btn:hover {
   color: #3b82f6;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.1);
 }
 
-.delete-btn:hover {
+.card-actions .delete-btn:hover {
   color: #ef4444;
   border-color: #ef4444;
   background-color: rgba(239, 68, 68, 0.1);
