@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut, Mail } from 'lucide-react';
+import { Users, Bookmark, Settings, MessageCircle, User, CheckCircle, XCircle, Clock, Download, LayoutDashboard, ExternalLink, X, LogOut, Mail, Search, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../context/ProjectContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -10,6 +10,7 @@ import ProjectModal from '../components/ProjectModal';
 import CreateProjectModal from '../components/CreateProjectModal';
 import './Dashboard.css';
 import '../components/tabs/WorkspaceTabs.css';
+import './Projects.css';
 import ProjectCard from '../components/ProjectCard';
 
 // Dashboard component displays the main dashboard UI for authenticated users
@@ -81,6 +82,12 @@ function Dashboard() {
   // State for delete project confirmation modal
   const [deleteProjectTarget, setDeleteProjectTarget] = useState(null); // { id, title }
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // State for applications search and filter
+  const [appSearch, setAppSearch] = useState('');
+  const [appStatusFilter, setAppStatusFilter] = useState('ALL');
+  const [showAppFilters, setShowAppFilters] = useState(false);
+  // State for My Projects search
+  const [myProjectSearch, setMyProjectSearch] = useState('');
 
   // Fetch user's owned and participating projects
   useEffect(() => {
@@ -134,12 +141,25 @@ function Dashboard() {
     }
   }, [user, applications, receivedApplications.length, sentApplications.length]);
 
-  // Filter applications based on the selected tab
+  // Filter applications based on the selected tab, search query, and status filter
   // 'received' tab shows applications_received (user is project owner)
   // 'sent' tab shows applications_sent (user is applicant)
   const filteredApplications = (applicationTab === 'received' ? receivedApplications : sentApplications)
     .slice()
-    .sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate));
+    .sort((a, b) => new Date(b.appliedDate) - new Date(a.appliedDate))
+    .filter(app => {
+      if (appStatusFilter !== 'ALL' && app.status !== appStatusFilter) return false;
+      if (appSearch.trim()) {
+        const q = appSearch.toLowerCase();
+        const name = (app.type === 'received' ? app.applicantName : app.projectOwnerName) || '';
+        return (
+          name.toLowerCase().includes(q) ||
+          (app.projectName || '').toLowerCase().includes(q) ||
+          (app.position || '').toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
 
   // Get real application counts from the Application collection
   const receivedApplicationsCount = receivedApplications.length;
@@ -482,68 +502,126 @@ function Dashboard() {
             <div className="myprojects-subtabs">
               <button
                 className={`subtab-btn ${myProjectsSubTab === 'owned' ? 'active' : ''}`}
-                onClick={() => setMyProjectsSubTab('owned')}
+                onClick={() => { setMyProjectsSubTab('owned'); setMyProjectSearch(''); }}
               >
                 Projects I Own ({userProjects.owned.length})
               </button>
               <button
                 className={`subtab-btn ${myProjectsSubTab === 'participating' ? 'active' : ''}`}
-                onClick={() => setMyProjectsSubTab('participating')}
+                onClick={() => { setMyProjectsSubTab('participating'); setMyProjectSearch(''); }}
               >
                 Projects I'm In ({userProjects.participating.length})
               </button>
             </div>
 
-            {myProjectsSubTab === 'owned' && (
-              <div className="projects-grid">
-                {userProjects.owned.length === 0 ? (
-                  <div className="empty-state">
-                    <p>You haven't created any projects yet.</p>
-                    <button className="empty-state-btn" onClick={() => setShowCreateProject(true)}>+ Create Your First Project</button>
-                  </div>
-                ) : (
-                  userProjects.owned.map(project => (
-                    <ProjectCard
-                      key={project.id || project._id}
-                      project={project}
-                      isOwned={true}
-                      hideReport={true}
-                      onEdit={() => handleEditProject(project)}
-                      onDelete={() => handleDeleteProject(project.id || project._id)}
-                      onClick={() => {
-                        setSelectedMyProject(project);
-                        setSelectedMyProjectType('owned');
-                      }}
-                    />
-                  ))
+            {/* Search bar */}
+            <div className="projects-filters">
+              <div className="pf-search-wrapper">
+                <Search size={18} className="pf-search-icon" />
+                <input
+                  type="text"
+                  className="pf-search-input"
+                  placeholder="Search by title or description…"
+                  value={myProjectSearch}
+                  onChange={e => setMyProjectSearch(e.target.value)}
+                  aria-label="Search my projects"
+                />
+                {myProjectSearch && (
+                  <button className="pf-search-clear" onClick={() => setMyProjectSearch('')} aria-label="Clear search">
+                    <X size={15} />
+                  </button>
                 )}
               </div>
-            )}
+            </div>
 
-            {myProjectsSubTab === 'participating' && (
-              <div className="projects-grid">
-                {userProjects.participating.length === 0 ? (
-                  <div className="empty-state">
-                    <p>You haven't joined any projects yet.</p>
-                    <a href="/projects" className="empty-state-link">Browse Projects to Apply →</a>
+            {myProjectsSubTab === 'owned' && (() => {
+              const list = userProjects.owned.filter(p =>
+                !myProjectSearch.trim() ||
+                (p.title || '').toLowerCase().includes(myProjectSearch.toLowerCase()) ||
+                (p.description || '').toLowerCase().includes(myProjectSearch.toLowerCase())
+              );
+              return (
+                <>
+                  <div className="projects-stats">
+                    <span>{list.length} project{list.length !== 1 ? 's' : ''} found</span>
                   </div>
-                ) : (
-                  userProjects.participating.map(project => (
-                    <ProjectCard
-                      key={project.id || project._id}
-                      project={project}
-                      isParticipating={true}
-                      hideReport={true}
-                      onLeave={() => handleLeaveProject(project)}
-                      onClick={() => {
-                        setSelectedMyProject(project);
-                        setSelectedMyProjectType('participating');
-                      }}
-                    />
-                  ))
-                )}
-              </div>
-            )}
+                  <div className="projects-grid">
+                    {userProjects.owned.length === 0 ? (
+                      <div className="empty-state">
+                        <p>You haven't created any projects yet.</p>
+                        <button className="empty-state-btn" onClick={() => setShowCreateProject(true)}>+ Create Your First Project</button>
+                      </div>
+                    ) : list.length === 0 ? (
+                      <div className="empty-state">
+                        <p>No projects match your search.</p>
+                        <button className="pf-clear-btn" onClick={() => setMyProjectSearch('')}>
+                          <X size={13} /> Clear search
+                        </button>
+                      </div>
+                    ) : (
+                      list.map(project => (
+                        <ProjectCard
+                          key={project.id || project._id}
+                          project={project}
+                          isOwned={true}
+                          hideReport={true}
+                          onEdit={() => handleEditProject(project)}
+                          onDelete={() => handleDeleteProject(project.id || project._id)}
+                          onClick={() => {
+                            setSelectedMyProject(project);
+                            setSelectedMyProjectType('owned');
+                          }}
+                        />
+                      ))
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+
+            {myProjectsSubTab === 'participating' && (() => {
+              const list = userProjects.participating.filter(p =>
+                !myProjectSearch.trim() ||
+                (p.title || '').toLowerCase().includes(myProjectSearch.toLowerCase()) ||
+                (p.description || '').toLowerCase().includes(myProjectSearch.toLowerCase())
+              );
+              return (
+                <>
+                  <div className="projects-stats">
+                    <span>{list.length} project{list.length !== 1 ? 's' : ''} found</span>
+                  </div>
+                  <div className="projects-grid">
+                    {userProjects.participating.length === 0 ? (
+                      <div className="empty-state">
+                        <p>You haven't joined any projects yet.</p>
+                        <a href="/projects" className="empty-state-link">Browse Projects to Apply →</a>
+                      </div>
+                    ) : list.length === 0 ? (
+                      <div className="empty-state">
+                        <p>No projects match your search.</p>
+                        <button className="pf-clear-btn" onClick={() => setMyProjectSearch('')}>
+                          <X size={13} /> Clear search
+                        </button>
+                      </div>
+                    ) : (
+                      list.map(project => (
+                        <ProjectCard
+                          key={project.id || project._id}
+                          project={project}
+                          isParticipating={true}
+                          hideReport={true}
+                          onLeave={() => handleLeaveProject(project)}
+                          onClick={() => {
+                            setSelectedMyProject(project);
+                            setSelectedMyProjectType('participating');
+                          }}
+                        />
+                      ))
+                    )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
         {activeTab === 'bookmarks' && (
@@ -580,16 +658,89 @@ function Dashboard() {
             <div className="myprojects-subtabs">
               <button 
                 className={`subtab-btn ${applicationTab === 'received' ? 'active' : ''}`}
-                onClick={() => setApplicationTab('received')}
+                onClick={() => { setApplicationTab('received'); setAppSearch(''); setAppStatusFilter('ALL'); setShowAppFilters(false); }}
               >
                 Received ({receivedApplicationsCount})
               </button>
               <button 
                 className={`subtab-btn ${applicationTab === 'sent' ? 'active' : ''}`}
-                onClick={() => setApplicationTab('sent')}
+                onClick={() => { setApplicationTab('sent'); setAppSearch(''); setAppStatusFilter('ALL'); setShowAppFilters(false); }}
               >
                 Sent ({sentApplicationsCount})
               </button>
+            </div>
+
+            {/* Search & Filter bar — matches Projects page style */}
+            <div className="projects-filters">
+              <div className="pf-search-wrapper">
+                <Search size={18} className="pf-search-icon" />
+                <input
+                  type="text"
+                  className="pf-search-input"
+                  placeholder="Search by name, project or position…"
+                  value={appSearch}
+                  onChange={e => setAppSearch(e.target.value)}
+                  aria-label="Search applications"
+                />
+                {appSearch && (
+                  <button className="pf-search-clear" onClick={() => setAppSearch('')} aria-label="Clear search">
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+              <button
+                className={`pf-filter-btn ${appStatusFilter !== 'ALL' ? 'pf-filter-btn--active' : ''}`}
+                onClick={() => setShowAppFilters(v => !v)}
+                aria-expanded={showAppFilters}
+                aria-label="Toggle filters"
+              >
+                <SlidersHorizontal size={16} />
+                <span>Filters</span>
+                {appStatusFilter !== 'ALL' && <span className="pf-active-dot" />}
+              </button>
+            </div>
+
+            {/* Expanded filter panel */}
+            {showAppFilters && (
+              <div className="pf-panel">
+                <div className="pf-section">
+                  <div className="pf-section-label">
+                    <Clock size={13} />
+                    Status
+                  </div>
+                  <div className="pf-chips">
+                    {[
+                      { value: 'ALL',      label: 'All'      },
+                      { value: 'PENDING',  label: 'Pending'  },
+                      { value: 'ACCEPTED', label: 'Accepted' },
+                      { value: 'INVITED',  label: 'Invited'  },
+                      { value: 'REJECTED', label: 'Rejected' },
+                      { value: 'QUIT',     label: 'Quit'     },
+                      { value: 'REMOVED',  label: 'Removed'  },
+                    ].map(({ value, label }) => (
+                      <button
+                        key={value}
+                        className={`pf-chip ${appStatusFilter === value ? 'pf-chip--active' : ''}`}
+                        onClick={() => setAppStatusFilter(value)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {appStatusFilter !== 'ALL' && (
+                  <div className="pf-panel-footer">
+                    <button className="pf-clear-btn" onClick={() => { setAppStatusFilter('ALL'); setAppSearch(''); }}>
+                      <X size={13} /> Clear all filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Results count */}
+            <div className="projects-stats">
+              <span>{filteredApplications.length} application{filteredApplications.length !== 1 ? 's' : ''} found</span>
             </div>
             
             {/* Applications list */}
