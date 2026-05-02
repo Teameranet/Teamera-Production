@@ -1339,6 +1339,26 @@
   max-width: 431.1px;
 }
 
+@media (max-width: 520px) {
+  .social-links-edit {
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* GitHub and LinkedIn share the first row equally */
+  .social-links-edit .social-input-group:nth-child(1),
+  .social-links-edit .social-input-group:nth-child(2) {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+
+  /* Portfolio takes the full second row */
+  .social-links-edit .social-input-group:nth-child(3) {
+    flex: 1 1 100%;
+  }
+}
+
 .social-input-group {
   display: flex;
   align-items: center;
