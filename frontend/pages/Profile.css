@@ -1333,21 +1333,28 @@
 
 .social-links-edit {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
   width: 100%;
   max-width: 300px;
-  flex-direction: row
 }
 
 .social-input-group {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 6px;
-  padding: 8px;
+  padding: 6px 10px;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.social-input-group:focus-within {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 .social-input-group .edit-input {
@@ -1355,7 +1362,13 @@
   border: none;
   padding: 0;
   flex: 1;
-  color: black;
+  background: transparent;
+  color: white;
+  font-size: 0.95rem;
+}
+
+.social-input-group .edit-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .social-input-group .edit-input:focus {
@@ -1364,7 +1377,8 @@
 }
 
 .social-input-group svg {
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
 }
 
 .social-btn {
@@ -1389,8 +1403,7 @@
 
 /* Banner edit input styles */
 .title-input,
-.location-input,
-.social-input {
+.location-input {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
@@ -1402,18 +1415,24 @@
 }
 
 .title-input::placeholder,
-.location-input::placeholder,
-.social-input::placeholder {
+.location-input::placeholder {
   color: rgba(255, 255, 255, 0.7);
 }
 
 .title-input:focus,
-.location-input:focus,
-.social-input:focus {
+.location-input:focus {
   outline: none;
   border-color: rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.15);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Location input: remove the meta-item wrapper glass when editing */
+.profile-meta-item:has(.location-input) {
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: none;
+  padding: 0;
 }
 
 .social-links-display {
