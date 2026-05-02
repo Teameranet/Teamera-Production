@@ -822,6 +822,59 @@ background: var(--color-border-light);
   background: #fee2e2;
 }
 
+/* ── Edit post button ────────────────────────────────────────── */
+.edit-post-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.edit-post-btn:hover {
+  color: var(--color-accent, #6366f1);
+  background: #ede9fe;
+}
+
+/* ── Inline post edit form ───────────────────────────────────── */
+.post-edit-form {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.post-edit-textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1.5px solid var(--color-accent, #6366f1);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #1a1a2e);
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.post-edit-textarea:focus {
+  border-color: var(--color-accent, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.post-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 /* ── Comments section ────────────────────────────────────────── */
 .comments-section {
   margin-top: 1rem;

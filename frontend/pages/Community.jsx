@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Heart, MessageCircle, Bookmark, BookmarkMinus, Paperclip,
   Send, Search, Hash, TrendingUp, Users, Trash2, Download,
-  ChevronDown, ChevronUp, SlidersHorizontal, X, Reply
+  ChevronDown, ChevronUp, SlidersHorizontal, X, Reply, Pencil, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UserAvatar from '../components/UserAvatar';
@@ -191,6 +191,11 @@ function Community() {
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const [showSavedPosts, setShowSavedPosts] = useState(false);
   const [showMyPosts, setShowMyPosts] = useState(false);
+  // Edit post state
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editPostText, setEditPostText] = useState('');
+  const [editPostCategory, setEditPostCategory] = useState('General');
+  const [saving, setSaving] = useState(false);
   // Profile modal
   const [selectedUser, setSelectedUser] = useState(null);
   // SSE connection status
@@ -282,6 +287,15 @@ function Community() {
                 setPosts((prev) => prev.filter((p) => p.id !== data.payload.postId));
                 // Refresh stats
                 fetchSidebar();
+                break;
+
+              case 'updatePost':
+                // Update edited post content/category in the feed
+                setPosts((prev) =>
+                  prev.map((p) =>
+                    p.id === data.payload.id ? { ...p, content: data.payload.content, category: data.payload.category, tags: data.payload.tags } : p
+                  )
+                );
                 break;
 
               case 'likeUpdate':
@@ -412,6 +426,44 @@ function Community() {
     } catch (err) {
       console.error('Delete post failed:', err);
       fetchPosts(); // Re-fetch to restore state
+    }
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPostId(post.id);
+    setEditPostText(post.content);
+    setEditPostCategory(post.category);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPostId(null);
+    setEditPostText('');
+    setEditPostCategory('General');
+  };
+
+  const handleSaveEdit = async (postId) => {
+    if (!editPostText.trim() || saving) return;
+    setSaving(true);
+    // Optimistic update
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, content: editPostText.trim(), category: editPostCategory } : p
+      )
+    );
+    setEditingPostId(null);
+    try {
+      await api.put(endpoints.community.updatePost(postId), {
+        content: editPostText.trim(),
+        category: editPostCategory,
+        userId,
+      });
+    } catch (err) {
+      console.error('Edit post failed:', err);
+      fetchPosts(); // Re-fetch to restore state
+    } finally {
+      setSaving(false);
+      setEditPostText('');
+      setEditPostCategory('General');
     }
   };
 
@@ -950,18 +1002,38 @@ function Community() {
                         </div>
                         <div className="post-header-right">
                           <CategoryBadge category={post.category} />
+                          <button className="edit-post-btn" onClick={() => handleEditPost(post)} title="Edit post" aria-label="Edit post">
+                            <Pencil size={15} />
+                          </button>
                           <button className="delete-post-btn" onClick={() => handleDeletePost(post.id)} title="Delete post" aria-label="Delete post">
                             <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
-                      <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>{post.content}</div>
-                      {post.content.length > 200 && (
-                        <button className="show-more-btn" onClick={() => toggleExpanded(post.id)}>
-                          {isExpanded
-                            ? <><ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less</>
-                            : <><ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more</>}
-                        </button>
+                      {editingPostId === post.id ? (
+                        <div className="post-edit-form">
+                          <div className="composer-categories" style={{ marginBottom: '0.5rem' }}>
+                            {COMPOSER_CATEGORIES.map((cat) => (
+                              <button key={cat} className={`category-chip ${editPostCategory === cat ? 'active' : ''}`} onClick={() => setEditPostCategory(cat)} type="button">{cat}</button>
+                            ))}
+                          </div>
+                          <textarea className="post-edit-textarea" value={editPostText} onChange={(e) => setEditPostText(e.target.value)} rows={4} aria-label="Edit post content" autoFocus />
+                          <div className="post-edit-actions">
+                            <button className="composer-cancel-btn" onClick={handleCancelEdit} type="button">Cancel</button>
+                            <button className="post-btn" onClick={() => handleSaveEdit(post.id)} disabled={!editPostText.trim() || saving} type="button"><Check size={15} />{saving ? 'Saving…' : 'Save'}</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>{post.content}</div>
+                          {post.content.length > 200 && (
+                            <button className="show-more-btn" onClick={() => toggleExpanded(post.id)}>
+                              {isExpanded
+                                ? <><ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less</>
+                                : <><ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more</>}
+                            </button>
+                          )}
+                        </>
                       )}
                       <PostAttachment attachment={post.attachment} />
                       {post.tags.length > 0 && (
@@ -1067,15 +1139,35 @@ function Community() {
                         <div className="post-header-right">
                           <CategoryBadge category={post.category} />
                           {isAuthor && (
-                            <button className="delete-post-btn" onClick={() => handleDeletePost(post.id)} title="Delete post" aria-label="Delete post"><Trash2 size={15} /></button>
+                            <>
+                              <button className="edit-post-btn" onClick={() => handleEditPost(post)} title="Edit post" aria-label="Edit post"><Pencil size={15} /></button>
+                              <button className="delete-post-btn" onClick={() => handleDeletePost(post.id)} title="Delete post" aria-label="Delete post"><Trash2 size={15} /></button>
+                            </>
                           )}
                         </div>
                       </div>
-                      <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>{post.content}</div>
-                      {post.content.length > 200 && (
-                        <button className="show-more-btn" onClick={() => toggleExpanded(post.id)}>
-                          {isExpanded ? <><ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less</> : <><ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more</>}
-                        </button>
+                      {editingPostId === post.id ? (
+                        <div className="post-edit-form">
+                          <div className="composer-categories" style={{ marginBottom: '0.5rem' }}>
+                            {COMPOSER_CATEGORIES.map((cat) => (
+                              <button key={cat} className={`category-chip ${editPostCategory === cat ? 'active' : ''}`} onClick={() => setEditPostCategory(cat)} type="button">{cat}</button>
+                            ))}
+                          </div>
+                          <textarea className="post-edit-textarea" value={editPostText} onChange={(e) => setEditPostText(e.target.value)} rows={4} aria-label="Edit post content" autoFocus />
+                          <div className="post-edit-actions">
+                            <button className="composer-cancel-btn" onClick={handleCancelEdit} type="button">Cancel</button>
+                            <button className="post-btn" onClick={() => handleSaveEdit(post.id)} disabled={!editPostText.trim() || saving} type="button"><Check size={15} />{saving ? 'Saving…' : 'Save'}</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>{post.content}</div>
+                          {post.content.length > 200 && (
+                            <button className="show-more-btn" onClick={() => toggleExpanded(post.id)}>
+                              {isExpanded ? <><ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less</> : <><ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more</>}
+                            </button>
+                          )}
+                        </>
                       )}
                       <PostAttachment attachment={post.attachment} />
                       {post.tags.length > 0 && (
@@ -1176,37 +1268,86 @@ function Community() {
                     <div className="post-header-right">
                       <CategoryBadge category={post.category} />
                       {isAuthor && (
-                        <button
-                          className="delete-post-btn"
-                          onClick={() => handleDeletePost(post.id)}
-                          title="Delete post"
-                          aria-label="Delete post"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        <>
+                          <button
+                            className="edit-post-btn"
+                            onClick={() => handleEditPost(post)}
+                            title="Edit post"
+                            aria-label="Edit post"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            className="delete-post-btn"
+                            onClick={() => handleDeletePost(post.id)}
+                            title="Delete post"
+                            aria-label="Delete post"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
 
-                  {/* Post content */}
-                  <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>
-                    {post.content}
-                  </div>
-                  {post.content.length > 200 && (
-                    <button
-                      className="show-more-btn"
-                      onClick={() => toggleExpanded(post.id)}
-                    >
-                      {isExpanded ? (
-                        <>
-                          <ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more
-                        </>
+                  {/* Post content / inline editor */}
+                  {editingPostId === post.id ? (
+                    <div className="post-edit-form">
+                      <div className="composer-categories" style={{ marginBottom: '0.5rem' }}>
+                        {COMPOSER_CATEGORIES.map((cat) => (
+                          <button
+                            key={cat}
+                            className={`category-chip ${editPostCategory === cat ? 'active' : ''}`}
+                            onClick={() => setEditPostCategory(cat)}
+                            type="button"
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        className="post-edit-textarea"
+                        value={editPostText}
+                        onChange={(e) => setEditPostText(e.target.value)}
+                        rows={4}
+                        aria-label="Edit post content"
+                        autoFocus
+                      />
+                      <div className="post-edit-actions">
+                        <button className="composer-cancel-btn" onClick={handleCancelEdit} type="button">Cancel</button>
+                        <button
+                          className="post-btn"
+                          onClick={() => handleSaveEdit(post.id)}
+                          disabled={!editPostText.trim() || saving}
+                          type="button"
+                        >
+                          <Check size={15} />
+                          {saving ? 'Saving…' : 'Save'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={`post-content ${isExpanded ? '' : 'truncated'}`}>
+                        {post.content}
+                      </div>
+                      {post.content.length > 200 && (
+                        <button
+                          className="show-more-btn"
+                          onClick={() => toggleExpanded(post.id)}
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp size={14} style={{ verticalAlign: 'middle' }} /> Show less
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown size={14} style={{ verticalAlign: 'middle' }} /> Show more
+                            </>
+                          )}
+                        </button>
                       )}
-                    </button>
+                    </>
                   )}
 
                   {/* Attachment */}

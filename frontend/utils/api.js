@@ -134,6 +134,7 @@ export const endpoints = {
     getPosts: '/api/community/posts',
     createPost: '/api/community/posts',
     deletePost: (postId) => `/api/community/posts/${postId}`,
+    updatePost: (postId) => `/api/community/posts/${postId}`,
     likePost: (postId) => `/api/community/posts/${postId}/like`,
     bookmarkPost: (postId) => `/api/community/posts/${postId}/bookmark`,
     addComment: (postId) => `/api/community/posts/${postId}/comments`,

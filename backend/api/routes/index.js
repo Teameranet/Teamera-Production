@@ -14,6 +14,7 @@ import {
   streamCommunity,
   getPosts,
   createPost,
+  updatePost,
   deletePost,
   toggleLike,
   toggleBookmark,
@@ -118,6 +119,7 @@ router.get("/community/trending", getTrending);
 router.get("/community/posts/bookmarked", getBookmarkedPosts);
 router.get("/community/posts", getPosts);
 router.post("/community/posts", createPost);
+router.put("/community/posts/:postId", updatePost);
 router.delete("/community/posts/:postId", deletePost);
 router.post("/community/posts/:postId/like", toggleLike);
 router.post("/community/posts/:postId/bookmark", toggleBookmark);

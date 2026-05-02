@@ -175,6 +175,48 @@ export const createPost = asyncHandler(async (req, res) => {
 });
 
 /**
+ * PUT /api/community/posts/:postId
+ * Body: { content, category, userId }
+ */
+export const updatePost = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+  const { content, category, userId } = req.body;
+
+  if (!content || !content.trim()) {
+    return res.status(400).json(errorResponse('Post content is required', 'MISSING_CONTENT'));
+  }
+
+  const post = await Post.findById(postId);
+  if (!post) {
+    return res.status(404).json(errorResponse('Post not found', 'POST_NOT_FOUND'));
+  }
+
+  // Only the author can edit their post
+  if (userId && post.author.userId && post.author.userId.toString() !== userId.toString()) {
+    return res.status(403).json(errorResponse('Not authorised to edit this post', 'FORBIDDEN'));
+  }
+
+  post.content = sanitizeInput(content.trim());
+  if (category) post.category = category;
+
+  // Re-parse tags from updated content
+  const matches = post.content.match(/#\w+/g);
+  post.tags = matches ? matches.map((t) => t.toLowerCase()) : [];
+
+  await post.save();
+
+  const formattedPost = formatPost(post, userId);
+
+  // Broadcast update to all connected clients
+  broadcastToCommunity({
+    type: 'updatePost',
+    payload: formattedPost,
+  });
+
+  res.json(successResponse(formattedPost, 'Post updated successfully'));
+});
+
+/**
  * DELETE /api/community/posts/:postId
  * Query param: userId (for ownership check)
  */
