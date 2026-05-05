@@ -1,5 +1,5 @@
 /* ========================================
-   WORKSPACE PAGE — mirrors Hackathons design system
+   WORKSPACE PAGE
    ======================================== */
 
 .workspace-container {
@@ -9,7 +9,7 @@
   margin: 0 auto;
 }
 
-/* Header — same gradient as .hackathons-header */
+/* Header */
 .workspace-header {
   display: flex;
   justify-content: space-between;
@@ -72,7 +72,7 @@
   color: white;
 }
 
-/* Tabs — same pattern as .hackathons-tabs */
+/* Tabs */
 .workspace-tabs {
   display: flex;
   /* justify-content: center; */

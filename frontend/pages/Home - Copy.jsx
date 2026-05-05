@@ -38,9 +38,9 @@ function Home({ onAuthClick }) {
                 Start Building Today
               </button>
             )}
-            <Link to="/hackathons" className="cta-button secondary">
+            <Link to="/projects" className="cta-button secondary">
               <Search size={20} className="button-icon" />
-              Join Hackathons
+              Explore Projects
             </Link>
           </div>
         </div>
@@ -171,7 +171,7 @@ function Home({ onAuthClick }) {
             <p>Gain real-world experience and learn from industry professionals.</p>
             <ul>
               <li>Join learning projects</li>
-              <li>Participate in hackathons</li>
+              <li>Participate in projects</li>
               <li>Build your network</li>
               <li>Develop practical skills</li>
             </ul>
@@ -198,9 +198,9 @@ function Home({ onAuthClick }) {
                 Get Started Free
               </button>
             )}
-            <Link to="/hackathons" className="cta-button secondary">
+            <Link to="/projects" className="cta-button secondary">
               <Search size={20} className="button-icon" />
-              Join Hackathons
+              Explore Projects
             </Link>
           </div>
           <div className="trust-indicators">
@@ -314,7 +314,7 @@ function FeaturesHorizontal() {
               <FeatureSlide icon={<Search size={24} />} title="Project Discovery" desc="Advanced browsing and filtering to find projects." />
               <FeatureSlide icon={<GitBranch size={24} />} title="Application Management" desc="Apply to projects and manage applications easily." />
               <FeatureSlide icon={<MessageSquare size={24} />} title="Real-time Collaboration" desc="Integrated chat, task tracking, and file sharing." />
-              <FeatureSlide icon={<Trophy size={24} />} title="Hackathon Tracking" desc="Join hackathons, track progress, and win prizes." />
+              <FeatureSlide icon={<Trophy size={24} />} title="Achievement Tracking" desc="Track milestones, celebrate wins, and grow your portfolio." />
             </div>
           </div>
           <div className="features-indicators">
