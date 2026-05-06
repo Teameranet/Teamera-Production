@@ -1,0 +1,170 @@
+@page {
+    size: A4;
+    margin: 1in;
+}
+
+body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: black;
+    background-color: white;
+    text-align: justify;
+    margin: 0;
+    padding: 0;
+}
+
+/* Page container for screen viewing */
+.page-container {
+    width: 210mm;
+    margin: auto;
+    background: white;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    color: black;
+    text-align: left;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    text-decoration: underline;
+    font-weight: bold;
+    page-break-after: avoid;
+}
+
+h1 {
+    font-size: 20pt;
+    page-break-before: always;
+    text-align: center;
+    margin-top: 0;
+    padding-top: 1in;
+}
+
+h2 {
+    font-size: 16pt;
+    border-bottom: 1px solid black;
+    padding-bottom: 5px;
+}
+
+h3 {
+    font-size: 14pt;
+}
+
+h4 {
+    font-size: 12pt;
+    font-style: italic;
+}
+
+p {
+    margin-bottom: 1.2em;
+    text-indent: 0.5in;
+}
+
+ul,
+ol {
+    margin-bottom: 1.2em;
+    padding-left: 0.7in;
+}
+
+li {
+    margin-bottom: 0.5em;
+}
+
+.center {
+    text-align: center;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    page-break-inside: avoid;
+}
+
+th,
+td {
+    border: 1px solid black;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f0f0f0;
+}
+
+.figure {
+    text-align: center;
+    margin: 2.5em 0;
+    page-break-inside: avoid;
+}
+
+.figure img {
+    max-width: 90%;
+    height: auto;
+    border: 1px solid black;
+}
+
+.figure-caption {
+    font-style: italic;
+    margin-top: 0.5em;
+    font-weight: bold;
+    font-size: 11pt;
+}
+
+.table-caption {
+    font-style: italic;
+    margin-bottom: 0.5em;
+    font-weight: bold;
+    text-align: left;
+    font-size: 11pt;
+}
+
+.page-break {
+    page-break-after: always;
+}
+
+pre {
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10pt;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 1em 0;
+    page-break-inside: avoid;
+}
+
+.mermaid {
+    background: white;
+    padding: 20px;
+    border: 1px dashed black;
+    margin: 10px auto;
+    display: block;
+    width: fit-content;
+}
+
+/* Header/Footer for Print */
+@media print {
+    body {
+        margin: 0;
+    }
+
+    .no-print {
+        display: none;
+    }
+
+    .page-container {
+        width: 100%;
+    }
+}

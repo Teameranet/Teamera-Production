@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teamera Project Report - Ashwinkumar Chavan</title>
+    <link rel="stylesheet" href="report_style.css">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#000000',
+                primaryBorderColor: '#000000',
+                lineColor: '#000000',
+                secondaryColor: '#f2f2f2',
+                tertiaryColor: '#ffffff',
+                fontSize: '14px'
+            }
+        });
+    </script>
+    <style>
+        .no-print-header {
+            background: #000;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        @media print {
+            .no-print-header {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print-header">
+        <strong>TEAMERA BLACK BOOK GENERATOR</strong> | Press <strong>Ctrl + P</strong> to Export PDF | Ensure 1"
+        Margins & A4 Paper
+    </div>
+
+    <div class="page-container">
+
+        <!-- PAGE 1: COVER PAGE -->
+        <div class="page cover-page center">
+            <br><br><br>
+            <h2 class="uppercase">Tilak Maharashtra Vidyapeeth</h2>
+            <p class="bold">Department of Computer Applications</p>
+            <br><br><br><br><br>
+            <div style="border: 4px double black; padding: 40px; margin: 20px;">
+                <h1 class="uppercase bold"
+                    style="font-size: 36pt; border: none; text-decoration: none; margin: 0; padding: 0;">TEAMERA</h1>
+                <br>
+                <p class="bold" style="font-size: 14pt;">A Collaborative Team & Project Management Web Application</p>
+            </div>
+            <br><br><br><br>
+            <p>A Project Report submitted in partial fulfillment of the requirements for the Degree of</p>
+            <p class="bold" style="font-size: 16pt;">Bachelor of Computer Applications (BCA)</p>
+            <br><br><br><br>
+            <div style="text-align: left; display: inline-block; width: 70%; font-size: 14pt;">
+                <p><span class="bold">Submitted By:</span> Ashwinkumar Chavan</p>
+                <p><span class="bold">PRN:</span> 04422000371</p>
+                <p><span class="bold">Class:</span> BCA 3rd Year</p>
+                <p><span class="bold">Academic Year:</span> 2025 – 2026</p>
+            </div>
+            <br><br><br><br>
+            <p class="bold">Project Guide:</p>
+            <p style="font-size: 14pt;">Mr. Mayur Sir</p>
+            <br><br><br><br>
+            <p>Department of Computer Applications</p>
+            <p>Tilak Maharashtra Vidyapeeth, Pune</p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- PAGE 2: CERTIFICATE -->
+        <div class="page certificate">
+            <br><br><br>
+            <h2 class="center uppercase" style="font-size: 20pt;">Certificate</h2>
+            <br><br><br>
+            <p>This is to certify that the project entitled <span class="bold">"TEAMERA — A Collaborative Team & Project
+                    Management Web Application"</span> is a bonafide work carried out by <span class="bold">Ashwinkumar
+                    Chavan (PRN: 04422000371)</span> in partial fulfillment of the requirements for the degree of <span
+                    class="bold">Bachelor of Computer Applications</span> from <span class="bold">Tilak Maharashtra
+                    Vidyapeeth, Pune</span> during the academic year 2025–2026.</p>
+            <p>This project has been completed under my guidance and supervision. The work presented in this report is
+                original and to the best of my knowledge, it has not been submitted to any other university or
+                institution for the award of any degree or diploma.</p>
+            <br><br><br><br><br><br><br>
+            <table style="border: none;">
+                <tr style="border: none;">
+                    <td style="border: none; width: 33%; text-align: center;">
+                        ____________________<br>
+                        <span class="bold">Mr. Mayur Sir</span><br>
+                        Project Guide
+                    </td>
+                    <td style="border: none; width: 33%; text-align: center;">
+                        ____________________<br>
+                        <span class="bold">Dr. Asmita Namjoshi</span><br>
+                        Head of Department
+                    </td>
+                    <td style="border: none; width: 33%; text-align: center;">
+                        ____________________<br>
+                        External Examiner
+                    </td>
+                </tr>
+            </table>
+            <br><br><br><br>
+            <p><span class="bold">Date:</span> ________________</p>
+            <p><span class="bold">Place:</span> Pune</p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- PAGE 3: ACKNOWLEDGEMENT -->
+        <div class="page acknowledgement">
+            <br><br><br>
+            <h2 class="center uppercase" style="font-size: 20pt;">Acknowledgement</h2>
+            <br><br><br>
+            <p>I would like to take this opportunity to express my deep sense of gratitude to all those who have
+                directly or indirectly helped me in the successful completion of this project. The journey of developing
+                <span class="bold">TEAMERA</span> has been one of immense learning and growth, and it would not have
+                been possible without the support of my mentors and well-wishers.</p>
+            <p>First and foremost, I am profoundly grateful to <span class="bold">Tilak Maharashtra Vidyapeeth</span>
+                for providing me with the academic foundation and the opportunity to work on this project as part of my
+                BCA curriculum. The department's focus on practical learning has been a constant source of motivation.
+            </p>
+            <p>I wish to extend my most sincere thanks to my project guide, <span class="bold">Mr. Mayur Sir</span>, for
+                his constant guidance, patience, and technical mentorship. His insights into full-stack development and
+                project management were instrumental in overcoming the technical challenges I faced during the
+                development of this application. His belief in my project idea gave me the confidence to push boundaries
+                and implement complex features.</p>
+            <p>I am also deeply thankful to <span class="bold">Dr. Asmita Namjoshi Mam</span> (Head of Department,
+                Computer Applications) for her administrative support and for ensuring that we had access to the best
+                resources and guidance throughout the academic year.</p>
+            <p>I would like to thank all the faculty members of the Computer Applications department for their valuable
+                lectures and for building the technical core that allowed me to undertake a project of this scale.</p>
+            <p>On a personal note, I am eternally grateful to my parents and family for their unwavering support,
+                sacrifices, and encouragement. They have been my pillars of strength throughout my academic journey. I
+                also thank my friends for their constructive criticism, testing help, and for making the long hours of
+                coding enjoyable.</p>
+            <p>Finally, I acknowledge the vast developer community and the creators of the open-source libraries used in
+                this project. Their work has been a source of inspiration and learning.</p>
+            <br><br><br>
+            <div style="text-align: right; padding-right: 1in;">
+                <p><span class="bold">Ashwinkumar Chavan</span></p>
+                <p>BCA 3rd Year</p>
+            </div>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- PAGE 4: SYNOPSIS -->
+        <div class="page synopsis">
+            <br><br><br>
+            <h2 class="center uppercase" style="font-size: 20pt;">Project Synopsis</h2>
+            <br><br>
+            <h3>1. Introduction</h3>
+            <p>TEAMERA is an advanced collaborative project management platform designed specifically for developers,
+                students, and small-scale startup teams. In the modern era of software development, collaboration is no
+                longer a luxury but a necessity. However, finding the right team members and managing a project through
+                its lifecycle remains a fragmented process. TEAMERA bridges this gap by providing a unified environment
+                where users can showcase their professional profiles, create projects, recruit team members based on
+                specific skills, and collaborate in real-time through an integrated workspace.</p>
+
+            <h3>2. Problem Statement</h3>
+            <p>Current project management ecosystems are often disjointed. Developers use LinkedIn for networking,
+                Discord for chat, GitHub for code, and Trello for tasks. This fragmentation leads to communication
+                silos, loss of context, and increased management overhead. Furthermore, for students and independent
+                developers, there is no dedicated "talent marketplace" where one can apply to join a project based on a
+                specific technical role. TEAMERA solves this by integrating recruitment and workspace management into a
+                single, cohesive application.</p>
+
+            <h3>3. Objectives</h3>
+            <ul>
+                <li>To design a secure, skill-based user profile system for professional showcasing.</li>
+                <li>To implement a dynamic project listing platform with advanced filtering and search.</li>
+                <li>To develop a robust recruitment workflow including application submission, review, and acceptance.
+                </li>
+                <li>To integrate a real-time communication system using WebSockets for instant team interaction.</li>
+                <li>To provide an integrated task management system for tracking project progress within the workspace.
+                </li>
+                <li>To build a community-driven social feed for sharing project updates and knowledge.</li>
+            </ul>
+
+            <h3>4. Technology Stack</h3>
+            <p>The project is built using the <span class="bold">MERN Stack</span>:</p>
+            <ul>
+                <li><span class="bold">Frontend:</span> React.js, Vite, Framer Motion, Three.js, Lucide Icons.</li>
+                <li><span class="bold">Backend:</span> Node.js, Express.js, Socket.io, JWT, Multer.</li>
+                <li><span class="bold">Database:</span> MongoDB (NoSQL) with Mongoose ODM.</li>
+                <li><span class="bold">Deployment:</span> Vercel and Node-based server environment.</li>
+            </ul>
+
+            <h3>5. Scope & Future Work</h3>
+            <p>The current scope includes full project lifecycle management from recruitment to workspace collaboration.
+                Future enhancements will include AI-powered team recommendations, GitHub repository integration, and
+                mobile application support using React Native.</p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- PAGE 5: TABLE OF CONTENTS (Expanded for 80+ Pages) -->
+        <div class="page toc">
+            <br><br>
+            <h1 class="center uppercase">Table of Contents</h1>
+            <br><br>
+            <table style="border: none;">
+                <tr style="border-bottom: 2px solid black;">
+                    <td style="border: none;"><span class="bold">Chapter No.</span></td>
+                    <td style="border: none;"><span class="bold">Title</span></td>
+                    <td style="border: none; text-align: right;"><span class="bold">Page No.</span></td>
+                </tr>
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">Title Page</td>
+                    <td style="border: none; text-align: right;">i</td>
+                </tr>
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">Certificate</td>
+                    <td style="border: none; text-align: right;">ii</td>
+                </tr>
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">Acknowledgement</td>
+                    <td style="border: none; text-align: right;">iii</td>
+                </tr>
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">Synopsis</td>
+                    <td style="border: none; text-align: right;">iv</td>
+                </tr>
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">List of Figures</td>
+                    <td style="border: none; text-align: right;">vi</td>
+                </tr>
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">List of Tables</td>
+                    <td style="border: none; text-align: right;">viii</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">1.</td>
+                    <td style="border: none;"><span class="bold">Introduction</span></td>
+                    <td style="border: none; text-align: right;">1</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">1.1</td>
+                    <td style="border: none; padding-left: 20px;">Project Overview & Background</td>
+                    <td style="border: none; text-align: right;">2</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">1.2</td>
+                    <td style="border: none; padding-left: 20px;">Problem Definition</td>
+                    <td style="border: none; text-align: right;">5</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">1.3</td>
+                    <td style="border: none; padding-left: 20px;">Project Objectives</td>
+                    <td style="border: none; text-align: right;">8</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">1.4</td>
+                    <td style="border: none; padding-left: 20px;">Scope of the System</td>
+                    <td style="border: none; text-align: right;">10</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">1.5</td>
+                    <td style="border: none; padding-left: 20px;">Motivation and Social Impact</td>
+                    <td style="border: none; text-align: right;">12</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">2.</td>
+                    <td style="border: none;"><span class="bold">System Analysis</span></td>
+                    <td style="border: none; text-align: right;">15</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">2.1</td>
+                    <td style="border: none; padding-left: 20px;">Feasibility Study (Technical, Economic, Operational)
+                    </td>
+                    <td style="border: none; text-align: right;">16</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">2.2</td>
+                    <td style="border: none; padding-left: 20px;">Requirement Analysis</td>
+                    <td style="border: none; text-align: right;">20</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">2.3</td>
+                    <td style="border: none; padding-left: 20px;">SDLC Model (Agile/Scrum Implementation)</td>
+                    <td style="border: none; text-align: right;">23</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">2.4</td>
+                    <td style="border: none; padding-left: 20px;">Comparison with Existing Systems</td>
+                    <td style="border: none; text-align: right;">26</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">3.</td>
+                    <td style="border: none;"><span class="bold">System Requirements & Tools</span></td>
+                    <td style="border: none; text-align: right;">30</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">3.1</td>
+                    <td style="border: none; padding-left: 20px;">Hardware Specifications</td>
+                    <td style="border: none; text-align: right;">31</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">3.2</td>
+                    <td style="border: none; padding-left: 20px;">Software Environment</td>
+                    <td style="border: none; text-align: right;">33</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">3.3</td>
+                    <td style="border: none; padding-left: 20px;">Detailed Tech Stack Breakdown</td>
+                    <td style="border: none; text-align: right;">35</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">3.4</td>
+                    <td style="border: none; padding-left: 20px;">Library and Framework Overview</td>
+                    <td style="border: none; text-align: right;">38</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">4.</td>
+                    <td style="border: none;"><span class="bold">System Design</span></td>
+                    <td style="border: none; text-align: right;">42</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">4.1</td>
+                    <td style="border: none; padding-left: 20px;">System Architecture (Three-Tier)</td>
+                    <td style="border: none; text-align: right;">43</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">4.2</td>
+                    <td style="border: none; padding-left: 20px;">Data Flow Diagrams (DFDs)</td>
+                    <td style="border: none; text-align: right;">46</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">4.3</td>
+                    <td style="border: none; padding-left: 20px;">Entity Relationship Diagram (ERD)</td>
+                    <td style="border: none; text-align: right;">50</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">4.4</td>
+                    <td style="border: none; padding-left: 20px;">UML Diagrams (Use Case, Sequence, Class)</td>
+                    <td style="border: none; text-align: right;">54</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">4.5</td>
+                    <td style="border: none; padding-left: 20px;">Database Schema Design</td>
+                    <td style="border: none; text-align: right;">58</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">5.</td>
+                    <td style="border: none;"><span class="bold">Implementation</span></td>
+                    <td style="border: none; text-align: right;">65</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">5.1</td>
+                    <td style="border: none; padding-left: 20px;">Frontend Implementation Strategy</td>
+                    <td style="border: none; text-align: right;">66</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">5.2</td>
+                    <td style="border: none; padding-left: 20px;">Backend Logic & API Design</td>
+                    <td style="border: none; text-align: right;">72</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">5.3</td>
+                    <td style="border: none; padding-left: 20px;">Real-time Socket.io Integration</td>
+                    <td style="border: none; text-align: right;">78</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">5.4</td>
+                    <td style="border: none; padding-left: 20px;">Module-wise Code Snippets</td>
+                    <td style="border: none; text-align: right;">82</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">5.5</td>
+                    <td style="border: none; padding-left: 20px;">UI/UX Design and Screenshots</td>
+                    <td style="border: none; text-align: right;">90</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">6.</td>
+                    <td style="border: none;"><span class="bold">Testing & Validation</span></td>
+                    <td style="border: none; text-align: right;">110</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">6.1</td>
+                    <td style="border: none; padding-left: 20px;">Testing Objectives & Strategy</td>
+                    <td style="border: none; text-align: right;">111</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">6.2</td>
+                    <td style="border: none; padding-left: 20px;">Detailed Test Cases & Results</td>
+                    <td style="border: none; text-align: right;">115</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">6.3</td>
+                    <td style="border: none; padding-left: 20px;">User Feedback & Bug Resolution</td>
+                    <td style="border: none; text-align: right;">122</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">7.</td>
+                    <td style="border: none;"><span class="bold">Conclusion & Future Scope</span></td>
+                    <td style="border: none; text-align: right;">125</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">7.1</td>
+                    <td style="border: none; padding-left: 20px;">Summary of Achievements</td>
+                    <td style="border: none; text-align: right;">126</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">7.2</td>
+                    <td style="border: none; padding-left: 20px;">Future Enhancements</td>
+                    <td style="border: none; text-align: right;">128</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;">8.</td>
+                    <td style="border: none;"><span class="bold">User Manual</span></td>
+                    <td style="border: none; text-align: right;">135</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">9.</td>
+                    <td style="border: none;"><span class="bold">Developer Manual</span></td>
+                    <td style="border: none; text-align: right;">145</td>
+                </tr>
+
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">References & Bibliography</td>
+                    <td style="border: none; text-align: right;">155</td>
+                </tr>
+                <tr>
+                    <td style="border: none;"></td>
+                    <td style="border: none;">Appendices (Source Code Listing)</td>
+                    <td style="border: none; text-align: right;">157</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- LIST OF FIGURES -->
+        <div class="page list-of-figures">
+            <br><br><br>
+            <h2 class="center uppercase">List of Figures</h2>
+            <br><br>
+            <table style="border: none;">
+                <tr>
+                    <td style="border: none;">Figure 1:</td>
+                    <td style="border: none;">Three-Tier Architecture of TEAMERA</td>
+                    <td style="border: none; text-align: right;">44</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 2:</td>
+                    <td style="border: none;">Level 0 DFD - Context Diagram</td>
+                    <td style="border: none; text-align: right;">46</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 3:</td>
+                    <td style="border: none;">Level 1 DFD - System Processes</td>
+                    <td style="border: none; text-align: right;">47</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 4:</td>
+                    <td style="border: none;">Level 2 DFD - Authentication Module</td>
+                    <td style="border: none; text-align: right;">48</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 5:</td>
+                    <td style="border: none;">Entity Relationship Diagram (ERD)</td>
+                    <td style="border: none; text-align: right;">51</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 6:</td>
+                    <td style="border: none;">UML Use Case Diagram</td>
+                    <td style="border: none; text-align: right;">55</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 7:</td>
+                    <td style="border: none;">Sequence Diagram: User Login Flow</td>
+                    <td style="border: none; text-align: right;">56</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 8:</td>
+                    <td style="border: none;">Sequence Diagram: Real-time Chat via Socket.io</td>
+                    <td style="border: none; text-align: right;">57</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 9:</td>
+                    <td style="border: none;">UML Class Diagram</td>
+                    <td style="border: none; text-align: right;">59</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 10:</td>
+                    <td style="border: none;">Home Page UI</td>
+                    <td style="border: none; text-align: right;">91</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 11:</td>
+                    <td style="border: none;">Dashboard and Workspace View</td>
+                    <td style="border: none; text-align: right;">94</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Figure 12:</td>
+                    <td style="border: none;">Community Feed Interface</td>
+                    <td style="border: none; text-align: right;">97</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- LIST OF TABLES -->
+        <div class="page list-of-tables">
+            <br><br><br>
+            <h2 class="center uppercase">List of Tables</h2>
+            <br><br>
+            <table style="border: none;">
+                <tr>
+                    <td style="border: none;">Table 1:</td>
+                    <td style="border: none;">Minimum Hardware Requirements</td>
+                    <td style="border: none; text-align: right;">31</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Table 2:</td>
+                    <td style="border: none;">Software Environment Details</td>
+                    <td style="border: none; text-align: right;">33</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Table 3:</td>
+                    <td style="border: none;">User Collection Schema</td>
+                    <td style="border: none; text-align: right;">60</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Table 4:</td>
+                    <td style="border: none;">Project Collection Schema</td>
+                    <td style="border: none; text-align: right;">61</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Table 5:</td>
+                    <td style="border: none;">Unit Test Cases for Authentication</td>
+                    <td style="border: none; text-align: right;">116</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">Table 6:</td>
+                    <td style="border: none;">Integration Test Cases for Workspace</td>
+                    <td style="border: none; text-align: right;">118</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 1: INTRODUCTION -->
+        <div class="page chapter-1">
+            <br><br>
+            <h1>CHAPTER 1: INTRODUCTION</h1>
+            <br>
+            <h3>1.1 Project Overview & Background</h3>
+            <p>The landscape of software development has undergone a paradigm shift over the last decade. The transition
+                from individual effort to collective collaboration has become the standard for building complex systems.
+                In academia and the professional world, the ability to build and manage teams efficiently is as crucial
+                as the technical skill of coding itself. However, a significant gap exists in the tools available for
+                the "discovery" phase of collaboration. While professional platforms like LinkedIn allow for networking,
+                they lack the specific project-centric recruitment tools needed for student developers and small teams.
+            </p>
+            <p><span class="bold">TEAMERA</span> is a full-stack collaborative project management solution designed to
+                bridge this gap. It is built on the philosophy that a project's success is determined not just by the
+                technology used, but by the synergy of the team behind it. TEAMERA provides a centralized hub where
+                developers can showcase their skills through professional profiles, browse a variety of projects looking
+                for contributors, and manage accepted projects within a dedicated real-time workspace.</p>
+            <p>The application is designed to handle the entire lifecycle of a collaborative project: from the initial
+                idea and recruitment of team members to real-time communication and task tracking. By integrating these
+                features into a single platform, TEAMERA reduces the cognitive load of switching between multiple tools
+                and ensures that all project-related context is preserved in one place.</p>
+
+            <h3>1.2 Problem Definition</h3>
+            <p>The primary problem addressed by TEAMERA is the fragmented and inefficient nature of project-based
+                collaboration among independent developers and students. Currently, a typical collaborative workflow
+                involves using multiple disconnected platforms:</p>
+            <ul>
+                <li><span class="bold">Networking:</span> LinkedIn or Twitter for finding potential collaborators.</li>
+                <li><span class="bold">Recruitment:</span> Informal messaging or emails to discuss project roles.</li>
+                <li><span class="bold">Communication:</span> Discord, Slack, or WhatsApp for team discussions.</li>
+                <li><span class="bold">Task Management:</span> Trello, Jira, or simple spreadsheets for tracking
+                    progress.</li>
+                <li><span class="bold">Social:</span> Sharing project milestones on generic social media platforms.</li>
+            </ul>
+            <p>This fragmentation leads to several critical issues:
+            <ol>
+                <li><span class="bold">Loss of Context:</span> Important technical discussions and decisions are often
+                    buried in generic chat apps.</li>
+                <li><span class="bold">Recruitment Friction:</span> There is no transparent way to review applications
+                    or showcase project needs to a targeted developer audience.</li>
+                <li><span class="bold">Management Overhead:</span> Small teams often find professional tools too complex
+                    and time-consuming to set up.</li>
+                <li><span class="bold">Fragmented Identities:</span> A developer's project contributions and skills are
+                    scattered across various platforms.</li>
+            </ol>
+            </p>
+            <p>TEAMERA serves as the "Glue" that binds these aspects together, providing a specialized ecosystem for
+                developer collaboration.</p>
+
+            <h3>1.3 Project Objectives</h3>
+            <p>The overarching objective of this project is to develop a robust, scalable, and intuitive web application
+                that facilitates seamless collaboration. The specific objectives are as follows:</p>
+            <ul>
+                <li><span class="bold">Identity & Verification:</span> To implement a secure authentication system and
+                    professional profiles that include skill tags, bios, and resume uploads.</li>
+                <li><span class="bold">Project Marketplace:</span> To create a dynamic listing where project owners can
+                    post requirements and potential members can discover opportunities based on skill matches.</li>
+                <li><span class="bold">Structured Recruitment:</span> To build a transparent application workflow where
+                    project owners can review, accept, or reject applications with automated notifications.</li>
+                <li><span class="bold">Unified Workspace:</span> To provide a private collaboration area for each
+                    project, integrating real-time messaging and persistent project data.</li>
+                <li><span class="bold">Community Engagement:</span> To foster a community of developers through a social
+                    feed where projects can be shared and knowledge can be exchanged.</li>
+                <li><span class="bold">High Performance:</span> To leverage modern web technologies (Vite, React, Node)
+                    to ensure a fast, responsive, and cross-platform user experience.</li>
+            </ul>
+
+            <h3>1.4 Scope of the System</h3>
+            <p>The scope of TEAMERA is defined by the functional and non-functional requirements needed to support
+                modern developer collaboration. The system's boundaries include:</p>
+            <ul>
+                <li><span class="bold">User Management Module:</span> Handling the entire user lifecycle from
+                    registration and secure login (JWT) to profile management and resume handling.</li>
+                <li><span class="bold">Project Discovery Module:</span> Managing the creation, display, and search
+                    functionality for projects. This includes categorization by tech stack and project stage.</li>
+                <li><span class="bold">Application Engine:</span> A complex state machine that handles project
+                    applications, owner reviews, and membership management.</li>
+                <li><span class="bold">Real-time Workspace:</span> Implementing a WebSocket-based chat system that
+                    supports persistent history and project-specific rooms.</li>
+                <li><span class="bold">Community Module:</span> A social layer for posting updates, liking, and
+                    commenting, integrated with the main user identity system.</li>
+                <li><span class="bold">Notification Engine:</span> A real-time system for informing users about
+                    applications, messages, and community interactions.</li>
+            </ul>
+
+            <h3>1.5 Motivation and Social Impact</h3>
+            <p>The motivation behind TEAMERA stems from the personal experiences of the developer within academic
+                environments. Many talented students often struggle to find peers with complementary skills to work on
+                innovative ideas. This "Collaboration Barrier" often leads to many great project ideas remaining as mere
+                concepts.</p>
+            <p>By providing a platform like TEAMERA, we aim to:
+            <ul>
+                <li><span class="bold">Empower Student Developers:</span> Giving them a professional platform to build a
+                    portfolio through collaborative projects.</li>
+                <li><span class="bold">Promote Open Innovation:</span> Facilitating the formation of teams that can
+                    build open-source or commercial solutions.</li>
+                <li><span class="bold">Democratize Project Management:</span> Providing easy-to-use tools that don't
+                    require the steep learning curve of enterprise software.</li>
+            </ul>
+            </p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 2: SYSTEM ANALYSIS -->
+        <div class="page chapter-2">
+            <br><br>
+            <h1>CHAPTER 2: SYSTEM ANALYSIS</h1>
+            <br>
+            <h3>2.1 Feasibility Study</h3>
+            <p>The feasibility study is the first major step in the system analysis phase. It determines whether the
+                project is viable from several critical perspectives. For TEAMERA, the following studies were conducted:
+            </p>
+
+            <h4>2.1.1 Technical Feasibility</h4>
+            <p>This study evaluates whether the required technology and technical resources are available. TEAMERA uses
+                the MERN stack, which is one of the most mature and widely supported technology stacks in the industry.
+                The team's familiarity with React for frontend, Node/Express for backend, and MongoDB for database
+                ensures that the technical challenges can be handled. Furthermore, the availability of libraries like
+                Socket.io for real-time features and JWT for security makes the implementation of advanced features
+                highly feasible.</p>
+
+            <h4>2.1.2 Economic Feasibility</h4>
+            <p>Economic feasibility assesses the cost-benefit ratio of the project. Since TEAMERA is an academic
+                project, the primary investment is time. The software tools used (VS Code, Git, Node.js) are all
+                open-source and free to use. Hosting platforms like Vercel and MongoDB Atlas provide generous free tiers
+                for small-to-medium scale applications. The long-term benefit of the project—providing a free
+                collaboration tool for students—far outweighs the minimal development costs.</p>
+
+            <h4>2.1.3 Operational Feasibility</h4>
+            <p>This study measures how well the proposed system will be accepted by its users. TEAMERA is designed with
+                a user-centric philosophy. By solving the real-world problem of fragmented collaboration tools, it
+                provides high value to its target audience (students and developers). The interface is designed to be
+                intuitive, requiring zero training for users who are already familiar with standard web applications.
+            </p>
+
+            <h3>2.2 Requirement Analysis</h3>
+            <p>Requirement analysis involves gathering and documenting the exact needs of the users. This was divided
+                into two categories:</p>
+
+            <h4>2.2.1 Functional Requirements</h4>
+            <ul>
+                <li>User must be able to register and log in securely.</li>
+                <li>User must be able to create and manage a professional profile.</li>
+                <li>Project owners must be able to create projects with detailed descriptions and role requirements.
+                </li>
+                <li>Users must be able to search and filter projects by tags and categories.</li>
+                <li>Users must be able to apply for project roles and track their status.</li>
+                <li>Accepted members must have access to a real-time project workspace with chat.</li>
+                <li>Users must be able to post and interact in a community feed.</li>
+            </ul>
+
+            <h4>2.2.2 Non-Functional Requirements</h4>
+            <ul>
+                <li><span class="bold">Performance:</span> The system should respond to user actions within 2 seconds.
+                </li>
+                <li><span class="bold">Scalability:</span> The architecture should support an increasing number of
+                    concurrent users.</li>
+                <li><span class="bold">Security:</span> All sensitive data (passwords) must be hashed, and API access
+                    must be protected by JWT.</li>
+                <li><span class="bold">Availability:</span> The system should be accessible 24/7 with minimal downtime.
+                </li>
+                <li><span class="bold">Responsiveness:</span> The UI must adapt to different screen sizes and devices.
+                </li>
+            </ul>
+
+            <h3>2.3 SDLC Model: Agile/Scrum</h3>
+            <p>The development of TEAMERA followed the <span class="bold">Agile Methodology</span>, specifically the
+                Scrum framework. This approach was chosen due to the iterative nature of the project and the need for
+                frequent feedback. The project was divided into 4 main Sprints:
+            <ol>
+                <li><span class="bold">Sprint 1 (Foundations):</span> Setup of environment, User Auth, and basic Profile
+                    management.</li>
+                <li><span class="bold">Sprint 2 (Core Logic):</span> Project creation, listing, and search
+                    functionality.</li>
+                <li><span class="bold">Sprint 3 (Collaboration):</span> Application system and Real-time Workspace
+                    implementation.</li>
+                <li><span class="bold">Sprint 4 (Social & Polish):</span> Community module, notifications, and UI/UX
+                    refinement.</li>
+            </ol>
+            </p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 3: SYSTEM REQUIREMENTS & TOOLS -->
+        <div class="page chapter-3">
+            <br><br>
+            <h1>CHAPTER 3: SYSTEM REQUIREMENTS & TOOLS</h1>
+            <br>
+            <h3>3.1 Hardware Specifications</h3>
+            <p>The hardware requirements for developing and running TEAMERA are designed to be accessible, allowing for
+                development on standard modern workstations.</p>
+            <div class="table-caption">Table 1: Hardware Requirements</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Minimum Requirement</th>
+                        <th>Recommended Specification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Processor</td>
+                        <td>Dual Core 2.0 GHz</td>
+                        <td>Quad Core 3.0 GHz or higher</td>
+                    </tr>
+                    <tr>
+                        <td>RAM</td>
+                        <td>4 GB</td>
+                        <td>8 GB or higher</td>
+                    </tr>
+                    <tr>
+                        <td>Storage</td>
+                        <td>500 MB Free Space</td>
+                        <td>1 GB SSD Free Space</td>
+                    </tr>
+                    <tr>
+                        <td>Network</td>
+                        <td>Stable Internet</td>
+                        <td>High-speed Broadband</td>
+                    </tr>
+                    <tr>
+                        <td>Display</td>
+                        <td>1024x768</td>
+                        <td>1920x1080 (Full HD)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3.2 Software Environment</h3>
+            <p>The software stack is crucial for the MERN (MongoDB, Express, React, Node) implementation. The following
+                environment was used for development:</p>
+            <div class="table-caption">Table 2: Software Environment</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Software Type</th>
+                        <th>Name/Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Operating System</td>
+                        <td>Windows 10/11 / Linux</td>
+                        <td>Development Environment</td>
+                    </tr>
+                    <tr>
+                        <td>Runtime</td>
+                        <td>Node.js v18.x or higher</td>
+                        <td>Server-side Execution</td>
+                    </tr>
+                    <tr>
+                        <td>Database</td>
+                        <td>MongoDB v6.0 / Atlas</td>
+                        <td>NoSQL Data Storage</td>
+                    </tr>
+                    <tr>
+                        <td>Web Browser</td>
+                        <td>Google Chrome v100+</td>
+                        <td>Application Testing</td>
+                    </tr>
+                    <tr>
+                        <td>IDE</td>
+                        <td>VS Code</td>
+                        <td>Code Development</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3.3 Tech Stack Breakdown</h3>
+            <p>The choice of the MERN stack is motivated by its high performance and the ability to use JavaScript
+                across the entire stack.</p>
+            <ul>
+                <li><span class="bold">MongoDB Atlas:</span> A cloud-based NoSQL database that allows for flexible data
+                    structures. This is essential for TEAMERA, where project requirements and community posts can vary
+                    significantly in structure.</li>
+                <li><span class="bold">Express.js:</span> A lightweight and flexible web framework for Node.js. It
+                    simplifies the development of complex REST APIs and handles routing and middleware efficiently.</li>
+                <li><span class="bold">React.js (with Vite):</span> A component-based UI library that allows for
+                    building a highly dynamic and responsive frontend. Vite is used as the build tool for its
+                    significantly faster development cycles compared to traditional tools.</li>
+                <li><span class="bold">Node.js:</span> An asynchronous event-driven JavaScript runtime, perfect for
+                    building scalable network applications. Its non-blocking I/O model is ideal for the real-time
+                    features of TEAMERA.</li>
+            </ul>
+
+            <h3>3.4 Library and Framework Overview</h3>
+            <p>Beyond the core stack, several specialized libraries were integrated to enhance functionality:</p>
+            <ul>
+                <li><span class="bold">Socket.io:</span> Used for real-time, bi-directional communication between client
+                    and server, enabling instant messaging in workspaces.</li>
+                <li><span class="bold">Framer Motion:</span> A powerful animation library for React, used to provide
+                    smooth transitions and a premium feel to the UI.</li>
+                <li><span class="bold">Three.js:</span> Used to create an immersive 3D landing page experience, setting
+                    TEAMERA apart from standard project management tools.</li>
+                <li><span class="bold">Mongoose:</span> A schema-based solution for MongoDB, providing built-in
+                    validation and relationship management for application data.</li>
+                <li><span class="bold">JWT (jsonwebtoken):</span> For stateless and secure session management.</li>
+            </ul>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 4: SYSTEM DESIGN -->
+        <div class="page chapter-4">
+            <br><br>
+            <h1>CHAPTER 4: SYSTEM DESIGN</h1>
+            <br>
+            <h3>4.1 System Architecture</h3>
+            <p>TEAMERA follows a <span class="bold">Three-Tier Architecture</span>, which provides a clear separation of
+                concerns, improved security, and better maintainability.</p>
+            <ul>
+                <li><span class="bold">Presentation Tier (Client):</span> This is the topmost level of the application.
+                    It consists of the React.js frontend that the user interacts with. It handles UI rendering, state
+                    management, and communication with the API.</li>
+                <li><span class="bold">Logic Tier (Server):</span> This tier is implemented using Node.js and
+                    Express.js. It contains the business logic, authentication services, and data processing. It acts as
+                    a bridge between the frontend and the database.</li>
+                <li><span class="bold">Data Tier (Database):</span> This consists of the MongoDB database where all
+                    application data—users, projects, messages, and posts—is stored.</li>
+            </ul>
+            <div class="figure">
+                <div class="mermaid">
+                    graph TD
+                    subgraph Client_Layer
+                    R[React App]
+                    S[Socket Client]
+                    end
+                    subgraph Server_Layer
+                    E[Express API]
+                    SO[Socket.io Server]
+                    A[Auth Middleware]
+                    end
+                    subgraph Data_Layer
+                    D[(MongoDB Atlas)]
+                    end
+                    R -- HTTP Requests --> A
+                    A --> E
+                    E -- Mongoose --> D
+                    S -- WebSockets --> SO
+                    SO -- Real-time Event --> S
+                </div>
+                <div class="figure-caption">Figure 1: Three-Tier Architecture of TEAMERA</div>
+            </div>
+
+            <h3>4.2 Data Flow Diagrams (DFDs)</h3>
+            <p>Data Flow Diagrams are used to model how data moves through the system. They provide a clear
+                visualization of inputs, processes, and outputs.</p>
+
+            <h4>4.2.1 Level 0 DFD: Context Diagram</h4>
+            <div class="figure">
+                <div class="mermaid">
+                    graph LR
+                    U[User] -- Login/Register --> S[TEAMERA System]
+                    U -- Project Data/Messages --> S
+                    S -- JWT/Project List --> U
+                    S -- Notifications/Messages --> U
+                    S -- Read/Write --> D[(MongoDB)]
+                </div>
+                <div class="figure-caption">Figure 2: Level 0 DFD - Context Diagram</div>
+            </div>
+
+            <h4>4.2.2 Level 1 DFD: System Processes</h4>
+            <div class="figure">
+                <div class="mermaid">
+                    graph TD
+                    U[User] --> P1[Auth Process]
+                    U --> P2[Project Mgmt]
+                    U --> P3[Workspace/Chat]
+                    U --> P4[Community]
+
+                    P1 --> D1[(Users)]
+                    P2 --> D2[(Projects)]
+                    P3 --> D3[(Messages)]
+                    P4 --> D4[(Posts)]
+
+                    P1 -- JWT Token --> U
+                    P2 -- Search Results --> U
+                    P3 -- Real-time Updates --> U
+                    P4 -- Community Feed --> U
+                </div>
+                <div class="figure-caption">Figure 3: Level 1 DFD - System Processes</div>
+            </div>
+
+            <h3>4.3 Entity Relationship Diagram (ERD)</h3>
+            <p>The ERD defines the data structure and the logical relationships between various entities.</p>
+            <div class="figure">
+                <div class="mermaid">
+                    erDiagram
+                    USER ||--o{ PROJECT : creates
+                    USER ||--o{ APPLICATION : submits
+                    PROJECT ||--o{ APPLICATION : receives
+                    PROJECT ||--o{ MESSAGE : contains
+                    USER ||--o{ POST : writes
+                    USER ||--o{ NOTIFICATION : receives
+
+                    USER {
+                    string id PK
+                    string name
+                    string email
+                    string password
+                    string bio
+                    string[] skills
+                    }
+                    PROJECT {
+                    string id PK
+                    string title
+                    string ownerId FK
+                    string status
+                    string[] tags
+                    }
+                    APPLICATION {
+                    string id PK
+                    string applicantId FK
+                    string projectId FK
+                    string status
+                    }
+                    MESSAGE {
+                    string id PK
+                    string projectId FK
+                    string senderId FK
+                    string content
+                    date timestamp
+                    }
+                </div>
+                <div class="figure-caption">Figure 5: Entity Relationship Diagram (ERD)</div>
+            </div>
+
+            <h3>4.4 UML Diagrams</h3>
+            <p>Use case and sequence diagrams help in understanding the behavioral aspects of the system.</p>
+            <div class="figure">
+                <div class="mermaid">
+                    graph TD
+                    subgraph Actors
+                    G[Guest User]
+                    R[Registered User]
+                    O[Project Owner]
+                    end
+
+                    subgraph TEAMERA_System
+                    UC1(Register/Login)
+                    UC2(Browse Projects)
+                    UC3(Create Project)
+                    UC4(Apply to Role)
+                    UC5(Real-time Chat)
+                    UC6(Manage Apps)
+                    UC7(Post in Community)
+                    end
+
+                    G --> UC1
+                    G --> UC2
+                    R --> UC2
+                    R --> UC3
+                    R --> UC4
+                    R --> UC5
+                    R --> UC7
+                    O --> UC6
+                    O --> UC3
+                </div>
+                <div class="figure-caption">Figure 6: UML Use Case Diagram</div>
+            </div>
+
+            <div class="figure">
+                <div class="mermaid">
+                    sequenceDiagram
+                    participant U as User
+                    participant F as Frontend (React)
+                    participant B as Backend (Express)
+                    participant D as Database (MongoDB)
+
+                    U->>F: Enter Email/Password
+                    F->>B: POST /api/users/login
+                    B->>D: Find User by Email
+                    D-->>B: User Document
+                    B->>B: Compare Password (bcrypt)
+                    B-->>F: Success {Token, UserData}
+                    F-->>U: Redirect to Dashboard
+                </div>
+                <div class="figure-caption">Figure 7: Sequence Diagram - User Login Flow</div>
+            </div>
+
+            <div class="figure">
+                <div class="mermaid">
+                    sequenceDiagram
+                    participant U as User A
+                    participant F as React App
+                    participant S as Socket.io Server
+                    participant D as MongoDB
+                    participant O as User B
+
+                    U->>F: Types "Hello" & Sends
+                    F->>S: emit "send-message"
+                    S->>D: Save Message
+                    S->>O: emit "receive-message"
+                    O-->>O: Update UI in Real-time
+                </div>
+                <div class="figure-caption">Figure 8: Sequence Diagram - Real-time Chat via Socket.io</div>
+            </div>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 5: IMPLEMENTATION -->
+        <div class="page chapter-5">
+            <br><br>
+            <h1>CHAPTER 5: IMPLEMENTATION</h1>
+            <br>
+            <h3>5.1 Frontend Implementation Strategy</h3>
+            <p>The frontend of TEAMERA is built using <span class="bold">React.js</span> with a modular, component-based
+                approach. The decision to use React was driven by its ability to handle dynamic state changes
+                efficiently, which is critical for real-time collaboration. The frontend architecture is divided into
+                three main layers: Components, Pages, and Context.</p>
+
+            <h3>5.2 Backend Logic & API Design</h3>
+            <p>The backend is a Node.js environment using <span class="bold">Express.js</span>. We followed a
+                "Service-Controller" pattern to separate business logic from routing. This makes the code much more
+                readable and easier to test.</p>
+
+            <h3>5.3 Real-time Socket.io Integration</h3>
+            <p>The "heart" of the workspace collaboration is the <span class="bold">Socket.io</span> implementation.
+                Unlike standard HTTP requests, WebSockets provide a full-duplex communication channel. This allows the
+                server to "push" data to the client instantly.</p>
+
+            <h3>5.4 Module-wise Code Snippets</h3>
+            <h4>5.4.1 User Authentication Middleware</h4>
+            <pre>
+// backend/middleware/auth.js
+const jwt = require('jsonwebtoken');
+
+const protect = async (req, res, next) => {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = await User.findById(decoded.id).select('-password');
+            next();
+        } catch (error) {
+            res.status(401).json({ message: 'Not authorized, token failed' });
+        }
+    }
+    if (!token) {
+        res.status(401).json({ message: 'Not authorized, no token' });
+    }
+};
+            </pre>
+
+            <h3>5.5 UI/UX Design and Screenshots</h3>
+            <div class="figure">
+                <div style="border: 2px solid black; padding: 20px; background: #f0f0f0;">
+                    [PLACEHOLDER: Insert Figure 10 - Home Page Screenshot here]
+                </div>
+                <div class="figure-caption">Figure 10: Home Page UI</div>
+            </div>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 6: TESTING -->
+        <div class="page chapter-6">
+            <br><br>
+            <h1>CHAPTER 6: TESTING & VALIDATION</h1>
+            <br>
+            <h3>6.1 Testing Objectives & Strategy</h3>
+            <p>Testing is a vital part of the software development process, ensuring that the application meets all
+                requirements and is free of critical bugs. For TEAMERA, we used a combination of manual and automated
+                testing.</p>
+
+            <h3>6.2 Detailed Test Cases & Results</h3>
+            <div class="table-caption">Table 5: Unit Test Cases for Authentication</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Test Case</th>
+                        <th>Input</th>
+                        <th>Expected Result</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>TC01</td>
+                        <td>Valid Login</td>
+                        <td>Correct Email/Pass</td>
+                        <td>Redirect to Dashboard</td>
+                        <td>Pass</td>
+                    </tr>
+                    <tr>
+                        <td>TC02</td>
+                        <td>Invalid Email</td>
+                        <td>Wrong Format</td>
+                        <td>Display Error Message</td>
+                        <td>Pass</td>
+                    </tr>
+                    <tr>
+                        <td>TC03</td>
+                        <td>Wrong Password</td>
+                        <td>Incorrect Pass</td>
+                        <td>Unauthorized Error</td>
+                        <td>Pass</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 7: CONCLUSION -->
+        <div class="page chapter-7">
+            <br><br>
+            <h1>CHAPTER 7: CONCLUSION & FUTURE SCOPE</h1>
+            <br>
+            <h3>7.1 Summary of Achievements</h3>
+            <p>The development of TEAMERA has been a successful journey in creating a unified platform for developer
+                collaboration. By integrating recruitment, real-time communication, and project management, the
+                application addresses a significant gap in the current ecosystem of developer tools.</p>
+
+            <h3>7.2 Future Enhancements</h3>
+            <ul>
+                <li>Mobile Application support using React Native.</li>
+                <li>AI-powered team matching algorithm.</li>
+                <li>GitHub repository integration for teams.</li>
+            </ul>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 8: USER MANUAL -->
+        <div class="page chapter-8">
+            <br><br>
+            <h1>CHAPTER 8: USER MANUAL</h1>
+            <br>
+            <h3>8.1 Introduction for Users</h3>
+            <p>Welcome to TEAMERA. This guide will help you navigate through the platform and make the most out of its
+                collaborative features. TEAMERA is designed to be intuitive, but this manual covers the key workflows
+                for both project owners and contributors.</p>
+
+            <h3>8.2 Getting Started</h3>
+            <h4>8.2.1 Registration & Login</h4>
+            <p>To use TEAMERA, you must first create an account. Click on the "Register" button on the home page.
+                Provide your full name, a valid email address, and a secure password. Once registered, you can log in
+                using your credentials. Your session is protected by a secure token, so you won't need to log in
+                frequently.</p>
+
+            <h4>8.2.2 Building Your Profile</h4>
+            <p>Your profile is your professional identity on TEAMERA. Click on the "Profile" link in the navigation bar.
+                Here you can:
+            <ul>
+                <li>Add a professional bio.</li>
+                <li>Select your technical skills (e.g., React, Python, UI Design).</li>
+                <li>Upload a profile image to build trust with team members.</li>
+                <li>Upload your latest resume (PDF) so project owners can review your expertise.</li>
+            </ul>
+            </p>
+
+            <h3>8.3 Project Management</h3>
+            <h4>8.3.1 Creating a Project</h4>
+            <p>If you have an idea and need a team, click on "Create Project" from your dashboard. Fill in the following
+                details:
+            <ul>
+                <li><span class="bold">Title:</span> A catchy name for your project.</li>
+                <li><span class="bold">Description:</span> Explain what you are building and why.</li>
+                <li><span class="bold">Tags:</span> Add technologies used (e.g., #MERN, #Blockchain).</li>
+                <li><span class="bold">Roles:</span> Define what kind of members you need (e.g., "Frontend Developer").
+                </li>
+            </ul>
+            </p>
+
+            <h4>8.3.2 Managing Applications</h4>
+            <p>Once your project is live, users will start applying. You will receive notifications for each
+                application. Go to your project settings to review applicant profiles and resumes. You can "Accept" or
+                "Reject" applications. Accepted members are automatically added to the project workspace.</p>
+
+            <h3>8.4 Collaboration in Workspace</h3>
+            <p>The workspace is a private area for your team. It includes:
+            <ul>
+                <li><span class="bold">Real-time Chat:</span> Instant messaging with all team members.</li>
+                <li><span class="bold">Project Details:</span> A quick view of the project's goals and members.</li>
+                <li><span class="bold">Task Tracking:</span> (Coming Soon) A board to manage your project sprints.</li>
+            </ul>
+            </p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- CHAPTER 9: DEVELOPER MANUAL -->
+        <div class="page chapter-9">
+            <br><br>
+            <h1>CHAPTER 9: DEVELOPER MANUAL</h1>
+            <br>
+            <h3>9.1 System Architecture Overview</h3>
+            <p>TEAMERA is a MERN stack application. The backend is an Express.js server running on Node.js, and the
+                frontend is a React.js application bundled with Vite. For development, we follow a standard local
+                environment setup.</p>
+
+            <h3>9.2 Local Development Setup</h3>
+            <ol>
+                <li><span class="bold">Clone Repository:</span> `git clone https://github.com/your-repo/teamera`</li>
+                <li><span class="bold">Install Dependencies:</span> Run `npm install` in both `backend` and `frontend`
+                    folders.</li>
+                <li><span class="bold">Environment Variables:</span> Create a `.env` file in the backend folder with the
+                    following:
+                    <pre>
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+                    </pre>
+                </li>
+                <li><span class="bold">Run Backend:</span> `npm run dev` in the backend folder.</li>
+                <li><span class="bold">Run Frontend:</span> `npm run dev` in the frontend folder.</li>
+            </ol>
+
+            <h3>9.3 Backend API Endpoints</h3>
+            <p>The backend exposes several RESTful endpoints:
+            <ul>
+                <li><span class="bold">POST /api/users/register:</span> Create a new user.</li>
+                <li><span class="bold">POST /api/users/login:</span> Authenticate and get JWT.</li>
+                <li><span class="bold">GET /api/projects:</span> Fetch all public projects.</li>
+                <li><span class="bold">POST /api/projects:</span> Create a new project (Protected).</li>
+                <li><span class="bold">POST /api/applications:</span> Apply to a project (Protected).</li>
+            </ul>
+            </p>
+
+            <h3>9.4 Real-time Communication (Socket.io)</h3>
+            <p>The WebSocket server is integrated into the Express server. The main events are:
+            <ul>
+                <li>`join-room`: Sent by the client when entering a workspace.</li>
+                <li>`send-message`: Emitted by the client to send a chat message.</li>
+                <li>`receive-message`: Broadcasted by the server to all users in a room.</li>
+            </ul>
+            </p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- GLOSSARY & BIBLIOGRAPHY -->
+        <div class="page glossary">
+            <br><br>
+            <h1>GLOSSARY & BIBLIOGRAPHY</h1>
+            <br>
+            <h3>Glossary of Terms</h3>
+            <ul>
+                <li><span class="bold">MERN:</span> MongoDB, Express, React, Node.</li>
+                <li><span class="bold">JWT:</span> JSON Web Token, used for authentication.</li>
+                <li><span class="bold">NoSQL:</span> Non-relational database management system.</li>
+                <li><span class="bold">WebSocket:</span> Full-duplex communication protocol.</li>
+                <li><span class="bold">ODM:</span> Object Data Modeling (e.g., Mongoose).</li>
+                <li><span class="bold">SPA:</span> Single Page Application.</li>
+            </ul>
+
+            <br><br>
+            <h3>Bibliography</h3>
+            <p>1. Flanagan, D. (2020). *JavaScript: The Definitive Guide*. O'Reilly Media.</p>
+            <p>2. Banks, A., & Porcello, E. (2020). *Learning React: Modern Patterns as Conquer Efficiently*. O'Reilly
+                Media.</p>
+            <p>3. Gancarz, M. (2003). *The UNIX Philosophy*. Digital Press.</p>
+            <p>4. Official Documentation: React (reactjs.org), Node.js (nodejs.org), MongoDB (mongodb.com).</p>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
