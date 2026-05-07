@@ -131,3 +131,10 @@ Now the Issue is
 Fix this issues
 -  when project owner update the Positions name Update the member positions name on real time
 - don’t Create Dublicat member
+--------------------------------------------------------------------------------------
+Redesign the “Three-Tier Client-Server Architecture” section in my project report (files: index.html and report_style.css) to make it look more professional, clean, and suitable for a college-level report in black & white. 
+Design a clean and properly aligned diagram of the three-tier architecture:
+Diagram base on current system flow
+Ensure the diagram is clear, well-spaced, and readable when printed in black & white
+Avoid colors; use borders, dashed lines, or grayscale for differentiation
+The final result should look neat, structured, and easy to understand, suitable for submitting as a professional academic report
