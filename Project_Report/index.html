@@ -130,7 +130,8 @@
             <p>I would like to take this opportunity to express my deep sense of gratitude to all those who have
                 directly or indirectly helped me in the successful completion of this project. The journey of developing
                 <span class="bold">TEAMERA</span> has been one of immense learning and growth, and it would not have
-                been possible without the support of my mentors and well-wishers.</p>
+                been possible without the support of my mentors and well-wishers.
+            </p>
             <p>First and foremost, I am profoundly grateful to <span class="bold">Tilak Maharashtra Vidyapeeth</span>
                 for providing me with the academic foundation and the opportunity to work on this project as part of my
                 BCA curriculum. The department's focus on practical learning has been a constant source of motivation.
@@ -885,61 +886,250 @@
             <br><br>
             <h1>CHAPTER 4: SYSTEM DESIGN</h1>
             <br>
-            <h3>4.1 System Architecture</h3>
-            <p>TEAMERA follows a <span class="bold">Three-Tier Architecture</span>, which provides a clear separation of
-                concerns, improved security, and better maintainability.</p>
+            <h3>4.1 Three-Tier Client-Server Architecture</h3>
+            <p>TEAMERA is built upon a <span class="bold">Three-Tier Client-Server Architecture</span>, a well-established
+                software design pattern that separates the application into three distinct, independently manageable
+                layers. This separation of concerns enhances security, simplifies maintenance, and enables the system
+                to scale efficiently as user demand grows.</p>
+
+            <h4>4.1.1 Architecture Overview</h4>
+            <p>The three tiers are logically and physically distinct, each with a clearly defined responsibility:</p>
             <ul>
-                <li><span class="bold">Presentation Tier (Client):</span> This is the topmost level of the application.
-                    It consists of the React.js frontend that the user interacts with. It handles UI rendering, state
-                    management, and communication with the API.</li>
-                <li><span class="bold">Logic Tier (Server):</span> This tier is implemented using Node.js and
-                    Express.js. It contains the business logic, authentication services, and data processing. It acts as
-                    a bridge between the frontend and the database.</li>
-                <li><span class="bold">Data Tier (Database):</span> This consists of the MongoDB database where all
-                    application data—users, projects, messages, and posts—is stored.</li>
+                <li><span class="bold">Tier 1 — Presentation Layer (Client):</span> The user-facing React.js application
+                    responsible for rendering the interface and managing user interactions.</li>
+                <li><span class="bold">Tier 2 — Application Layer (Server):</span> The Node.js / Express.js backend
+                    that enforces business logic, handles authentication, and processes all API requests.</li>
+                <li><span class="bold">Tier 3 — Data Layer (Database):</span> The MongoDB Atlas cloud database that
+                    persists all application data through Mongoose ODM.</li>
             </ul>
-            <div class="figure">
-                <div class="mermaid">
-                    graph TD
-                    subgraph Client_Layer
-                    R[React App]
-                    S[Socket Client]
-                    end
-                    subgraph Server_Layer
-                    E[Express API]
-                    SO[Socket.io Server]
-                    A[Auth Middleware]
-                    end
-                    subgraph Data_Layer
-                    D[(MongoDB Atlas)]
-                    end
-                    R -- HTTP Requests --> A
-                    A --> E
-                    E -- Mongoose --> D
-                    S -- WebSockets --> SO
-                    SO -- Real-time Event --> S
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!--              THREE-TIER ARCHITECTURE DIAGRAM               -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <div class="arch-wrapper">
+
+                <!-- ── TIER 1: PRESENTATION ── -->
+                <div class="arch-tier tier-presentation">
+                    <div class="arch-tier-label">TIER 1 &nbsp;|&nbsp; PRESENTATION LAYER &nbsp;(Client)</div>
+                    <div class="arch-tier-body">
+                        <div class="arch-module">
+                            <div class="arch-module-title">React.js + Vite</div>
+                            <div class="arch-module-item">Pages &amp; UI Components</div>
+                            <div class="arch-module-item">React Context (Auth / Project / Notification)</div>
+                            <div class="arch-module-item">React Router (Protected Routes)</div>
+                        </div>
+                        <div class="arch-module">
+                            <div class="arch-module-title">Real-Time Client</div>
+                            <div class="arch-module-item">Socket.io Client</div>
+                            <div class="arch-module-item">SSE Event Listeners</div>
+                            <div class="arch-module-item">Live Notification Handler</div>
+                        </div>
+                        <div class="arch-module">
+                            <div class="arch-module-title">API &amp; Auth Services</div>
+                            <div class="arch-module-item">Axios HTTP Client</div>
+                            <div class="arch-module-item">JWT Token Storage</div>
+                            <div class="arch-module-item">File Upload (FormData)</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="figure-caption">Figure 1: Three-Tier Architecture of TEAMERA</div>
-            </div>
 
-            <h3>4.2 Data Flow Diagrams (DFDs)</h3>
-            <p>Data Flow Diagrams are used to model how data moves through the system. They provide a clear
-                visualization of inputs, processes, and outputs.</p>
+                <!-- ── COMMUNICATION ARROW 1 ── -->
+                <div class="arch-arrow-block">
+                    <div class="arch-arrow-line">
+                        <span class="arch-arrow-label arch-arrow-down">HTTP / REST API &nbsp;&#x25BC;&nbsp; JSON Responses</span>
+                    </div>
+                    <div class="arch-arrow-line arch-arrow-dashed">
+                        <span class="arch-arrow-label arch-arrow-up">WebSocket (Socket.io) &nbsp;&#x25B2;&nbsp; Real-time Events</span>
+                    </div>
+                </div>
 
-            <h4>4.2.1 Level 0 DFD: Context Diagram</h4>
+                <!-- ── TIER 2: APPLICATION ── -->
+                <div class="arch-tier tier-application">
+                    <div class="arch-tier-label">TIER 2 &nbsp;|&nbsp; APPLICATION LAYER &nbsp;(Server)</div>
+                    <div class="arch-tier-body">
+                        <div class="arch-module">
+                            <div class="arch-module-title">Express.js REST API</div>
+                            <div class="arch-module-item">Route Handlers (users, projects,</div>
+                            <div class="arch-module-item">&nbsp;&nbsp;applications, messages, community)</div>
+                            <div class="arch-module-item">Controllers &amp; Service Layer</div>
+                        </div>
+                        <div class="arch-module">
+                            <div class="arch-module-title">Middleware Pipeline</div>
+                            <div class="arch-module-item">JWT Auth Verification</div>
+                            <div class="arch-module-item">Input Validation (express-validator)</div>
+                            <div class="arch-module-item">Multer (File Uploads)</div>
+                        </div>
+                        <div class="arch-module">
+                            <div class="arch-module-title">Real-Time Engine</div>
+                            <div class="arch-module-item">Socket.io Server (Chat Rooms)</div>
+                            <div class="arch-module-item">SSE Clients (Notifications)</div>
+                            <div class="arch-module-item">Project / Community SSE Streams</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── COMMUNICATION ARROW 2 ── -->
+                <div class="arch-arrow-block">
+                    <div class="arch-arrow-line">
+                        <span class="arch-arrow-label arch-arrow-down">Mongoose ODM Queries &nbsp;&#x25BC;&nbsp; CRUD Operations</span>
+                    </div>
+                    <div class="arch-arrow-line arch-arrow-dashed">
+                        <span class="arch-arrow-label arch-arrow-up">Query Results &nbsp;&#x25B2;&nbsp; Document Objects</span>
+                    </div>
+                </div>
+
+                <!-- ── TIER 3: DATA ── -->
+                <div class="arch-tier tier-data">
+                    <div class="arch-tier-label">TIER 3 &nbsp;|&nbsp; DATA LAYER &nbsp;(Database)</div>
+                    <div class="arch-tier-body arch-tier-body--data">
+                        <div class="arch-collection">
+                            <div class="arch-collection-name">Users</div>
+                            <div class="arch-collection-desc">Profile, Skills, Resume, Stats</div>
+                        </div>
+                        <div class="arch-collection">
+                            <div class="arch-collection-name">Projects</div>
+                            <div class="arch-collection-desc">Details, Tags, Open Positions, Team</div>
+                        </div>
+                        <div class="arch-collection">
+                            <div class="arch-collection-name">Applications</div>
+                            <div class="arch-collection-desc">Status, Position, Applicant Ref</div>
+                        </div>
+                        <div class="arch-collection">
+                            <div class="arch-collection-name">Messages</div>
+                            <div class="arch-collection-desc">Chat History, Room, Timestamp</div>
+                        </div>
+                        <div class="arch-collection">
+                            <div class="arch-collection-name">Posts</div>
+                            <div class="arch-collection-desc">Community Feed, Likes, Comments</div>
+                        </div>
+                        <div class="arch-collection">
+                            <div class="arch-collection-name">Notifications</div>
+                            <div class="arch-collection-desc">Type, Read Status, Target User</div>
+                        </div>
+                    </div>
+                    <div class="arch-db-footer">MongoDB Atlas &nbsp;&mdash;&nbsp; Cloud-Hosted NoSQL Database &nbsp;|&nbsp; Mongoose ODM</div>
+                </div>
+
+            </div><!-- end .arch-wrapper -->
+
+            <p class="figure-caption" style="text-indent:0; margin-top: 0.6em;">
+                Figure 1: Three-Tier Client-Server Architecture of TEAMERA
+            </p>
+
+            <h4>4.1.2 Detailed Layer Analysis</h4>
+
+            <h4>A. Presentation Tier (Client Layer)</h4>
+            <p>The presentation tier is the topmost layer and serves as the primary interface between the user and the
+                system. Built with React.js and bundled via Vite, it is responsible for:</p>
+            <ul>
+                <li><span class="bold">UI Rendering:</span> Displays interactive pages — Home, Dashboard, Projects,
+                    Workspace, Community, and Profile — using reusable React components.</li>
+                <li><span class="bold">State Management:</span> Manages global application state through React Context
+                    API (AuthContext, ProjectContext, NotificationContext).</li>
+                <li><span class="bold">Client-Side Routing:</span> Implements protected and public routes using React
+                    Router, redirecting unauthenticated users appropriately.</li>
+                <li><span class="bold">API Communication:</span> Sends HTTP requests to the application tier via Axios,
+                    attaching JWT tokens in request headers for protected endpoints.</li>
+                <li><span class="bold">Real-time Communication:</span> Establishes persistent WebSocket connections via
+                    Socket.io Client for instant workspace chat and live team updates.</li>
+                <li><span class="bold">SSE Subscriptions:</span> Listens to Server-Sent Events for real-time
+                    notification delivery without polling.</li>
+            </ul>
+            <p><span class="bold">Key Technologies:</span> React.js, Vite, Socket.io Client, Axios, React Router,
+                Framer Motion, Three.js, Lucide Icons.</p>
+
+            <h4>B. Application Tier (Server Layer)</h4>
+            <p>The application tier is the core of the system. It acts as the intermediary between the client and the
+                database, enforcing all business rules and security policies:</p>
+            <ul>
+                <li><span class="bold">RESTful API:</span> Exposes structured endpoints for user management, project
+                    CRUD, application handling, messaging, and community features.</li>
+                <li><span class="bold">Authentication &amp; Authorization:</span> Issues and validates JWT tokens;
+                    protects routes using the <code>auth.js</code> middleware to ensure only authorized users can
+                    access sensitive resources.</li>
+                <li><span class="bold">Input Validation:</span> Sanitizes and validates all incoming request data
+                    using <code>express-validator</code> before processing.</li>
+                <li><span class="bold">File Handling:</span> Manages resume and profile image uploads using Multer,
+                    storing files in the <code>/uploads</code> directory.</li>
+                <li><span class="bold">Real-time Engine:</span> Runs a Socket.io server for bi-directional workspace
+                    chat and maintains SSE client registries for push notifications.</li>
+                <li><span class="bold">Business Logic:</span> Enforces rules such as preventing duplicate applications,
+                    managing team membership state, and synchronizing project updates across all connected clients.</li>
+            </ul>
+            <p><span class="bold">Key Technologies:</span> Node.js, Express.js, Socket.io, JWT (jsonwebtoken),
+                Multer, bcryptjs, express-validator.</p>
+
+            <h4>C. Data Tier (Database Layer)</h4>
+            <p>The data tier is responsible for persistent storage and retrieval of all application data. MongoDB
+                Atlas, a cloud-hosted NoSQL database, is used with Mongoose as the Object Data Modeling (ODM) layer:</p>
+            <ul>
+                <li><span class="bold">Users Collection:</span> Stores user credentials, profile information, skill
+                    tags, resume references, and aggregated statistics.</li>
+                <li><span class="bold">Projects Collection:</span> Holds project metadata, open positions (with unique
+                    IDs), team member references, and project status.</li>
+                <li><span class="bold">Applications Collection:</span> Tracks each application's status (Pending,
+                    Accepted, Rejected), linking applicants to specific project positions.</li>
+                <li><span class="bold">Messages Collection:</span> Persists workspace chat history, indexed by project
+                    room for efficient retrieval.</li>
+                <li><span class="bold">Posts Collection:</span> Stores community feed entries with likes and nested
+                    comment references.</li>
+                <li><span class="bold">Notifications Collection:</span> Records notification events with type, read
+                    status, and target user reference for reliable delivery.</li>
+            </ul>
+            <p><span class="bold">Key Technologies:</span> MongoDB Atlas (Cloud NoSQL), Mongoose ODM, schema-level
+                validation, indexed queries.</p>
+
+            <h4>4.1.3 Inter-Tier Communication</h4>
+            <p>The communication between tiers follows well-defined protocols:</p>
+            <ul>
+                <li><span class="bold">Client ↔ Server (HTTP):</span> RESTful API calls over HTTPS carry JSON payloads.
+                    JWT tokens in the <code>Authorization</code> header authenticate every protected request.</li>
+                <li><span class="bold">Client ↔ Server (WebSocket):</span> Socket.io maintains a persistent,
+                    full-duplex channel for real-time workspace chat. Clients join project-specific rooms; the server
+                    broadcasts messages only to room members.</li>
+                <li><span class="bold">Client ↔ Server (SSE):</span> Server-Sent Events push notification updates
+                    from server to client without requiring the client to poll.</li>
+                <li><span class="bold">Server ↔ Database:</span> Mongoose ODM translates JavaScript model operations
+                    into optimized MongoDB queries, handling connection pooling, schema validation, and document
+                    population (joins) transparently.</li>
+            </ul>
+
+            <p>This architecture ensures that each tier can be developed, tested, and scaled independently, providing
+                a robust foundation for the collaborative features of TEAMERA.</p>
+
+            <!-- closing the chapter-4 div that was opened before this section -->
+        </div><!-- end chapter-4 page div -->
+
+        <div class="page-break"></div>
+
+        <!-- continuation of chapter 4 on a new page -->
+        <div class="page chapter-4b">
+            <br><br>
+            <h1 style="page-break-before: avoid; padding-top: 0;">CHAPTER 4 (CONTINUED): SYSTEM DESIGN</h1>
+            <br>
+            <!-- placeholder so the section heading below renders correctly -->
+            <p style="text-indent:0; font-size:10pt; font-style:italic;">(Continued from previous page)</p>
+
+            <!-- dummy anchor so the section numbering below is self-contained -->
+            <h3 style="page-break-before: avoid;">4.2 Data Flow Diagrams (DFDs)</h3>
+            <p>Data Flow Diagrams illustrate how data moves through the TEAMERA system. The diagrams below represent
+                the system at three levels of abstraction.</p>
+
+            <h4>4.2.1 Level 0 DFD — Context Diagram</h4>
+            <p>The context diagram provides the highest-level view of the system, showing TEAMERA as a single process
+                interacting with its primary external entity — the User.</p>
             <div class="figure">
                 <div class="mermaid">
                     graph LR
-                    U[User] -- Login/Register --> S[TEAMERA System]
-                    U -- Project Data/Messages --> S
-                    S -- JWT/Project List --> U
-                    S -- Notifications/Messages --> U
-                    S -- Read/Write --> D[(MongoDB)]
+                    U([User]) -- "Login / Register / Actions" --> S[TEAMERA System]
+                    S -- "Responses / Notifications / Data" --> U
                 </div>
-                <div class="figure-caption">Figure 2: Level 0 DFD - Context Diagram</div>
+                <div class="figure-caption">Figure 2: Level 0 DFD — Context Diagram</div>
             </div>
 
-            <h4>4.2.2 Level 1 DFD: System Processes</h4>
+            <h4>4.2.2 Level 1 DFD — System Processes</h4>
+            <p>The Level 1 DFD expands the system into its four major processing modules and shows how each module
+                interacts with the underlying data stores.</p>
             <div class="figure">
                 <div class="mermaid">
                     graph TD
@@ -958,8 +1148,18 @@
                     P3 -- Real-time Updates --> U
                     P4 -- Community Feed --> U
                 </div>
-                <div class="figure-caption">Figure 3: Level 1 DFD - System Processes</div>
+                <div class="figure-caption">Figure 3: Level 1 DFD — System Processes</div>
             </div>
+
+        </div><!-- end chapter-4b -->
+
+        <div class="page-break"></div>
+
+        <!-- ── CHAPTER 4 PART C: ERD + UML ── -->
+        <div class="page chapter-4c">
+            <br><br>
+            <h1 style="page-break-before: avoid; padding-top: 0;">CHAPTER 4 (CONTINUED): SYSTEM DESIGN</h1>
+            <br>
 
             <h3>4.3 Entity Relationship Diagram (ERD)</h3>
             <p>The ERD defines the data structure and the logical relationships between various entities.</p>
@@ -1055,7 +1255,7 @@
                     B-->>F: Success {Token, UserData}
                     F-->>U: Redirect to Dashboard
                 </div>
-                <div class="figure-caption">Figure 7: Sequence Diagram - User Login Flow</div>
+                <div class="figure-caption">Figure 7: Sequence Diagram — User Login Flow</div>
             </div>
 
             <div class="figure">
@@ -1067,42 +1267,45 @@
                     participant D as MongoDB
                     participant O as User B
 
-                    U->>F: Types "Hello" & Sends
+                    U->>F: Types "Hello" &amp; Sends
                     F->>S: emit "send-message"
                     S->>D: Save Message
                     S->>O: emit "receive-message"
                     O-->>O: Update UI in Real-time
                 </div>
-                <div class="figure-caption">Figure 8: Sequence Diagram - Real-time Chat via Socket.io</div>
+                <div class="figure-caption">Figure 8: Sequence Diagram — Real-time Chat via Socket.io</div>
             </div>
-        </div>
+        </div><!-- end chapter-4c -->
 
+        <!-- ── dummy closing tag placeholder — actual close is below ── -->
         <div class="page-break"></div>
 
-        <!-- CHAPTER 5: IMPLEMENTATION -->
-        <div class="page chapter-5">
-            <br><br>
-            <h1>CHAPTER 5: IMPLEMENTATION</h1>
-            <br>
-            <h3>5.1 Frontend Implementation Strategy</h3>
-            <p>The frontend of TEAMERA is built using <span class="bold">React.js</span> with a modular, component-based
-                approach. The decision to use React was driven by its ability to handle dynamic state changes
-                efficiently, which is critical for real-time collaboration. The frontend architecture is divided into
-                three main layers: Components, Pages, and Context.</p>
+    <div class="page-break"></div>
 
-            <h3>5.2 Backend Logic & API Design</h3>
-            <p>The backend is a Node.js environment using <span class="bold">Express.js</span>. We followed a
-                "Service-Controller" pattern to separate business logic from routing. This makes the code much more
-                readable and easier to test.</p>
+    <!-- CHAPTER 5: IMPLEMENTATION -->
+    <div class="page chapter-5">
+        <br><br>
+        <h1>CHAPTER 5: IMPLEMENTATION</h1>
+        <br>
+        <h3>5.1 Frontend Implementation Strategy</h3>
+        <p>The frontend of TEAMERA is built using <span class="bold">React.js</span> with a modular, component-based
+            approach. The decision to use React was driven by its ability to handle dynamic state changes
+            efficiently, which is critical for real-time collaboration. The frontend architecture is divided into
+            three main layers: Components, Pages, and Context.</p>
 
-            <h3>5.3 Real-time Socket.io Integration</h3>
-            <p>The "heart" of the workspace collaboration is the <span class="bold">Socket.io</span> implementation.
-                Unlike standard HTTP requests, WebSockets provide a full-duplex communication channel. This allows the
-                server to "push" data to the client instantly.</p>
+        <h3>5.2 Backend Logic & API Design</h3>
+        <p>The backend is a Node.js environment using <span class="bold">Express.js</span>. We followed a
+            "Service-Controller" pattern to separate business logic from routing. This makes the code much more
+            readable and easier to test.</p>
 
-            <h3>5.4 Module-wise Code Snippets</h3>
-            <h4>5.4.1 User Authentication Middleware</h4>
-            <pre>
+        <h3>5.3 Real-time Socket.io Integration</h3>
+        <p>The "heart" of the workspace collaboration is the <span class="bold">Socket.io</span> implementation.
+            Unlike standard HTTP requests, WebSockets provide a full-duplex communication channel. This allows the
+            server to "push" data to the client instantly.</p>
+
+        <h3>5.4 Module-wise Code Snippets</h3>
+        <h4>5.4.1 User Authentication Middleware</h4>
+        <pre>
 // backend/middleware/auth.js
 const jwt = require('jsonwebtoken');
 
@@ -1124,218 +1327,218 @@ const protect = async (req, res, next) => {
 };
             </pre>
 
-            <h3>5.5 UI/UX Design and Screenshots</h3>
-            <div class="figure">
-                <div style="border: 2px solid black; padding: 20px; background: #f0f0f0;">
-                    [PLACEHOLDER: Insert Figure 10 - Home Page Screenshot here]
-                </div>
-                <div class="figure-caption">Figure 10: Home Page UI</div>
+        <h3>5.5 UI/UX Design and Screenshots</h3>
+        <div class="figure">
+            <div style="border: 2px solid black; padding: 20px; background: #f0f0f0;">
+                [PLACEHOLDER: Insert Figure 10 - Home Page Screenshot here]
             </div>
+            <div class="figure-caption">Figure 10: Home Page UI</div>
         </div>
+    </div>
 
-        <div class="page-break"></div>
+    <div class="page-break"></div>
 
-        <!-- CHAPTER 6: TESTING -->
-        <div class="page chapter-6">
-            <br><br>
-            <h1>CHAPTER 6: TESTING & VALIDATION</h1>
-            <br>
-            <h3>6.1 Testing Objectives & Strategy</h3>
-            <p>Testing is a vital part of the software development process, ensuring that the application meets all
-                requirements and is free of critical bugs. For TEAMERA, we used a combination of manual and automated
-                testing.</p>
+    <!-- CHAPTER 6: TESTING -->
+    <div class="page chapter-6">
+        <br><br>
+        <h1>CHAPTER 6: TESTING & VALIDATION</h1>
+        <br>
+        <h3>6.1 Testing Objectives & Strategy</h3>
+        <p>Testing is a vital part of the software development process, ensuring that the application meets all
+            requirements and is free of critical bugs. For TEAMERA, we used a combination of manual and automated
+            testing.</p>
 
-            <h3>6.2 Detailed Test Cases & Results</h3>
-            <div class="table-caption">Table 5: Unit Test Cases for Authentication</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Test Case</th>
-                        <th>Input</th>
-                        <th>Expected Result</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>TC01</td>
-                        <td>Valid Login</td>
-                        <td>Correct Email/Pass</td>
-                        <td>Redirect to Dashboard</td>
-                        <td>Pass</td>
-                    </tr>
-                    <tr>
-                        <td>TC02</td>
-                        <td>Invalid Email</td>
-                        <td>Wrong Format</td>
-                        <td>Display Error Message</td>
-                        <td>Pass</td>
-                    </tr>
-                    <tr>
-                        <td>TC03</td>
-                        <td>Wrong Password</td>
-                        <td>Incorrect Pass</td>
-                        <td>Unauthorized Error</td>
-                        <td>Pass</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <h3>6.2 Detailed Test Cases & Results</h3>
+        <div class="table-caption">Table 5: Unit Test Cases for Authentication</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Test Case</th>
+                    <th>Input</th>
+                    <th>Expected Result</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>TC01</td>
+                    <td>Valid Login</td>
+                    <td>Correct Email/Pass</td>
+                    <td>Redirect to Dashboard</td>
+                    <td>Pass</td>
+                </tr>
+                <tr>
+                    <td>TC02</td>
+                    <td>Invalid Email</td>
+                    <td>Wrong Format</td>
+                    <td>Display Error Message</td>
+                    <td>Pass</td>
+                </tr>
+                <tr>
+                    <td>TC03</td>
+                    <td>Wrong Password</td>
+                    <td>Incorrect Pass</td>
+                    <td>Unauthorized Error</td>
+                    <td>Pass</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-        <div class="page-break"></div>
+    <div class="page-break"></div>
 
-        <!-- CHAPTER 7: CONCLUSION -->
-        <div class="page chapter-7">
-            <br><br>
-            <h1>CHAPTER 7: CONCLUSION & FUTURE SCOPE</h1>
-            <br>
-            <h3>7.1 Summary of Achievements</h3>
-            <p>The development of TEAMERA has been a successful journey in creating a unified platform for developer
-                collaboration. By integrating recruitment, real-time communication, and project management, the
-                application addresses a significant gap in the current ecosystem of developer tools.</p>
+    <!-- CHAPTER 7: CONCLUSION -->
+    <div class="page chapter-7">
+        <br><br>
+        <h1>CHAPTER 7: CONCLUSION & FUTURE SCOPE</h1>
+        <br>
+        <h3>7.1 Summary of Achievements</h3>
+        <p>The development of TEAMERA has been a successful journey in creating a unified platform for developer
+            collaboration. By integrating recruitment, real-time communication, and project management, the
+            application addresses a significant gap in the current ecosystem of developer tools.</p>
 
-            <h3>7.2 Future Enhancements</h3>
-            <ul>
-                <li>Mobile Application support using React Native.</li>
-                <li>AI-powered team matching algorithm.</li>
-                <li>GitHub repository integration for teams.</li>
-            </ul>
-        </div>
+        <h3>7.2 Future Enhancements</h3>
+        <ul>
+            <li>Mobile Application support using React Native.</li>
+            <li>AI-powered team matching algorithm.</li>
+            <li>GitHub repository integration for teams.</li>
+        </ul>
+    </div>
 
-        <div class="page-break"></div>
+    <div class="page-break"></div>
 
-        <!-- CHAPTER 8: USER MANUAL -->
-        <div class="page chapter-8">
-            <br><br>
-            <h1>CHAPTER 8: USER MANUAL</h1>
-            <br>
-            <h3>8.1 Introduction for Users</h3>
-            <p>Welcome to TEAMERA. This guide will help you navigate through the platform and make the most out of its
-                collaborative features. TEAMERA is designed to be intuitive, but this manual covers the key workflows
-                for both project owners and contributors.</p>
+    <!-- CHAPTER 8: USER MANUAL -->
+    <div class="page chapter-8">
+        <br><br>
+        <h1>CHAPTER 8: USER MANUAL</h1>
+        <br>
+        <h3>8.1 Introduction for Users</h3>
+        <p>Welcome to TEAMERA. This guide will help you navigate through the platform and make the most out of its
+            collaborative features. TEAMERA is designed to be intuitive, but this manual covers the key workflows
+            for both project owners and contributors.</p>
 
-            <h3>8.2 Getting Started</h3>
-            <h4>8.2.1 Registration & Login</h4>
-            <p>To use TEAMERA, you must first create an account. Click on the "Register" button on the home page.
-                Provide your full name, a valid email address, and a secure password. Once registered, you can log in
-                using your credentials. Your session is protected by a secure token, so you won't need to log in
-                frequently.</p>
+        <h3>8.2 Getting Started</h3>
+        <h4>8.2.1 Registration & Login</h4>
+        <p>To use TEAMERA, you must first create an account. Click on the "Register" button on the home page.
+            Provide your full name, a valid email address, and a secure password. Once registered, you can log in
+            using your credentials. Your session is protected by a secure token, so you won't need to log in
+            frequently.</p>
 
-            <h4>8.2.2 Building Your Profile</h4>
-            <p>Your profile is your professional identity on TEAMERA. Click on the "Profile" link in the navigation bar.
-                Here you can:
-            <ul>
-                <li>Add a professional bio.</li>
-                <li>Select your technical skills (e.g., React, Python, UI Design).</li>
-                <li>Upload a profile image to build trust with team members.</li>
-                <li>Upload your latest resume (PDF) so project owners can review your expertise.</li>
-            </ul>
-            </p>
+        <h4>8.2.2 Building Your Profile</h4>
+        <p>Your profile is your professional identity on TEAMERA. Click on the "Profile" link in the navigation bar.
+            Here you can:
+        <ul>
+            <li>Add a professional bio.</li>
+            <li>Select your technical skills (e.g., React, Python, UI Design).</li>
+            <li>Upload a profile image to build trust with team members.</li>
+            <li>Upload your latest resume (PDF) so project owners can review your expertise.</li>
+        </ul>
+        </p>
 
-            <h3>8.3 Project Management</h3>
-            <h4>8.3.1 Creating a Project</h4>
-            <p>If you have an idea and need a team, click on "Create Project" from your dashboard. Fill in the following
-                details:
-            <ul>
-                <li><span class="bold">Title:</span> A catchy name for your project.</li>
-                <li><span class="bold">Description:</span> Explain what you are building and why.</li>
-                <li><span class="bold">Tags:</span> Add technologies used (e.g., #MERN, #Blockchain).</li>
-                <li><span class="bold">Roles:</span> Define what kind of members you need (e.g., "Frontend Developer").
-                </li>
-            </ul>
-            </p>
+        <h3>8.3 Project Management</h3>
+        <h4>8.3.1 Creating a Project</h4>
+        <p>If you have an idea and need a team, click on "Create Project" from your dashboard. Fill in the following
+            details:
+        <ul>
+            <li><span class="bold">Title:</span> A catchy name for your project.</li>
+            <li><span class="bold">Description:</span> Explain what you are building and why.</li>
+            <li><span class="bold">Tags:</span> Add technologies used (e.g., #MERN, #Blockchain).</li>
+            <li><span class="bold">Roles:</span> Define what kind of members you need (e.g., "Frontend Developer").
+            </li>
+        </ul>
+        </p>
 
-            <h4>8.3.2 Managing Applications</h4>
-            <p>Once your project is live, users will start applying. You will receive notifications for each
-                application. Go to your project settings to review applicant profiles and resumes. You can "Accept" or
-                "Reject" applications. Accepted members are automatically added to the project workspace.</p>
+        <h4>8.3.2 Managing Applications</h4>
+        <p>Once your project is live, users will start applying. You will receive notifications for each
+            application. Go to your project settings to review applicant profiles and resumes. You can "Accept" or
+            "Reject" applications. Accepted members are automatically added to the project workspace.</p>
 
-            <h3>8.4 Collaboration in Workspace</h3>
-            <p>The workspace is a private area for your team. It includes:
-            <ul>
-                <li><span class="bold">Real-time Chat:</span> Instant messaging with all team members.</li>
-                <li><span class="bold">Project Details:</span> A quick view of the project's goals and members.</li>
-                <li><span class="bold">Task Tracking:</span> (Coming Soon) A board to manage your project sprints.</li>
-            </ul>
-            </p>
-        </div>
+        <h3>8.4 Collaboration in Workspace</h3>
+        <p>The workspace is a private area for your team. It includes:
+        <ul>
+            <li><span class="bold">Real-time Chat:</span> Instant messaging with all team members.</li>
+            <li><span class="bold">Project Details:</span> A quick view of the project's goals and members.</li>
+            <li><span class="bold">Task Tracking:</span> (Coming Soon) A board to manage your project sprints.</li>
+        </ul>
+        </p>
+    </div>
 
-        <div class="page-break"></div>
+    <div class="page-break"></div>
 
-        <!-- CHAPTER 9: DEVELOPER MANUAL -->
-        <div class="page chapter-9">
-            <br><br>
-            <h1>CHAPTER 9: DEVELOPER MANUAL</h1>
-            <br>
-            <h3>9.1 System Architecture Overview</h3>
-            <p>TEAMERA is a MERN stack application. The backend is an Express.js server running on Node.js, and the
-                frontend is a React.js application bundled with Vite. For development, we follow a standard local
-                environment setup.</p>
+    <!-- CHAPTER 9: DEVELOPER MANUAL -->
+    <div class="page chapter-9">
+        <br><br>
+        <h1>CHAPTER 9: DEVELOPER MANUAL</h1>
+        <br>
+        <h3>9.1 System Architecture Overview</h3>
+        <p>TEAMERA is a MERN stack application. The backend is an Express.js server running on Node.js, and the
+            frontend is a React.js application bundled with Vite. For development, we follow a standard local
+            environment setup.</p>
 
-            <h3>9.2 Local Development Setup</h3>
-            <ol>
-                <li><span class="bold">Clone Repository:</span> `git clone https://github.com/your-repo/teamera`</li>
-                <li><span class="bold">Install Dependencies:</span> Run `npm install` in both `backend` and `frontend`
-                    folders.</li>
-                <li><span class="bold">Environment Variables:</span> Create a `.env` file in the backend folder with the
-                    following:
-                    <pre>
+        <h3>9.2 Local Development Setup</h3>
+        <ol>
+            <li><span class="bold">Clone Repository:</span> `git clone https://github.com/your-repo/teamera`</li>
+            <li><span class="bold">Install Dependencies:</span> Run `npm install` in both `backend` and `frontend`
+                folders.</li>
+            <li><span class="bold">Environment Variables:</span> Create a `.env` file in the backend folder with the
+                following:
+                <pre>
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
                     </pre>
-                </li>
-                <li><span class="bold">Run Backend:</span> `npm run dev` in the backend folder.</li>
-                <li><span class="bold">Run Frontend:</span> `npm run dev` in the frontend folder.</li>
-            </ol>
+            </li>
+            <li><span class="bold">Run Backend:</span> `npm run dev` in the backend folder.</li>
+            <li><span class="bold">Run Frontend:</span> `npm run dev` in the frontend folder.</li>
+        </ol>
 
-            <h3>9.3 Backend API Endpoints</h3>
-            <p>The backend exposes several RESTful endpoints:
-            <ul>
-                <li><span class="bold">POST /api/users/register:</span> Create a new user.</li>
-                <li><span class="bold">POST /api/users/login:</span> Authenticate and get JWT.</li>
-                <li><span class="bold">GET /api/projects:</span> Fetch all public projects.</li>
-                <li><span class="bold">POST /api/projects:</span> Create a new project (Protected).</li>
-                <li><span class="bold">POST /api/applications:</span> Apply to a project (Protected).</li>
-            </ul>
-            </p>
+        <h3>9.3 Backend API Endpoints</h3>
+        <p>The backend exposes several RESTful endpoints:
+        <ul>
+            <li><span class="bold">POST /api/users/register:</span> Create a new user.</li>
+            <li><span class="bold">POST /api/users/login:</span> Authenticate and get JWT.</li>
+            <li><span class="bold">GET /api/projects:</span> Fetch all public projects.</li>
+            <li><span class="bold">POST /api/projects:</span> Create a new project (Protected).</li>
+            <li><span class="bold">POST /api/applications:</span> Apply to a project (Protected).</li>
+        </ul>
+        </p>
 
-            <h3>9.4 Real-time Communication (Socket.io)</h3>
-            <p>The WebSocket server is integrated into the Express server. The main events are:
-            <ul>
-                <li>`join-room`: Sent by the client when entering a workspace.</li>
-                <li>`send-message`: Emitted by the client to send a chat message.</li>
-                <li>`receive-message`: Broadcasted by the server to all users in a room.</li>
-            </ul>
-            </p>
-        </div>
+        <h3>9.4 Real-time Communication (Socket.io)</h3>
+        <p>The WebSocket server is integrated into the Express server. The main events are:
+        <ul>
+            <li>`join-room`: Sent by the client when entering a workspace.</li>
+            <li>`send-message`: Emitted by the client to send a chat message.</li>
+            <li>`receive-message`: Broadcasted by the server to all users in a room.</li>
+        </ul>
+        </p>
+    </div>
 
-        <div class="page-break"></div>
+    <div class="page-break"></div>
 
-        <!-- GLOSSARY & BIBLIOGRAPHY -->
-        <div class="page glossary">
-            <br><br>
-            <h1>GLOSSARY & BIBLIOGRAPHY</h1>
-            <br>
-            <h3>Glossary of Terms</h3>
-            <ul>
-                <li><span class="bold">MERN:</span> MongoDB, Express, React, Node.</li>
-                <li><span class="bold">JWT:</span> JSON Web Token, used for authentication.</li>
-                <li><span class="bold">NoSQL:</span> Non-relational database management system.</li>
-                <li><span class="bold">WebSocket:</span> Full-duplex communication protocol.</li>
-                <li><span class="bold">ODM:</span> Object Data Modeling (e.g., Mongoose).</li>
-                <li><span class="bold">SPA:</span> Single Page Application.</li>
-            </ul>
+    <!-- GLOSSARY & BIBLIOGRAPHY -->
+    <div class="page glossary">
+        <br><br>
+        <h1>GLOSSARY & BIBLIOGRAPHY</h1>
+        <br>
+        <h3>Glossary of Terms</h3>
+        <ul>
+            <li><span class="bold">MERN:</span> MongoDB, Express, React, Node.</li>
+            <li><span class="bold">JWT:</span> JSON Web Token, used for authentication.</li>
+            <li><span class="bold">NoSQL:</span> Non-relational database management system.</li>
+            <li><span class="bold">WebSocket:</span> Full-duplex communication protocol.</li>
+            <li><span class="bold">ODM:</span> Object Data Modeling (e.g., Mongoose).</li>
+            <li><span class="bold">SPA:</span> Single Page Application.</li>
+        </ul>
 
-            <br><br>
-            <h3>Bibliography</h3>
-            <p>1. Flanagan, D. (2020). *JavaScript: The Definitive Guide*. O'Reilly Media.</p>
-            <p>2. Banks, A., & Porcello, E. (2020). *Learning React: Modern Patterns as Conquer Efficiently*. O'Reilly
-                Media.</p>
-            <p>3. Gancarz, M. (2003). *The UNIX Philosophy*. Digital Press.</p>
-            <p>4. Official Documentation: React (reactjs.org), Node.js (nodejs.org), MongoDB (mongodb.com).</p>
-        </div>
+        <br><br>
+        <h3>Bibliography</h3>
+        <p>1. Flanagan, D. (2020). *JavaScript: The Definitive Guide*. O'Reilly Media.</p>
+        <p>2. Banks, A., & Porcello, E. (2020). *Learning React: Modern Patterns as Conquer Efficiently*. O'Reilly
+            Media.</p>
+        <p>3. Gancarz, M. (2003). *The UNIX Philosophy*. Digital Press.</p>
+        <p>4. Official Documentation: React (reactjs.org), Node.js (nodejs.org), MongoDB (mongodb.com).</p>
+    </div>
 
     </div>
 
