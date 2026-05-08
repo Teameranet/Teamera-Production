@@ -138,3 +138,5 @@ Diagram base on current system flow
 Ensure the diagram is clear, well-spaced, and readable when printed in black & white
 Avoid colors; use borders, dashed lines, or grayscale for differentiation
 The final result should look neat, structured, and easy to understand, suitable for submitting as a professional academic report
+
+Architecture Diagram: Integrated a new Mermaid.js diagram (Figure 2) specifically for the Deployment Architecture Flow, visualizing the connection between the user browser and the various cloud environments.
