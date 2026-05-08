@@ -887,20 +887,28 @@
             <h1>CHAPTER 4: SYSTEM DESIGN</h1>
             <br>
             <h3>4.1 Three-Tier Client-Server Architecture</h3>
-            <p>TEAMERA is built upon a <span class="bold">Three-Tier Client-Server Architecture</span>, a well-established
+            <p>TEAMERA is built upon a <span class="bold">Three-Tier Client-Server Architecture</span>, a proven
                 software design pattern that separates the application into three distinct, independently manageable
-                layers. This separation of concerns enhances security, simplifies maintenance, and enables the system
-                to scale efficiently as user demand grows.</p>
+                layers. This separation of concerns enforces security boundaries, simplifies maintenance, and allows
+                each layer to scale independently as user demand grows.</p>
 
             <h4>4.1.1 Architecture Overview</h4>
-            <p>The three tiers are logically and physically distinct, each with a clearly defined responsibility:</p>
+            <p>The three tiers are logically and physically distinct, each with a clearly defined responsibility in
+                the TEAMERA system flow:</p>
             <ul>
-                <li><span class="bold">Tier 1 — Presentation Layer (Client):</span> The user-facing React.js application
-                    responsible for rendering the interface and managing user interactions.</li>
-                <li><span class="bold">Tier 2 — Application Layer (Server):</span> The Node.js / Express.js backend
-                    that enforces business logic, handles authentication, and processes all API requests.</li>
-                <li><span class="bold">Tier 3 — Data Layer (Database):</span> The MongoDB Atlas cloud database that
-                    persists all application data through Mongoose ODM.</li>
+                <li><span class="bold">Tier 1 — Presentation Layer (Client):</span> A React.js single-page application
+                    (SPA) bundled with Vite. It renders all user-facing pages — Home, Dashboard, Projects, Workspace,
+                    Community, and Profile — and communicates with the server exclusively through REST API calls and
+                    real-time channels (Socket.io + SSE).</li>
+                <li><span class="bold">Tier 2 — Application Layer (Server):</span> A Node.js / Express.js server that
+                    acts as the sole gateway between the client and the database. It enforces JWT-based authentication,
+                    validates all inputs, executes business logic (dual-path application state machine — applicant-initiated
+                    and owner-initiated invitation flow — team membership rules, duplicate-application prevention),
+                    and manages four real-time SSE streams alongside a Socket.io chat engine.</li>
+                <li><span class="bold">Tier 3 — Data Layer (Database):</span> A MongoDB Atlas cloud-hosted NoSQL
+                    database accessed exclusively through Mongoose ODM. It persists all platform data across seven
+                    collections — Users, Projects, Applications, Dashboards, Messages, Posts, and Notifications —
+                    with compound indexes for efficient querying.</li>
             </ul>
 
             <!-- ═══════════════════════════════════════════════════════════ -->
@@ -910,25 +918,28 @@
 
                 <!-- ── TIER 1: PRESENTATION ── -->
                 <div class="arch-tier tier-presentation">
-                    <div class="arch-tier-label">TIER 1 &nbsp;|&nbsp; PRESENTATION LAYER &nbsp;(Client)</div>
+                    <div class="arch-tier-label">TIER 1 &nbsp;|&nbsp; PRESENTATION LAYER &nbsp;&mdash;&nbsp; Client (Browser)</div>
                     <div class="arch-tier-body">
                         <div class="arch-module">
-                            <div class="arch-module-title">React.js + Vite</div>
-                            <div class="arch-module-item">Pages &amp; UI Components</div>
-                            <div class="arch-module-item">React Context (Auth / Project / Notification)</div>
-                            <div class="arch-module-item">React Router (Protected Routes)</div>
+                            <div class="arch-module-title">Pages &amp; UI Components</div>
+                            <div class="arch-module-item">Home, Dashboard, Projects</div>
+                            <div class="arch-module-item">Workspace, Community, Profile</div>
+                            <div class="arch-module-item">Modals: Auth, Project, Onboarding</div>
+                            <div class="arch-module-item">Workspace Tabs: Chat, Tasks, Team, Files</div>
                         </div>
                         <div class="arch-module">
-                            <div class="arch-module-title">Real-Time Client</div>
-                            <div class="arch-module-item">Socket.io Client</div>
-                            <div class="arch-module-item">SSE Event Listeners</div>
-                            <div class="arch-module-item">Live Notification Handler</div>
+                            <div class="arch-module-title">State &amp; Routing</div>
+                            <div class="arch-module-item">AuthContext — user session &amp; JWT</div>
+                            <div class="arch-module-item">ProjectContext — active project state</div>
+                            <div class="arch-module-item">NotificationContext — live alerts</div>
+                            <div class="arch-module-item">React Router — ProtectedRoute guards</div>
                         </div>
                         <div class="arch-module">
-                            <div class="arch-module-title">API &amp; Auth Services</div>
-                            <div class="arch-module-item">Axios HTTP Client</div>
-                            <div class="arch-module-item">JWT Token Storage</div>
-                            <div class="arch-module-item">File Upload (FormData)</div>
+                            <div class="arch-module-title">Communication Services</div>
+                            <div class="arch-module-item">Axios — REST API calls + JWT header</div>
+                            <div class="arch-module-item">Socket.io Client — workspace chat</div>
+                            <div class="arch-module-item">SSE Listeners — notifications, project</div>
+                            <div class="arch-module-item">FormData — workspace chat file uploads</div>
                         </div>
                     </div>
                 </div>
@@ -936,34 +947,43 @@
                 <!-- ── COMMUNICATION ARROW 1 ── -->
                 <div class="arch-arrow-block">
                     <div class="arch-arrow-line">
-                        <span class="arch-arrow-label arch-arrow-down">HTTP / REST API &nbsp;&#x25BC;&nbsp; JSON Responses</span>
+                        <span class="arch-arrow-label">&#x25BC;&nbsp; HTTPS REST Requests (JSON) &nbsp;|&nbsp; JWT in Authorization Header &nbsp;|&nbsp; Multipart/FormData (chat file uploads)</span>
                     </div>
                     <div class="arch-arrow-line arch-arrow-dashed">
-                        <span class="arch-arrow-label arch-arrow-up">WebSocket (Socket.io) &nbsp;&#x25B2;&nbsp; Real-time Events</span>
+                        <span class="arch-arrow-label">&#x25B2;&nbsp; JSON Responses &nbsp;|&nbsp; Socket.io Events (chat, team-update) &nbsp;|&nbsp; SSE Streams (notifications, community, project)</span>
                     </div>
                 </div>
 
                 <!-- ── TIER 2: APPLICATION ── -->
                 <div class="arch-tier tier-application">
-                    <div class="arch-tier-label">TIER 2 &nbsp;|&nbsp; APPLICATION LAYER &nbsp;(Server)</div>
+                    <div class="arch-tier-label">TIER 2 &nbsp;|&nbsp; APPLICATION LAYER &nbsp;&mdash;&nbsp; Server (Node.js / Express.js)</div>
                     <div class="arch-tier-body">
                         <div class="arch-module">
-                            <div class="arch-module-title">Express.js REST API</div>
-                            <div class="arch-module-item">Route Handlers (users, projects,</div>
-                            <div class="arch-module-item">&nbsp;&nbsp;applications, messages, community)</div>
-                            <div class="arch-module-item">Controllers &amp; Service Layer</div>
+                            <div class="arch-module-title">REST API Routes &amp; Controllers</div>
+                            <div class="arch-module-item">userController — register, login, profile</div>
+                            <div class="arch-module-item">projectController — CRUD, search, filter</div>
+                            <div class="arch-module-item">dashboardController — bookmarks, stats</div>
+                            <div class="arch-module-item">messageController — chat history</div>
+                            <div class="arch-module-item">communityController — posts, likes</div>
+                            <div class="arch-module-item">notificationController — read, clear</div>
                         </div>
                         <div class="arch-module">
                             <div class="arch-module-title">Middleware Pipeline</div>
-                            <div class="arch-module-item">JWT Auth Verification</div>
-                            <div class="arch-module-item">Input Validation (express-validator)</div>
-                            <div class="arch-module-item">Multer (File Uploads)</div>
+                            <div class="arch-module-item">auth.js — JWT verification on every</div>
+                            <div class="arch-module-item">&nbsp;&nbsp;protected route</div>
+                            <div class="arch-module-item">validation.js — express-validator rules</div>
+                            <div class="arch-module-item">Multer — resume &amp; avatar file storage</div>
+                            <div class="arch-module-item">&nbsp;&nbsp;to /uploads directory</div>
+                            <div class="arch-module-item">CORS, Helmet, Rate Limiting</div>
                         </div>
                         <div class="arch-module">
                             <div class="arch-module-title">Real-Time Engine</div>
-                            <div class="arch-module-item">Socket.io Server (Chat Rooms)</div>
-                            <div class="arch-module-item">SSE Clients (Notifications)</div>
-                            <div class="arch-module-item">Project / Community SSE Streams</div>
+                            <div class="arch-module-item">Socket.io Server — project chat rooms</div>
+                            <div class="arch-module-item">&nbsp;&nbsp;(join-room, send-message, disconnect)</div>
+                            <div class="arch-module-item">sseClients — notification push stream</div>
+                            <div class="arch-module-item">projectSseClients — team update stream</div>
+                            <div class="arch-module-item">communitySseClients — feed live stream</div>
+                            <div class="arch-module-item">chatSseClients — workspace chat SSE</div>
                         </div>
                     </div>
                 </div>
@@ -971,43 +991,47 @@
                 <!-- ── COMMUNICATION ARROW 2 ── -->
                 <div class="arch-arrow-block">
                     <div class="arch-arrow-line">
-                        <span class="arch-arrow-label arch-arrow-down">Mongoose ODM Queries &nbsp;&#x25BC;&nbsp; CRUD Operations</span>
+                        <span class="arch-arrow-label">&#x25BC;&nbsp; Mongoose ODM — find(), save(), updateOne(), aggregate() &nbsp;|&nbsp; Schema Validation &nbsp;|&nbsp; Compound Index Queries</span>
                     </div>
                     <div class="arch-arrow-line arch-arrow-dashed">
-                        <span class="arch-arrow-label arch-arrow-up">Query Results &nbsp;&#x25B2;&nbsp; Document Objects</span>
+                        <span class="arch-arrow-label">&#x25B2;&nbsp; Populated Document Objects (JSON) &nbsp;|&nbsp; Cursor Results &nbsp;|&nbsp; Write Acknowledgements</span>
                     </div>
                 </div>
 
                 <!-- ── TIER 3: DATA ── -->
                 <div class="arch-tier tier-data">
-                    <div class="arch-tier-label">TIER 3 &nbsp;|&nbsp; DATA LAYER &nbsp;(Database)</div>
+                    <div class="arch-tier-label">TIER 3 &nbsp;|&nbsp; DATA LAYER &nbsp;&mdash;&nbsp; MongoDB Atlas (Cloud NoSQL)</div>
                     <div class="arch-tier-body arch-tier-body--data">
                         <div class="arch-collection">
-                            <div class="arch-collection-name">Users</div>
-                            <div class="arch-collection-desc">Profile, Skills, Resume, Stats</div>
+                            <div class="arch-collection-name">users</div>
+                            <div class="arch-collection-desc">name, email, password (hashed), avatar, bio, title, role, skills[ ], experiences[ ], education[ ], githubUrl, linkedinUrl</div>
                         </div>
                         <div class="arch-collection">
-                            <div class="arch-collection-name">Projects</div>
-                            <div class="arch-collection-desc">Details, Tags, Open Positions, Team</div>
+                            <div class="arch-collection-name">projects</div>
+                            <div class="arch-collection-desc">ownerId, title, stage, industry, teamMembers[ ], openPositions[ ] (with unique id), funding, timeline, applications count</div>
                         </div>
                         <div class="arch-collection">
-                            <div class="arch-collection-name">Applications</div>
-                            <div class="arch-collection-desc">Status, Position, Applicant Ref</div>
+                            <div class="arch-collection-name">applications</div>
+                            <div class="arch-collection-desc">userId (unique), applications_received[ ], applications_sent[ ], stats — dual-document sync per submission; status: PENDING / ACCEPTED / REJECTED / INVITED / REMOVED / QUIT</div>
                         </div>
                         <div class="arch-collection">
-                            <div class="arch-collection-name">Messages</div>
-                            <div class="arch-collection-desc">Chat History, Room, Timestamp</div>
+                            <div class="arch-collection-name">dashboards</div>
+                            <div class="arch-collection-desc">userId (unique), bookmarkedProjects[ ], stats (bookmarks, projects, members, profile%), recentActivity[ ]</div>
                         </div>
                         <div class="arch-collection">
-                            <div class="arch-collection-name">Posts</div>
-                            <div class="arch-collection-desc">Community Feed, Likes, Comments</div>
+                            <div class="arch-collection-name">messages</div>
+                            <div class="arch-collection-desc">projectId, senderId, content, type, attachments[ ], reactions[ ], replyTo, mentions[ ] — indexed by projectId + createdAt</div>
                         </div>
                         <div class="arch-collection">
-                            <div class="arch-collection-name">Notifications</div>
-                            <div class="arch-collection-desc">Type, Read Status, Target User</div>
+                            <div class="arch-collection-name">posts</div>
+                            <div class="arch-collection-desc">Community feed entries — authorId, content, likes[ ], comments[ ], tags[ ], media attachments</div>
+                        </div>
+                        <div class="arch-collection">
+                            <div class="arch-collection-name">notifications</div>
+                            <div class="arch-collection-desc">userId, type, title, message, isRead, priority, metadata (applicationId, oldStatus, newStatus), TTL expiry</div>
                         </div>
                     </div>
-                    <div class="arch-db-footer">MongoDB Atlas &nbsp;&mdash;&nbsp; Cloud-Hosted NoSQL Database &nbsp;|&nbsp; Mongoose ODM</div>
+                    <div class="arch-db-footer">MongoDB Atlas &nbsp;&mdash;&nbsp; Cloud-Hosted NoSQL &nbsp;|&nbsp; Mongoose ODM &nbsp;|&nbsp; 7 Collections &nbsp;|&nbsp; Compound Indexes &nbsp;|&nbsp; Schema-Level Validation</div>
                 </div>
 
             </div><!-- end .arch-wrapper -->
@@ -1022,80 +1046,142 @@
             <p>The presentation tier is the topmost layer and serves as the primary interface between the user and the
                 system. Built with React.js and bundled via Vite, it is responsible for:</p>
             <ul>
-                <li><span class="bold">UI Rendering:</span> Displays interactive pages — Home, Dashboard, Projects,
-                    Workspace, Community, and Profile — using reusable React components.</li>
-                <li><span class="bold">State Management:</span> Manages global application state through React Context
-                    API (AuthContext, ProjectContext, NotificationContext).</li>
-                <li><span class="bold">Client-Side Routing:</span> Implements protected and public routes using React
-                    Router, redirecting unauthenticated users appropriately.</li>
-                <li><span class="bold">API Communication:</span> Sends HTTP requests to the application tier via Axios,
-                    attaching JWT tokens in request headers for protected endpoints.</li>
-                <li><span class="bold">Real-time Communication:</span> Establishes persistent WebSocket connections via
-                    Socket.io Client for instant workspace chat and live team updates.</li>
-                <li><span class="bold">SSE Subscriptions:</span> Listens to Server-Sent Events for real-time
-                    notification delivery without polling.</li>
+                <li><span class="bold">Page Rendering:</span> Displays six main pages — Home (with Three.js 3D canvas),
+                    Dashboard, Projects, Workspace, Community, and Profile — each composed of reusable React components
+                    such as ProjectCard, NotificationModal, ProfileModal, and CollaborationSpace.</li>
+                <li><span class="bold">Global State Management:</span> Three React Context providers manage cross-cutting
+                    state: <code>AuthContext</code> holds the logged-in user and JWT token; <code>ProjectContext</code>
+                    caches the active project and triggers real-time re-renders when team membership changes;
+                    <code>NotificationContext</code> maintains the unread notification count and live alert queue.</li>
+                <li><span class="bold">Client-Side Routing &amp; Guards:</span> React Router defines public routes
+                    (Home) and protected routes (Dashboard, Workspace, Profile) via the <code>ProtectedRoute</code>
+                    component, which redirects unauthenticated users to the login modal.</li>
+                <li><span class="bold">REST API Communication:</span> All data operations are performed through
+                    <code>frontend/utils/api.js</code>, which wraps Axios and automatically attaches the stored JWT
+                    in the <code>Authorization: Bearer</code> header for every protected request.</li>
+                <li><span class="bold">Real-time Workspace Chat:</span> The <code>WorkspaceChatTab</code> component
+                    establishes a Socket.io connection, joins a project-specific room using the project ID, and
+                    renders incoming messages instantly without page refresh.</li>
+                <li><span class="bold">SSE Subscriptions:</span> The client opens persistent EventSource connections
+                    to four server-side SSE streams — notifications, project team updates, community feed, and
+                    workspace chat — enabling live UI updates without polling.</li>
+                <li><span class="bold">File Uploads:</span> Chat file attachments in the workspace are sent as
+                    <code>multipart/form-data</code> via the <code>WorkspaceChatTab</code> component to the
+                    dedicated <code>POST /messages/:projectId/upload</code> endpoint.</li>
             </ul>
             <p><span class="bold">Key Technologies:</span> React.js, Vite, Socket.io Client, Axios, React Router,
                 Framer Motion, Three.js, Lucide Icons.</p>
 
             <h4>B. Application Tier (Server Layer)</h4>
-            <p>The application tier is the core of the system. It acts as the intermediary between the client and the
+            <p>The application tier is the core of the system. It acts as the sole gateway between the client and the
                 database, enforcing all business rules and security policies:</p>
             <ul>
-                <li><span class="bold">RESTful API:</span> Exposes structured endpoints for user management, project
-                    CRUD, application handling, messaging, and community features.</li>
-                <li><span class="bold">Authentication &amp; Authorization:</span> Issues and validates JWT tokens;
-                    protects routes using the <code>auth.js</code> middleware to ensure only authorized users can
-                    access sensitive resources.</li>
-                <li><span class="bold">Input Validation:</span> Sanitizes and validates all incoming request data
-                    using <code>express-validator</code> before processing.</li>
-                <li><span class="bold">File Handling:</span> Manages resume and profile image uploads using Multer,
-                    storing files in the <code>/uploads</code> directory.</li>
-                <li><span class="bold">Real-time Engine:</span> Runs a Socket.io server for bi-directional workspace
-                    chat and maintains SSE client registries for push notifications.</li>
-                <li><span class="bold">Business Logic:</span> Enforces rules such as preventing duplicate applications,
-                    managing team membership state, and synchronizing project updates across all connected clients.</li>
+                <li><span class="bold">RESTful API Controllers:</span> Six dedicated controllers handle domain logic —
+                    <code>userController</code> (registration, login, profile updates, skill management),
+                    <code>projectController</code> (CRUD, search, team management, position updates),
+                    <code>dashboardController</code> (bookmarks, stats, recent activity),
+                    <code>messageController</code> (chat history retrieval),
+                    <code>communityController</code> (posts, likes, comments), and
+                    <code>notificationController</code> (mark-read, clear-all).</li>
+                <li><span class="bold">Authentication &amp; Authorization:</span> The <code>auth.js</code> middleware
+                    verifies the JWT on every protected route. Tokens are signed with a secret key and carry the
+                    user ID as payload. Passwords are hashed with <code>bcryptjs</code> before storage.</li>
+                <li><span class="bold">Input Validation:</span> The <code>validation.js</code> middleware applies
+                    <code>express-validator</code> rule chains to all write endpoints, rejecting malformed or
+                    missing fields before they reach the controller.</li>
+                <li><span class="bold">File Handling:</span> Multer is configured with disk storage (25 MB limit)
+                    and handles a single route — <code>POST /messages/:projectId/upload</code> — saving chat
+                    file attachments to the <code>backend/uploads/</code> directory. The
+                    <code>contactService.js</code> handles contact form submissions separately in memory.</li>
+                <li><span class="bold">Application State Machine:</span> The project controller enforces the full
+                    application lifecycle through two distinct entry paths:
+                    <ul style="margin-top: 0.4em;">
+                        <li><span class="bold">Applicant-Initiated Flow:</span> A user applies to an open position →
+                            status is set to <code>PENDING</code> → the project owner reviews and moves it to
+                            <code>ACCEPTED</code> or <code>REJECTED</code> → an accepted member may later be
+                            <code>REMOVED</code> by the owner or voluntarily <code>QUIT</code>.</li>
+                        <li><span class="bold">Owner-Initiated Invitation Flow:</span> During project creation or
+                            editing, the owner directly adds team members → the system creates an application record
+                            with status <code>INVITED</code> in both the owner's <code>applications_received</code>
+                            and the member's <code>applications_sent</code> arrays, bypassing the PENDING review
+                            step entirely. Invitation stats (<code>invitedReceived</code>,
+                            <code>invitedSent</code>) are tracked separately from regular applications.</li>
+                    </ul>
+                    Both paths use dual-document synchronisation (applicant's <code>applications_sent</code> and
+                    owner's <code>applications_received</code> updated atomically, sharing the same
+                    <code>applicationId</code>). Re-application is permitted after REJECTED, QUIT, or REMOVED
+                    status.</li>
+                <li><span class="bold">Real-Time Engine:</span> A Socket.io server manages project-scoped chat rooms
+                    (join-room, send-message, disconnect events). Four independent SSE registries —
+                    <code>sseClients</code>, <code>projectSseClients</code>, <code>communitySseClients</code>, and
+                    <code>chatSseClients</code> — push targeted events to subscribed clients without polling.</li>
+                <li><span class="bold">Team Consistency Logic:</span> When a project owner updates position names or
+                    team details, the server propagates changes to all connected clients via the
+                    <code>projectSseClients</code> stream, preventing stale data and duplicate member entries.</li>
             </ul>
             <p><span class="bold">Key Technologies:</span> Node.js, Express.js, Socket.io, JWT (jsonwebtoken),
                 Multer, bcryptjs, express-validator.</p>
 
             <h4>C. Data Tier (Database Layer)</h4>
             <p>The data tier is responsible for persistent storage and retrieval of all application data. MongoDB
-                Atlas, a cloud-hosted NoSQL database, is used with Mongoose as the Object Data Modeling (ODM) layer:</p>
+                Atlas, a cloud-hosted NoSQL database, is used with Mongoose as the Object Data Modeling (ODM) layer
+                across seven collections:</p>
             <ul>
-                <li><span class="bold">Users Collection:</span> Stores user credentials, profile information, skill
-                    tags, resume references, and aggregated statistics.</li>
-                <li><span class="bold">Projects Collection:</span> Holds project metadata, open positions (with unique
-                    IDs), team member references, and project status.</li>
-                <li><span class="bold">Applications Collection:</span> Tracks each application's status (Pending,
-                    Accepted, Rejected), linking applicants to specific project positions.</li>
-                <li><span class="bold">Messages Collection:</span> Persists workspace chat history, indexed by project
-                    room for efficient retrieval.</li>
-                <li><span class="bold">Posts Collection:</span> Stores community feed entries with likes and nested
-                    comment references.</li>
-                <li><span class="bold">Notifications Collection:</span> Records notification events with type, read
-                    status, and target user reference for reliable delivery.</li>
+                <li><span class="bold">users:</span> Stores credentials (hashed password), profile fields (bio,
+                    title, avatar, location), skill arrays with proficiency levels, experience and education
+                    histories, and external profile links (GitHub, LinkedIn, portfolio).</li>
+                <li><span class="bold">projects:</span> Holds project metadata (title, stage, industry, funding,
+                    timeline), an embedded <code>teamMembers</code> array with user references and role names, and
+                    an <code>openPositions</code> array where each position carries a unique ObjectId — enabling
+                    precise application targeting and position-level updates.</li>
+                <li><span class="bold">applications:</span> Uses a user-centric document model where each user has
+                    one document containing both <code>applications_received</code> and <code>applications_sent</code>
+                    arrays. Both arrays share the same <code>applicationId</code> for cross-reference, and
+                    aggregated stats (totalReceived, pendingReceived, acceptedSent, etc.) are maintained inline.</li>
+                <li><span class="bold">dashboards:</span> Stores per-user dashboard data including
+                    <code>bookmarkedProjects</code> (with projectId, name, stage, and timestamp),
+                    summary statistics (totalBookmarks, totalProjects, totalTeamMembers, profileCompleteness),
+                    and a <code>recentActivity</code> log for quick-access display.</li>
+                <li><span class="bold">messages:</span> Persists workspace chat history with projectId, senderId,
+                    content type, file attachments, emoji reactions, reply-to references, and @mention arrays.
+                    Indexed on <code>{ projectId, createdAt }</code> for fast room-scoped retrieval.</li>
+                <li><span class="bold">posts:</span> Stores community feed entries with author reference, rich
+                    content, likes array, nested comments, and media attachments for the social layer.</li>
+                <li><span class="bold">notifications:</span> Records notification events with type, priority,
+                    read status, and a metadata object carrying applicationId, projectId, senderId, and
+                    old/new status values. A TTL index automatically expires old notifications.</li>
             </ul>
             <p><span class="bold">Key Technologies:</span> MongoDB Atlas (Cloud NoSQL), Mongoose ODM, schema-level
-                validation, indexed queries.</p>
+                validation, compound indexes, TTL indexes.</p>
 
             <h4>4.1.3 Inter-Tier Communication</h4>
-            <p>The communication between tiers follows well-defined protocols:</p>
+            <p>The communication between tiers follows well-defined protocols that map directly to the system's
+                functional requirements:</p>
             <ul>
-                <li><span class="bold">Client ↔ Server (HTTP):</span> RESTful API calls over HTTPS carry JSON payloads.
-                    JWT tokens in the <code>Authorization</code> header authenticate every protected request.</li>
-                <li><span class="bold">Client ↔ Server (WebSocket):</span> Socket.io maintains a persistent,
-                    full-duplex channel for real-time workspace chat. Clients join project-specific rooms; the server
-                    broadcasts messages only to room members.</li>
-                <li><span class="bold">Client ↔ Server (SSE):</span> Server-Sent Events push notification updates
-                    from server to client without requiring the client to poll.</li>
-                <li><span class="bold">Server ↔ Database:</span> Mongoose ODM translates JavaScript model operations
-                    into optimized MongoDB queries, handling connection pooling, schema validation, and document
-                    population (joins) transparently.</li>
+                <li><span class="bold">Client → Server (HTTPS REST):</span> All CRUD operations are performed via
+                    JSON payloads over HTTPS. The JWT token in the <code>Authorization: Bearer</code> header is
+                    verified by <code>auth.js</code> before any controller logic executes. File uploads use
+                    <code>multipart/form-data</code> encoding.</li>
+                <li><span class="bold">Client ↔ Server (WebSocket / Socket.io):</span> The workspace chat
+                    establishes a persistent, full-duplex Socket.io connection. On joining a project workspace,
+                    the client emits a <code>join-room</code> event with the project ID. The server broadcasts
+                    <code>receive-message</code> events only to members of that specific room, ensuring message
+                    isolation between projects.</li>
+                <li><span class="bold">Server → Client (SSE):</span> Four Server-Sent Event streams deliver
+                    targeted push updates: notification events (application status changes, new applications),
+                    project team updates (member added/removed, position renamed), community feed updates (new
+                    posts, likes), and workspace chat events. Clients subscribe on login and unsubscribe on
+                    logout, keeping the connection pool lean.</li>
+                <li><span class="bold">Server ↔ Database (Mongoose ODM):</span> All database interactions go
+                    through Mongoose model methods (<code>find()</code>, <code>save()</code>,
+                    <code>findOneAndUpdate()</code>, <code>aggregate()</code>). Mongoose handles connection
+                    pooling to MongoDB Atlas, enforces schema validation before writes, and populates
+                    cross-collection references (e.g., populating user details into project team members)
+                    transparently.</li>
             </ul>
 
-            <p>This architecture ensures that each tier can be developed, tested, and scaled independently, providing
-                a robust foundation for the collaborative features of TEAMERA.</p>
+            <p>This architecture ensures that each tier can be developed, tested, and scaled independently,
+                providing a robust and maintainable foundation for all collaborative features of TEAMERA.</p>
 
             <!-- closing the chapter-4 div that was opened before this section -->
         </div><!-- end chapter-4 page div -->
