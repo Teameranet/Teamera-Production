@@ -18,7 +18,8 @@
                 lineColor: '#000000',
                 secondaryColor: '#f2f2f2',
                 tertiaryColor: '#ffffff',
-                fontSize: '14px'
+                fontSize: '12pt',
+                fontFamily: '"Times New Roman", Times, serif'
             }
         });
     </script>
@@ -1231,42 +1232,141 @@
             <!-- dummy anchor so the section numbering below is self-contained -->
             <h3 style="page-break-before: avoid;">4.2 Data Flow Diagrams (DFDs)</h3>
             <p>Data Flow Diagrams illustrate how data moves through the TEAMERA system. The diagrams below represent
-                the system at three levels of abstraction.</p>
+                the system at three levels of abstraction, reflecting the current workspace-based collaboration model
+                with real-time chat, task management, and team coordination features.</p>
 
             <h4>4.2.1 Level 0 DFD — Context Diagram</h4>
             <p>The context diagram provides the highest-level view of the system, showing TEAMERA as a single process
-                interacting with its primary external entity — the User.</p>
+                interacting with its primary external entity — the User (acting as both Project Owner and Team Member).
+            </p>
             <div class="figure">
                 <div class="mermaid">
                     graph LR
-                    U([User]) -- "Login / Register / Actions" --> S[TEAMERA System]
-                    S -- "Responses / Notifications / Data" --> U
+                    classDef default fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+
+                    U[User / Team Member]
+                    S((0.0<br>TEAMERA Workspace<br>Collaboration System))
+
+                    U -- "Registration, Project Creation, Team Invitations,<br>Workspace Chat, Task Management, File Uploads" --> S
+                    S -- "JWT Tokens, Real-time SSE Streams,<br>Socket.io Events, Dashboard Analytics" --> U
                 </div>
                 <div class="figure-caption">Figure 2: Level 0 DFD — Context Diagram</div>
             </div>
 
             <h4>4.2.2 Level 1 DFD — System Processes</h4>
-            <p>The Level 1 DFD expands the system into its four major processing modules and shows how each module
-                interacts with the underlying data stores.</p>
+            <p>The Level 1 DFD expands the system into its major processing modules, reflecting the current workspace-centered
+                architecture with integrated chat, task management, and team coordination features.</p>
             <div class="figure">
                 <div class="mermaid">
                     graph TD
-                    U[User] --> P1[Auth Process]
-                    U --> P2[Project Mgmt]
-                    U --> P3[Workspace/Chat]
-                    U --> P4[Community]
+                    classDef default fill:#fff,stroke:#000,stroke-width:1px,color:#000;
 
-                    P1 --> D1[(Users)]
-                    P2 --> D2[(Projects)]
-                    P3 --> D3[(Messages)]
-                    P4 --> D4[(Posts)]
+                    %% External Entities
+                    U[User / Team Member]
 
-                    P1 -- JWT Token --> U
-                    P2 -- Search Results --> U
-                    P3 -- Real-time Updates --> U
-                    P4 -- Community Feed --> U
+                    %% Processes
+                    P1((1.0<br>Authentication &<br>Profile Management))
+                    P2((2.0<br>Project &<br>Team Management))
+                    P3((3.0<br>Application &<br>Invitation Engine))
+                    P4((4.0<br>Workspace<br>Collaboration))
+                    P5((5.0<br>Dashboard &<br>Community Hub))
+
+                    %% Data Stores
+                    D1[(D1: Users)]
+                    D2[(D2: Projects)]
+                    D3[(D3: Applications)]
+                    D4[(D4: Messages & Tasks)]
+                    D5[(D5: Dashboards & Posts)]
+                    D6[(D6: Notifications)]
+
+                    %% Data Flows
+                    U -- "Credentials, Profile Updates" --> P1
+                    P1 -- "JWT Tokens, User Data" --> U
+                    P1 -- "Store/Retrieve User Info" --> D1
+
+                    U -- "Create Projects, Manage Teams" --> P2
+                    P2 -- "Project Listings, Team Updates" --> U
+                    P2 -- "Project & Team Data" --> D2
+
+                    U -- "Submit Applications, Send Invites" --> P3
+                    P3 -- "Application Status, Invitations" --> U
+                    P3 -- "Application Records" --> D3
+
+                    U -- "Chat Messages, Task Updates, File Uploads" --> P4
+                    P4 -- "Real-time Chat, Task Status, SSE Events" --> U
+                    P4 -- "Messages, Tasks, Files" --> D4
+
+                    U -- "Bookmarks, Community Posts" --> P5
+                    P5 -- "Dashboard Stats, Social Feed" --> U
+                    P5 -- "Dashboard & Community Data" --> D5
+
+                    %% Notification flows
+                    P3 -- "Application Notifications" --> D6
+                    P2 -- "Team Update Notifications" --> D6
+                    P4 -- "Chat & Task Notifications" --> D6
+                    D6 -- "Real-time Notifications" --> U
+
+                    %% Inter-process flows
+                    P1 -. "Auth Validation" .-> P2
+                    P1 -. "Auth Validation" .-> P3
+                    P1 -. "Auth Validation" .-> P4
+                    P2 -. "Team Membership" .-> P4
+                    P3 -. "Membership Changes" .-> P2
                 </div>
                 <div class="figure-caption">Figure 3: Level 1 DFD — System Processes</div>
+            </div>
+
+            <h4>4.2.3 Level 2 DFD — Workspace Collaboration Module</h4>
+            <p>The Level 2 DFD breaks down the Workspace Collaboration process (Process 4.0) into detailed sub-processes,
+                showing the integrated chat, task management, and team coordination workflows that form the core of TEAMERA's
+                collaborative features.</p>
+            <div class="figure">
+                <div class="mermaid">
+                    graph TD
+                    classDef default fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+
+                    U[Team Member]
+
+                    %% Sub-processes
+                    P4_1((4.1<br>Real-time<br>Chat Engine))
+                    P4_2((4.2<br>Task<br>Management))
+                    P4_3((4.3<br>Team<br>Coordination))
+                    P4_4((4.4<br>File Upload<br>Handler))
+                    P4_5((4.5<br>SSE Event<br>Broadcaster))
+
+                    %% Data Stores
+                    D4A[(D4A: Messages)]
+                    D4B[(D4B: Tasks)]
+                    D4C[(D4C: File Attachments)]
+                    D2[(D2: Projects)]
+                    D1[(D1: Users)]
+
+                    %% User interactions
+                    U -- "Send Messages, Emoji Reactions" --> P4_1
+                    U -- "Create/Update Tasks, Toggle Steps" --> P4_2
+                    U -- "Invite Members, Manage Roles" --> P4_3
+                    U -- "Upload Chat Files" --> P4_4
+
+                    %% Data flows
+                    P4_1 -- "Store Messages" --> D4A
+                    P4_1 -- "Retrieve Chat History" --> D4A
+                    P4_2 -- "Store Tasks" --> D4B
+                    P4_2 -- "Update Task Status" --> D4B
+                    P4_4 -- "Store Files" --> D4C
+                    P4_3 -- "Update Team Data" --> D2
+
+                    %% Real-time events
+                    P4_1 -- "Socket.io Chat Events" --> P4_5
+                    P4_2 -- "Task Update Events" --> P4_5
+                    P4_3 -- "Team Change Events" --> P4_5
+                    P4_5 -- "Live Updates (SSE)" --> U
+
+                    %% Cross-references
+                    P4_1 -. "Message Attachments" .-> D4C
+                    P4_2 -. "Task Assignment" .-> D2
+                    P4_3 -. "Member Verification" .-> D1
+                </div>
+                <div class="figure-caption">Figure 4: Level 2 DFD — Workspace Collaboration Module</div>
             </div>
 
         </div><!-- end chapter-4b -->

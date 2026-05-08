@@ -135,8 +135,8 @@ Fix this issues
 Redesign the “Three-Tier Client-Server Architecture” section in my project report (files: index.html and report_style.css) to make it look more professional, clean, and suitable for a college-level report in black & white. 
 Design a clean and properly aligned diagram of the three-tier architecture:
 Diagram base on current system flow
-Ensure the diagram is clear, well-spaced, and readable when printed in black & white
+Ensure the diagram is clear, well-spaced, and readable when printed in black & white as per college Students Report style
 Avoid colors; use borders, dashed lines, or grayscale for differentiation
-The final result should look neat, structured, and easy to understand, suitable for submitting as a professional academic report
+The final result should look neat, structured, and easy to understand, suitable for submitting as a professional academic reoprt
 
 Architecture Diagram: Integrated a new Mermaid.js diagram (Figure 2) specifically for the Deployment Architecture Flow, visualizing the connection between the user browser and the various cloud environments.
