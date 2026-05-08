@@ -197,7 +197,7 @@
             <h3>4. Technology Stack</h3>
             <p>The project is built using the <span class="bold">MERN Stack</span>:</p>
             <ul>
-                <li><span class="bold">Frontend:</span> React.js, Vite, Framer Motion, Three.js, Lucide Icons.</li>
+                <li><span class="bold">Frontend:</span> React.js, Vite, Lucide Icons.</li>
                 <li><span class="bold">Backend:</span> Node.js, Express.js, Socket.io, JWT, Multer.</li>
                 <li><span class="bold">Database:</span> MongoDB (NoSQL) with Mongoose ODM.</li>
                 <li><span class="bold">Deployment:</span> Vercel and Node-based server environment.</li>
@@ -869,10 +869,6 @@
             <ul>
                 <li><span class="bold">Socket.io:</span> Used for real-time, bi-directional communication between client
                     and server, enabling instant messaging in workspaces.</li>
-                <li><span class="bold">Framer Motion:</span> A powerful animation library for React, used to provide
-                    smooth transitions and a premium feel to the UI.</li>
-                <li><span class="bold">Three.js:</span> Used to create an immersive 3D landing page experience, setting
-                    TEAMERA apart from standard project management tools.</li>
                 <li><span class="bold">Mongoose:</span> A schema-based solution for MongoDB, providing built-in
                     validation and relationship management for application data.</li>
                 <li><span class="bold">JWT (jsonwebtoken):</span> For stateless and secure session management.</li>
@@ -925,7 +921,7 @@
                             <div class="arch-module-item">Home, Dashboard, Projects</div>
                             <div class="arch-module-item">Workspace, Community, Profile</div>
                             <div class="arch-module-item">Modals: Auth, Project, Onboarding</div>
-                            <div class="arch-module-item">Workspace Tabs: Chat, Tasks, Team, Files</div>
+                            <div class="arch-module-item">Workspace Tabs: Chat, Tasks, Team</div>
                         </div>
                         <div class="arch-module">
                             <div class="arch-module-title">State &amp; Routing</div>
@@ -1046,9 +1042,8 @@
             <p>The presentation tier is the topmost layer and serves as the primary interface between the user and the
                 system. Built with React.js and bundled via Vite, it is responsible for:</p>
             <ul>
-                <li><span class="bold">Page Rendering:</span> Displays six main pages — Home (with Three.js 3D canvas),
-                    Dashboard, Projects, Workspace, Community, and Profile — each composed of reusable React components
-                    such as ProjectCard, NotificationModal, ProfileModal, and CollaborationSpace.</li>
+                <li><span class="bold">Page Rendering:</span> Displays six main pages — Home, Dashboard, Projects, Workspace, Community, and Profile — each composed of reusable React components
+                    such as ProjectCard, NotificationModal, ProfileModal, and the Workspace tab components (WorkspaceChatTab, WorkspaceTasksTab, WorkspaceTeamTab).</li>
                 <li><span class="bold">Global State Management:</span> Three React Context providers manage cross-cutting
                     state: <code>AuthContext</code> holds the logged-in user and JWT token; <code>ProjectContext</code>
                     caches the active project and triggers real-time re-renders when team membership changes;
@@ -1070,7 +1065,7 @@
                     dedicated <code>POST /messages/:projectId/upload</code> endpoint.</li>
             </ul>
             <p><span class="bold">Key Technologies:</span> React.js, Vite, Socket.io Client, Axios, React Router,
-                Framer Motion, Three.js, Lucide Icons.</p>
+                Lucide Icons.</p>
 
             <h4>B. Application Tier (Server Layer)</h4>
             <p>The application tier is the core of the system. It acts as the sole gateway between the client and the
@@ -1543,9 +1538,9 @@ const protect = async (req, res, next) => {
         <h3>8.4 Collaboration in Workspace</h3>
         <p>The workspace is a private area for your team. It includes:
         <ul>
-            <li><span class="bold">Real-time Chat:</span> Instant messaging with all team members.</li>
-            <li><span class="bold">Project Details:</span> A quick view of the project's goals and members.</li>
-            <li><span class="bold">Task Tracking:</span> (Coming Soon) A board to manage your project sprints.</li>
+            <li><span class="bold">Real-time Chat:</span> Instant messaging with all team members, with support for file attachments, emoji reactions, and reply threads.</li>
+            <li><span class="bold">Task Tracking:</span> A board to create, assign, and manage project tasks within the workspace.</li>
+            <li><span class="bold">Team Management:</span> View all team members, their roles, and manage membership directly from the workspace.</li>
         </ul>
         </p>
     </div>
@@ -1582,11 +1577,11 @@ JWT_SECRET=your_secret_key
         <h3>9.3 Backend API Endpoints</h3>
         <p>The backend exposes several RESTful endpoints:
         <ul>
-            <li><span class="bold">POST /api/users/register:</span> Create a new user.</li>
+            <li><span class="bold">POST /api/users:</span> Create a new user (Register).</li>
             <li><span class="bold">POST /api/users/login:</span> Authenticate and get JWT.</li>
             <li><span class="bold">GET /api/projects:</span> Fetch all public projects.</li>
             <li><span class="bold">POST /api/projects:</span> Create a new project (Protected).</li>
-            <li><span class="bold">POST /api/applications:</span> Apply to a project (Protected).</li>
+            <li><span class="bold">POST /api/applications/submit:</span> Apply to a project (Protected).</li>
         </ul>
         </p>
 
