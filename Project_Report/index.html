@@ -376,28 +376,33 @@
                 </tr>
                 <tr>
                     <td style="border: none;">5.1</td>
-                    <td style="border: none; padding-left: 20px;">Frontend Implementation Strategy</td>
+                    <td style="border: none; padding-left: 20px;">Frontend Implementation</td>
                     <td style="border: none; text-align: right;">66</td>
                 </tr>
                 <tr>
                     <td style="border: none;">5.2</td>
-                    <td style="border: none; padding-left: 20px;">Backend Logic & API Design</td>
+                    <td style="border: none; padding-left: 20px;">Backend Implementation & API Design</td>
                     <td style="border: none; text-align: right;">72</td>
                 </tr>
                 <tr>
                     <td style="border: none;">5.3</td>
-                    <td style="border: none; padding-left: 20px;">Real-time Socket.io Integration</td>
+                    <td style="border: none; padding-left: 20px;">Real-time Communication Implementation</td>
                     <td style="border: none; text-align: right;">78</td>
                 </tr>
                 <tr>
                     <td style="border: none;">5.4</td>
-                    <td style="border: none; padding-left: 20px;">Module-wise Code Snippets</td>
+                    <td style="border: none; padding-left: 20px;">Database Implementation</td>
                     <td style="border: none; text-align: right;">82</td>
                 </tr>
                 <tr>
                     <td style="border: none;">5.5</td>
-                    <td style="border: none; padding-left: 20px;">UI/UX Design and Screenshots</td>
+                    <td style="border: none; padding-left: 20px;">Security Implementation</td>
                     <td style="border: none; text-align: right;">90</td>
+                </tr>
+                <tr>
+                    <td style="border: none;">5.6</td>
+                    <td style="border: none; padding-left: 20px;">UI/UX Design and Screenshots</td>
+                    <td style="border: none; text-align: right;">94</td>
                 </tr>
 
                 <tr>
@@ -1505,47 +1510,69 @@
             <br><br>
             <h1>CHAPTER 5: IMPLEMENTATION</h1>
             <br>
-            <h3>5.1 Frontend Implementation Strategy</h3>
-            <p>The frontend of TEAMERA is built using <span class="bold">React.js</span> with a modular, component-based
-                approach. The decision to use React was driven by its ability to handle dynamic state changes
-                efficiently, which is critical for real-time collaboration. The frontend architecture is divided into
-                three main layers: Components, Pages, and Context.</p>
-
-            <h3>5.2 Backend Logic & API Design</h3>
-            <p>The backend is a Node.js environment using <span class="bold">Express.js</span>. We followed a
-                "Service-Controller" pattern to separate business logic from routing. This makes the code much more
-                readable and easier to test.</p>
-
-            <h3>5.3 Real-time Socket.io Integration</h3>
-            <p>The "heart" of the workspace collaboration is the <span class="bold">Socket.io</span> implementation.
-                Unlike standard HTTP requests, WebSockets provide a full-duplex communication channel. This allows the
-                server to "push" data to the client instantly.</p>
-
-            <h3>5.4 Module-wise Code Snippets</h3>
-            <h4>5.4.1 User Authentication Middleware</h4>
+            
+            <h3>5.1 Frontend Implementation</h3>
+            <p>The frontend of TEAMERA is built using <span class="bold">React.js</span> and bundled with <span class="bold">Vite</span> for optimal development speed and production performance. The application follows a modular architecture to ensure scalability and maintainability.</p>
+            
+            <h4>5.1.1 Frontend File Structure</h4>
+            <p>The project follows a logical directory structure to separate concerns and promote reusability:</p>
             <pre>
-// backend/middleware/auth.js
-const jwt = require('jsonwebtoken');
-
-const protect = async (req, res, next) => {
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
-            next();
-        } catch (error) {
-            res.status(401).json({ message: 'Not authorized, token failed' });
-        }
-    }
-    if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
-    }
-};
+frontend/
+├── components/          # Reusable UI components (AuthModal, Navbar, ProjectCard)
+│   └── tabs/            # Workspace-specific components (WorkspaceChat, Tasks)
+├── context/             # Global State Management (Auth, Project, Notifications)
+├── pages/               # Main Page views (Home, Dashboard, Community, Workspace)
+├── styles/              # Global CSS, theme variables, and component styles
+├── utils/               # API wrappers, Socket.io client config, and helpers
+└── App.jsx              # Main entry point with React Router configuration
             </pre>
 
-            <h3>5.5 UI/UX Design and Screenshots</h3>
+            <h3>5.2 Backend Implementation & API Design</h3>
+            <p>The backend is powered by <span class="bold">Node.js</span> and <span class="bold">Express.js</span>, following a Controller-Route-Service architecture. This separation ensures that the business logic is decoupled from the HTTP transport layer.</p>
+            
+            <h4>5.2.1 RESTful API Design</h4>
+            <p>The system exposes a comprehensive set of REST endpoints to handle various modules:</p>
+            <ul>
+                <li><span class="bold">Auth Module:</span> <code>/api/auth/register</code>, <code>/api/auth/login</code>, <code>/api/auth/profile</code> (GET/PUT).</li>
+                <li><span class="bold">Project Module:</span> <code>/api/projects</code> (CRUD), <code>/api/projects/:id/members</code> (Manage team).</li>
+                <li><span class="bold">Application Module:</span> <code>/api/applications/submit</code>, <code>/api/applications/:id/status</code> (Review).</li>
+                <li><span class="bold">Social Module:</span> <code>/api/posts</code> (Feed), <code>/api/posts/:id/like</code>, <code>/api/posts/:id/comment</code>.</li>
+                <li><span class="bold">Workspace Module:</span> <code>/api/messages/:projectId</code> (History), <code>/api/messages/upload</code> (Files).</li>
+            </ul>
+
+            <h3>5.3 Real-time Communication Implementation</h3>
+            <p>Real-time features are implemented using a hybrid approach of <span class="bold">WebSockets (Socket.io)</span> and <span class="bold">Server-Sent Events (SSE)</span> to ensure instant data synchronization across clients.</p>
+            <ul>
+                <li><span class="bold">Socket.io:</span> Used for the Workspace Chat system. It manages persistent connections and project-specific "rooms," allowing team members to communicate without latency.</li>
+                <li><span class="bold">SSE (Server-Sent Events):</span> Used for push notifications and live UI updates (e.g., application status changes, new community posts) without the overhead of a full-duplex connection.</li>
+            </ul>
+
+            <h3>5.4 Database Implementation</h3>
+            <p>TEAMERA uses <span class="bold">MongoDB Atlas</span> as its cloud-hosted NoSQL database. Data modeling is handled via the <span class="bold">Mongoose ODM</span>, enforcing schema-level validation while maintaining flexibility.</p>
+            
+            <h4>5.4.1 Database Collections</h4>
+            <p>The system architecture relies on the following primary collections:</p>
+            <ul>
+                <li><span class="bold">users:</span> Stores user credentials, professional bios, skill sets, and resumes.</li>
+                <li><span class="bold">projects:</span> Contains project metadata, role requirements, and current team rosters.</li>
+                <li><span class="bold">applications:</span> Tracks the state machine of recruitment (Pending, Accepted, Rejected).</li>
+                <li><span class="bold">messages:</span> Persists workspace chat history and file attachment references.</li>
+                <li><span class="bold">posts:</span> Stores community social feed content, including likes and comments.</li>
+                <li><span class="bold">notifications:</span> Manages system alerts and read/unread status for users.</li>
+                <li><span class="bold">dashboards:</span> Caches user-specific metrics and bookmarked projects for performance.</li>
+            </ul>
+
+            <h3>5.5 Security Implementation</h3>
+            <p>Security is integrated at every layer of the TEAMERA stack to protect user data and prevent unauthorized access.</p>
+            <ul>
+                <li><span class="bold">JWT Authentication:</span> Stateless authentication using JSON Web Tokens. Tokens are issued upon login and required for all protected API requests.</li>
+                <li><span class="bold">Bcrypt Hashing:</span> User passwords are never stored in plain text; they are hashed with a salt factor of 10 before being saved to the database.</li>
+                <li><span class="bold">Route Guarding:</span> Middleware (<code>auth.js</code>) intercepts requests to verify token validity and user permissions before reaching controllers.</li>
+                <li><span class="bold">Input Validation:</span> All user-provided data is sanitized and validated using <code>express-validator</code> to prevent NoSQL injection and XSS attacks.</li>
+                <li><span class="bold">CORS Policy:</span> Restricted Cross-Origin Resource Sharing ensures that only authorized domains can interact with the backend API.</li>
+            </ul>
+
+            <h3>5.6 UI/UX Design and Screenshots</h3>
             <div class="figure">
                 <div style="border: 2px solid black; padding: 20px; background: #f0f0f0;">
                     [PLACEHOLDER: Insert Figure 10 - Home Page Screenshot here]
