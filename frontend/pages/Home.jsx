@@ -1,17 +1,107 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Rocket, Search, ArrowRight, Users, Lightbulb, Target, GitBranch, MessageSquare, Shield, Zap } from 'lucide-react';
+import { Rocket, Search, ArrowRight, Users, Lightbulb, Target, GitBranch, MessageSquare, Shield, Zap, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import UserAvatar from '../components/UserAvatar';
 import './Home.css';
 
 function Home({ onAuthClick }) {
   const { user } = useAuth();
-
+  const [activePersona, setActivePersona] = React.useState('founder');
 
   const handleStartBuilding = () => {
     if (!user) {
       onAuthClick();
     }
   };
+
+  const stages = [
+    {
+      id: 1,
+      title: "Ideation",
+      description: "Define the problem, research the space, and outline the solution.",
+      details: ["Write problem statement", "Market and competitor scan", "Create lean canvas"],
+      icon: <Lightbulb size={24} />,
+      color: "#4f46e5",
+      badge: "Start here"
+    },
+    {
+      id: 2,
+      title: "Validation",
+      description: "Test assumptions with users and validate demand before building.",
+      details: ["Customer interviews", "Landing page + waitlist", "Pilot or concierge test"],
+      icon: <Target size={24} />,
+      color: "#0ea5e9",
+      badge: "De‑risk"
+    },
+    {
+      id: 3,
+      title: "MVP",
+      description: "Build a minimal version focused on the core value proposition.",
+      details: ["Scope v1 features", "Ship fast, measure usage", "Iterate from feedback"],
+      icon: <GitBranch size={24} />,
+      color: "#10b981",
+      badge: "Build"
+    },
+    {
+      id: 4,
+      title: "Launch",
+      description: "Release publicly, announce widely, and onboard early adopters.",
+      details: ["Public release checklist", "Go‑to‑market plan", "Monitor KPIs"],
+      icon: <Rocket size={24} />,
+      color: "#f59e0b",
+      badge: "Go live"
+    },
+    {
+      id: 5,
+      title: "Scale",
+      description: "Grow usage, strengthen the team, and optimize for reliability.",
+      details: ["Growth experiments", "Team hiring", "Security & reliability"],
+      icon: <Users size={24} />,
+      color: "#7c3aed",
+      badge: "Grow"
+    }
+  ];
+
+  const personas = [
+    {
+      id: 'founder',
+      title: "The Founder",
+      icon: "🚀",
+      description: "Have a brilliant idea? Build your dream team and turn your vision into reality.",
+      features: ["Create project listings", "Find co-founders", "Recruit team members", "Access funding opportunities"],
+      color: "#ef4444",
+      avatar: { name: "Founder", color: "#ef4444" }
+    },
+    {
+      id: 'professional',
+      title: "The Professional",
+      icon: "💼",
+      description: "Ready to contribute your skills to exciting projects and grow your career.",
+      features: ["Discover projects", "Showcase your skills", "Join innovative teams", "Build your portfolio"],
+      color: "#2563eb",
+      avatar: { name: "Pro", color: "#2563eb" }
+    },
+    {
+      id: 'investor',
+      title: "The Investor",
+      icon: "💰",
+      description: "Looking for promising startups and talented teams to invest in.",
+      features: ["Browse startup projects", "Connect with founders", "Track team progress", "Make informed investments"],
+      color: "#10b981",
+      avatar: { name: "Invest", color: "#10b981" }
+    },
+    {
+      id: 'student',
+      title: "The Student",
+      icon: "🎓",
+      description: "Gain real-world experience and learn from industry professionals.",
+      features: ["Join learning projects", "Build your network", "Develop practical skills"],
+      color: "#f59e0b",
+      avatar: { name: "Student", color: "#f59e0b" }
+    }
+  ];
 
   return (
     <div className="home-container">
@@ -91,131 +181,129 @@ function Home({ onAuthClick }) {
         </div>
       </section>
 
-      {/* Project Stages Section */}
-      <section className="stages-section">
+      {/* Project Stages Section - Wavy Timeline */}
+      <section className="stages-journey-section">
         <div className="section-header">
-          <h2>Project stages from idea to scale</h2>
-          <p>Understand where your project is and what to do next.</p>
+          <span className="section-label">OUR PROCESS</span>
+          <h2>How Teamera works</h2>
+          <p>From idea to scale, we support every step of your journey.</p>
         </div>
-        <div className="stages-timeline">
-          <div className="stage-card ideation">
-            <div className="stage-icon">
-              <Lightbulb size={24} />
-            </div>
-            <h3>Ideation</h3>
-            <p>Define the problem, research the space, and outline the solution.</p>
-            <ul>
-              <li>Write problem statement</li>
-              <li>Market and competitor scan</li>
-              <li>Create lean canvas</li>
-            </ul>
-            <span className="stage-badge">Start here</span>
+
+        <div className="journey-container">
+          {/* SVG Wavy Line */}
+          <div className="wavy-line-container">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" className="wavy-svg">
+              <path 
+                d="M 50 0 C 50 5, 10 5, 10 10 C 10 20, 90 20, 90 30 C 90 40, 10 40, 10 50 C 10 60, 90 60, 90 70 C 90 80, 10 80, 10 90 C 10 95, 50 95, 50 100" 
+                stroke="url(#gradient-line)" 
+                strokeWidth="3" 
+                vectorEffect="non-scaling-stroke"
+              />
+              <defs>
+                <linearGradient id="gradient-line" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#2563eb" />
+                  <stop offset="50%" stopColor="#7c3aed" />
+                  <stop offset="100%" stopColor="#ef4444" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
-          <div className="stage-card validation">
-            <div className="stage-icon">
-              <Target size={24} />
-            </div>
-            <h3>Validation</h3>
-            <p>Test assumptions with users and validate demand before building.</p>
-            <ul>
-              <li>Customer interviews</li>
-              <li>Landing page + waitlist</li>
-              <li>Pilot or concierge test</li>
-            </ul>
-            <span className="stage-badge">De‑risk</span>
-          </div>
-          <div className="stage-card mvp">
-            <div className="stage-icon">
-              <GitBranch size={24} />
-            </div>
-            <h3>MVP</h3>
-            <p>Build a minimal version focused on the core value proposition.</p>
-            <ul>
-              <li>Scope v1 features</li>
-              <li>Ship fast, measure usage</li>
-              <li>Iterate from feedback</li>
-            </ul>
-            <span className="stage-badge">Build</span>
-          </div>
-          <div className="stage-card launch">
-            <div className="stage-icon">
-              <Rocket size={24} />
-            </div>
-            <h3>Launch</h3>
-            <p>Release publicly, announce widely, and onboard early adopters.</p>
-            <ul>
-              <li>Public release checklist</li>
-              <li>Go‑to‑market plan</li>
-              <li>Monitor KPIs</li>
-            </ul>
-            <span className="stage-badge">Go live</span>
-          </div>
-          <div className="stage-card scale">
-            <div className="stage-icon">
-              <Users size={24} />
-            </div>
-            <h3>Scale</h3>
-            <p>Grow usage, strengthen the team, and optimize for reliability.</p>
-            <ul>
-              <li>Growth experiments</li>
-              <li>Team hiring</li>
-              <li>Security & reliability</li>
-            </ul>
-            <span className="stage-badge">Grow</span>
+
+          <div className="journey-steps">
+            {stages.map((stage, index) => (
+              <motion.div 
+                key={stage.id}
+                className={`journey-step ${index % 2 === 0 ? 'left' : 'right'}`}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <div className="step-content-card">
+                  <div className="step-header">
+                    <div className="step-number">{stage.id}</div>
+                  </div>
+                  <h3>{stage.title}</h3>
+                  <p>{stage.description}</p>
+                  <ul className="step-features">
+                    {stage.details.map((detail, i) => (
+                      <li key={i}>
+                        <CheckCircle2 size={14} className="feature-check" />
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="step-footer">
+                    <span className="step-badge" style={{ backgroundColor: `${stage.color}15`, color: stage.color }}>
+                      {stage.badge}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* User Personas Section */}
-      <section className="personas-section">
+      {/* User Personas Section - Premium Selector */}
+      <section className="personas-modern-section">
         <div className="section-header">
+          <span className="section-label">COMMUNITY</span>
           <h2>Built for every type of entrepreneur</h2>
           <p>Whether you're starting out or scaling up, find your place in our community</p>
         </div>
-        <div className="personas-grid">
-          <div className="persona-card founder">
-            <div className="persona-icon">🚀</div>
-            <h3>The Founder</h3>
-            <p>Have a brilliant idea? Build your dream team and turn your vision into reality.</p>
-            <ul>
-              <li>Create project listings</li>
-              <li>Find co-founders</li>
-              <li>Recruit team members</li>
-              <li>Access funding opportunities</li>
-            </ul>
-          </div>
-          <div className="persona-card professional">
-            <div className="persona-icon">💼</div>
-            <h3>The Professional</h3>
-            <p>Ready to contribute your skills to exciting projects and grow your career.</p>
-            <ul>
-              <li>Discover projects</li>
-              <li>Showcase your skills</li>
-              <li>Join innovative teams</li>
-              <li>Build your portfolio</li>
-            </ul>
-          </div>
-          <div className="persona-card investor">
-            <div className="persona-icon">💰</div>
-            <h3>The Investor</h3>
-            <p>Looking for promising startups and talented teams to invest in.</p>
-            <ul>
-              <li>Browse startup projects</li>
-              <li>Connect with founders</li>
-              <li>Track team progress</li>
-              <li>Make informed investments</li>
-            </ul>
-          </div>
-          <div className="persona-card student">
-            <div className="persona-icon">🎓</div>
-            <h3>The Student</h3>
-            <p>Gain real-world experience and learn from industry professionals.</p>
-            <ul>
-              <li>Join learning projects</li>
-              <li>Build your network</li>
-              <li>Develop practical skills</li>
-            </ul>
-          </div>
+
+        <div className="persona-toggle-container">
+          {personas.map((p) => (
+            <button 
+              key={p.id}
+              className={`persona-toggle-btn ${activePersona === p.id ? 'active' : ''}`}
+              onClick={() => setActivePersona(p.id)}
+            >
+              {p.title}
+            </button>
+          ))}
+        </div>
+
+        <div className="persona-display-container">
+          <AnimatePresence mode="wait">
+            {personas.map((p) => p.id === activePersona && (
+              <motion.div 
+                key={p.id}
+                className="persona-detailed-card"
+                initial={{ opacity: 0, scale: 0.95, x: 20 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: -20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <div className="persona-card-visual" style={{ background: `linear-gradient(135deg, ${p.color}20, ${p.color}05)` }}>
+                  <div className="persona-avatar-group">
+                    <UserAvatar user={{ name: p.avatar.name }} color={p.color} size="large" />
+                    <div className="persona-badge-float">{p.icon}</div>
+                  </div>
+                </div>
+                <div className="persona-card-content">
+                  <div className="persona-header">
+                    <h3>{p.title}</h3>
+                    <p className="persona-tagline">{p.description}</p>
+                  </div>
+                  <div className="persona-features-grid">
+                    {p.features.map((feature, i) => (
+                      <div key={i} className="persona-feature-item">
+                        <CheckCircle2 size={18} className="feature-icon" style={{ color: p.color }} />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="persona-cta">
+                    <button className="cta-button primary" style={{ background: p.color }} onClick={handleStartBuilding}>
+                      Join as {p.title}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </section>
 
