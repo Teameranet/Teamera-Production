@@ -9,6 +9,7 @@ import './Home.css';
 function Home({ onAuthClick }) {
   const { user } = useAuth();
   const [activePersona, setActivePersona] = React.useState('founder');
+  const [activeFlow, setActiveFlow] = React.useState('hiring');
 
   const handleStartBuilding = () => {
     if (!user) {
@@ -16,53 +17,84 @@ function Home({ onAuthClick }) {
     }
   };
 
-  const stages = [
-    {
-      id: 1,
-      title: "Ideation",
-      description: "Define the problem, research the space, and outline the solution.",
-      details: ["Write problem statement", "Market and competitor scan", "Create lean canvas"],
-      icon: <Lightbulb size={24} />,
-      color: "#4f46e5",
-      badge: "Start here"
-    },
-    {
-      id: 2,
-      title: "Validation",
-      description: "Test assumptions with users and validate demand before building.",
-      details: ["Customer interviews", "Landing page + waitlist", "Pilot or concierge test"],
-      icon: <Target size={24} />,
-      color: "#0ea5e9",
-      badge: "De‑risk"
-    },
-    {
-      id: 3,
-      title: "MVP",
-      description: "Build a minimal version focused on the core value proposition.",
-      details: ["Scope v1 features", "Ship fast, measure usage", "Iterate from feedback"],
-      icon: <GitBranch size={24} />,
-      color: "#10b981",
-      badge: "Build"
-    },
-    {
-      id: 4,
-      title: "Launch",
-      description: "Release publicly, announce widely, and onboard early adopters.",
-      details: ["Public release checklist", "Go‑to‑market plan", "Monitor KPIs"],
-      icon: <Rocket size={24} />,
-      color: "#f59e0b",
-      badge: "Go live"
-    },
-    {
-      id: 5,
-      title: "Scale",
-      description: "Grow usage, strengthen the team, and optimize for reliability.",
-      details: ["Growth experiments", "Team hiring", "Security & reliability"],
-      icon: <Users size={24} />,
-      color: "#7c3aed",
-      badge: "Grow"
-    }
-  ];
+  const flows = {
+    hiring: [
+      {
+        id: 1,
+        title: "Post Your Vision",
+        description: "List your project and specify the skills you need to bring it to life.",
+        details: ["Define project goals", "Set required skills", "Outline team structure"],
+        icon: <Rocket size={24} />,
+        color: "#4f46e5",
+        badge: "Post"
+      },
+      {
+        id: 2,
+        title: "Find Talent",
+        description: "Browse through applications and search for professionals that match your needs.",
+        details: ["Review portfolios", "Verify experience", "Direct messaging"],
+        icon: <Search size={24} />,
+        color: "#0ea5e9",
+        badge: "Search"
+      },
+      {
+        id: 3,
+        title: "Build Your Team",
+        description: "Select the best candidates and onboard them to your project.",
+        details: ["Send invitations", "Confirm roles", "Manage permissions"],
+        icon: <Users size={24} />,
+        color: "#10b981",
+        badge: "Hire"
+      },
+      {
+        id: 4,
+        title: "Launch Together",
+        description: "Collaborate in real-time and turn your idea into a reality.",
+        details: ["Real-time chat", "Task management", "Progress tracking"],
+        icon: <Zap size={24} />,
+        color: "#f59e0b",
+        badge: "Build"
+      }
+    ],
+    connecting: [
+      {
+        id: 1,
+        title: "Discover Projects",
+        description: "Explore a wide range of projects looking for your specific expertise.",
+        details: ["Advanced filtering", "Skill-based matches", "Industry categories"],
+        icon: <Search size={24} />,
+        color: "#4f46e5",
+        badge: "Explore"
+      },
+      {
+        id: 2,
+        title: "Apply & Pitch",
+        description: "Apply to projects that excite you and showcase why you're the right fit.",
+        details: ["Personalized pitch", "Portfolio highlight", "Quick application"],
+        icon: <Target size={24} />,
+        color: "#0ea5e9",
+        badge: "Apply"
+      },
+      {
+        id: 3,
+        title: "Join a Team",
+        description: "Get accepted into a team and start contributing your skills.",
+        details: ["Accept invites", "Review team goals", "Meet your peers"],
+        icon: <Users size={24} />,
+        color: "#10b981",
+        badge: "Join"
+      },
+      {
+        id: 4,
+        title: "Grow & Build",
+        description: "Contribute to innovative projects and expand your professional portfolio.",
+        details: ["Gain experience", "Build network", "Track contributions"],
+        icon: <GitBranch size={24} />,
+        color: "#f59e0b",
+        badge: "Contribute"
+      }
+    ]
+  };
 
   const personas = [
     {
@@ -186,7 +218,22 @@ function Home({ onAuthClick }) {
         <div className="section-header">
           <span className="section-label">OUR PROCESS</span>
           <h2>How Teamera works</h2>
-          <p>From idea to scale, we support every step of your journey.</p>
+          <p>Whether you're looking to hire or looking to connect, we've got you covered.</p>
+        </div>
+
+        <div className="persona-toggle-container">
+          <button 
+            className={`persona-toggle-btn ${activeFlow === 'hiring' ? 'active' : ''}`}
+            onClick={() => setActiveFlow('hiring')}
+          >
+            For Hiring
+          </button>
+          <button 
+            className={`persona-toggle-btn ${activeFlow === 'connecting' ? 'active' : ''}`}
+            onClick={() => setActiveFlow('connecting')}
+          >
+            For Connecting
+          </button>
         </div>
 
         <div className="journey-container">
@@ -194,7 +241,7 @@ function Home({ onAuthClick }) {
           <div className="wavy-line-container">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" className="wavy-svg">
               <path 
-                d="M 10 10 C 10 20, 90 20, 90 30 C 90 40, 10 40, 10 50 C 10 60, 90 60, 90 70 C 90 80, 10 80, 10 90" 
+                d="M 10 10 C 10 25, 90 25, 90 40 C 90 55, 10 55, 10 70 C 10 85, 90 85, 90 100" 
                 stroke="url(#gradient-line)" 
                 strokeWidth="3" 
                 vectorEffect="non-scaling-stroke"
@@ -210,37 +257,51 @@ function Home({ onAuthClick }) {
           </div>
 
           <div className="journey-steps">
-            {stages.map((stage, index) => (
+            <AnimatePresence mode="wait">
               <motion.div 
-                key={stage.id}
-                className={`journey-step ${index % 2 === 0 ? 'left' : 'right'}`}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                key={activeFlow}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="journey-steps-container"
               >
-                <div className="step-content-card">
-                  <div className="step-header">
-                    <div className="step-number">{stage.id}</div>
-                  </div>
-                  <h3>{stage.title}</h3>
-                  <p>{stage.description}</p>
-                  <ul className="step-features">
-                    {stage.details.map((detail, i) => (
-                      <li key={i}>
-                        <CheckCircle2 size={14} className="feature-check" />
-                        {detail}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="step-footer">
-                    <span className="step-badge" style={{ backgroundColor: `${stage.color}15`, color: stage.color }}>
-                      {stage.badge}
-                    </span>
-                  </div>
-                </div>
+                {flows[activeFlow].map((stage, index) => (
+                  <motion.div 
+                    key={stage.id}
+                    className={`journey-step ${index % 2 === 0 ? 'left' : 'right'}`}
+                    initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                  >
+                    <div className="step-content-card">
+                      <div className="step-header">
+                        <div className="step-number">{stage.id}</div>
+                        <div className="step-icon" style={{ color: stage.color }}>
+                          {stage.icon}
+                        </div>
+                      </div>
+                      <h3>{stage.title}</h3>
+                      <p>{stage.description}</p>
+                      <ul className="step-features">
+                        {stage.details.map((detail, i) => (
+                          <li key={i}>
+                            <CheckCircle2 size={14} className="feature-check" />
+                            {detail}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="step-footer">
+                        <span className="step-badge" style={{ backgroundColor: `${stage.color}15`, color: stage.color }}>
+                          {stage.badge}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </motion.div>
-            ))}
+            </AnimatePresence>
           </div>
         </div>
       </section>
