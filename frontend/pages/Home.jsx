@@ -71,8 +71,8 @@ function Home({ onAuthClick }) {
       icon: "🚀",
       description: "Have a brilliant idea? Build your dream team and turn your vision into reality.",
       features: ["Create project listings", "Find co-founders", "Recruit team members", "Access funding opportunities"],
-      color: "#ef4444",
-      avatar: { name: "Founder", color: "#ef4444" }
+      color: "#2563eb",
+      avatar: { name: "Founder", color: "#2563eb" }
     },
     {
       id: 'professional',
@@ -89,8 +89,8 @@ function Home({ onAuthClick }) {
       icon: "💰",
       description: "Looking for promising startups and talented teams to invest in.",
       features: ["Browse startup projects", "Connect with founders", "Track team progress", "Make informed investments"],
-      color: "#10b981",
-      avatar: { name: "Invest", color: "#10b981" }
+      color: "#2563eb",
+      avatar: { name: "Invest", color: "#2563eb" }
     },
     {
       id: 'student',
@@ -98,8 +98,8 @@ function Home({ onAuthClick }) {
       icon: "🎓",
       description: "Gain real-world experience and learn from industry professionals.",
       features: ["Join learning projects", "Build your network", "Develop practical skills"],
-      color: "#f59e0b",
-      avatar: { name: "Student", color: "#f59e0b" }
+      color: "#2563eb",
+      avatar: { name: "Student", color: "#2563eb" }
     }
   ];
 
@@ -194,7 +194,7 @@ function Home({ onAuthClick }) {
           <div className="wavy-line-container">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" className="wavy-svg">
               <path 
-                d="M 50 0 C 50 5, 10 5, 10 10 C 10 20, 90 20, 90 30 C 90 40, 10 40, 10 50 C 10 60, 90 60, 90 70 C 90 80, 10 80, 10 90 C 10 95, 50 95, 50 100" 
+                d="M 10 10 C 10 20, 90 20, 90 30 C 90 40, 10 40, 10 50 C 10 60, 90 60, 90 70 C 90 80, 10 80, 10 90" 
                 stroke="url(#gradient-line)" 
                 strokeWidth="3" 
                 vectorEffect="non-scaling-stroke"
@@ -277,9 +277,15 @@ function Home({ onAuthClick }) {
                 transition={{ duration: 0.4 }}
               >
                 <div className="persona-card-visual" style={{ background: `linear-gradient(135deg, ${p.color}20, ${p.color}05)` }}>
-                  <div className="persona-avatar-group">
-                    <UserAvatar user={{ name: p.avatar.name }} color={p.color} size="large" />
-                    <div className="persona-badge-float">{p.icon}</div>
+                  <div 
+                    className="persona-large-icon" 
+                    style={{ 
+                      fontSize: '6rem', 
+                      filter: 'drop-shadow(0 15px 25px rgba(0,0,0,0.1))',
+                      animation: 'float 6s ease-in-out infinite' 
+                    }}
+                  >
+                    {p.icon}
                   </div>
                 </div>
                 <div className="persona-card-content">
