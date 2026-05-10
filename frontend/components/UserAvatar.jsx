@@ -14,7 +14,7 @@ import './UserAvatar.css';
  * @param {string} props.color - Override background color
  * @returns {JSX.Element} UserAvatar component
  */
-function UserAvatar({ user, size = 'medium', className = '', name, color }) {
+function UserAvatar({ user, size = 'medium', className = '', name, color, onClick, style = {} }) {
   // Get the first letter of name or email
   const getInitial = () => {
     if (name) return name.charAt(0).toUpperCase();
@@ -37,7 +37,8 @@ function UserAvatar({ user, size = 'medium', className = '', name, color }) {
   return (
     <div 
       className={avatarClasses}
-      style={{ backgroundColor: getBackgroundColor() }}
+      style={{ backgroundColor: getBackgroundColor(), ...style }}
+      onClick={onClick}
     >
       <span className="avatar-initial">{getInitial()}</span>
     </div>

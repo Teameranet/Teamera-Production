@@ -198,6 +198,32 @@ function Community() {
   const [saving, setSaving] = useState(false);
   // Profile modal
   const [selectedUser, setSelectedUser] = useState(null);
+
+  const handleUserClick = async (author) => {
+    if (!author) return;
+    
+    // If we don't have a userId (e.g. anonymous), just show what we have
+    if (!author.userId) {
+      setSelectedUser(author);
+      return;
+    }
+    
+    // Set initial data and loading state
+    setSelectedUser({ ...author, loading: true });
+    
+    try {
+      const res = await api.get(endpoints.users.getProfile(author.userId));
+      if (res.success && res.data) {
+        setSelectedUser({ ...author, ...res.data, loading: false });
+      } else {
+        setSelectedUser({ ...author, loading: false });
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+      setSelectedUser({ ...author, loading: false });
+    }
+  };
+
   // SSE connection status
   const [sseConnected, setSseConnected] = useState(false);
 
@@ -1064,7 +1090,7 @@ function Community() {
                             <div className="cm-list">
                               {post.comments.map((comment) => (
                                 <CommentItem key={comment.id} comment={comment} currentUserName={user?.name} currentUserRole={user?.role}
-                                  onAvatarClick={(author) => setSelectedUser(author)}
+                                  onAvatarClick={handleUserClick}
                                   onReply={(c) => setCommentReplyTo((prev) => ({ ...prev, [post.id]: c }))}
                                   onDelete={(commentId) => handleDeleteComment(post.id, commentId)}
                                 />
@@ -1130,9 +1156,9 @@ function Community() {
                     <article key={post.id} className="post-card">
                       <div className="post-header">
                         <div className="post-author-info">
-                          <UserAvatar user={{ name: post.author.name }} size="medium" style={{ cursor: 'pointer' }} onClick={() => setSelectedUser(post.author)} />
+                          <UserAvatar user={{ name: post.author.name }} size="medium" style={{ cursor: 'pointer' }} onClick={() => handleUserClick(post.author)} />
                           <div>
-                            <div className="post-author-name" onClick={() => setSelectedUser(post.author)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSelectedUser(post.author)}>{post.author.name}</div>
+                            <div className="post-author-name" onClick={() => handleUserClick(post.author)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleUserClick(post.author)}>{post.author.name}</div>
                             <div className="post-author-meta">{post.author.title} · {formatTimestamp(post.createdAt)}</div>
                           </div>
                         </div>
@@ -1193,7 +1219,7 @@ function Community() {
                           {post.comments.length > 0 && (
                             <div className="cm-list">
                               {post.comments.map((comment) => (
-                                <CommentItem key={comment.id} comment={comment} currentUserName={user?.name} currentUserRole={user?.role} onAvatarClick={(author) => setSelectedUser(author)} onReply={(c) => setCommentReplyTo((prev) => ({ ...prev, [post.id]: c }))} onDelete={(commentId) => handleDeleteComment(post.id, commentId)} />
+                                <CommentItem key={comment.id} comment={comment} currentUserName={user?.name} currentUserRole={user?.role} onAvatarClick={handleUserClick} onReply={(c) => setCommentReplyTo((prev) => ({ ...prev, [post.id]: c }))} onDelete={(commentId) => handleDeleteComment(post.id, commentId)} />
                               ))}
                             </div>
                           )}
@@ -1247,15 +1273,15 @@ function Community() {
                         user={{ name: post.author.name }}
                         size="medium"
                         style={{ cursor: 'pointer' }}
-                        onClick={() => setSelectedUser(post.author)}
+                        onClick={() => handleUserClick(post.author)}
                       />
                       <div>
                         <div
                           className="post-author-name"
-                          onClick={() => setSelectedUser(post.author)}
+                          onClick={() => handleUserClick(post.author)}
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && setSelectedUser(post.author)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleUserClick(post.author)}
                         >
                           {post.author.name}
                         </div>
@@ -1412,7 +1438,7 @@ function Community() {
                               comment={comment}
                               currentUserName={user?.name}
                               currentUserRole={user?.role}
-                              onAvatarClick={(author) => setSelectedUser(author)}
+                              onAvatarClick={handleUserClick}
                               onReply={(c) => setCommentReplyTo((prev) => ({ ...prev, [post.id]: c }))}
                               onDelete={(commentId) => handleDeleteComment(post.id, commentId)}
                             />
