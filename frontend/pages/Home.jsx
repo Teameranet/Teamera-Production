@@ -241,7 +241,7 @@ function Home({ onAuthClick }) {
           <div className="wavy-line-container">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" className="wavy-svg">
               <path 
-                d="M 10 10 C 10 25, 90 25, 90 40 C 90 55, 10 55, 10 70 C 10 85, 90 85, 90 100" 
+                d="M 10 10 C 10 25, 90 25, 90 40 C 90 55, 10 55, 10 70 C 10 77.5, 90 77.5, 90 85" 
                 stroke="url(#gradient-line)" 
                 strokeWidth="3" 
                 vectorEffect="non-scaling-stroke"
