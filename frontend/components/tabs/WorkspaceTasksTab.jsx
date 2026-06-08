@@ -49,6 +49,9 @@ function TaskModal({ task, members, onSave, onClose }) {
   const [stepInput, setStepInput] = useState('');
   const stepRef = useRef(null);
 
+  // Debug logging
+  console.log('TaskModal rendered - isEdit:', isEdit, 'task:', task, 'members:', members);
+
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
   const addStep = () => {
@@ -311,6 +314,9 @@ function WorkspaceTasksTab({ project, isAdmin }) {
   const [editTask, setEditTask]   = useState(null);
   const sseRef = useRef(null);
 
+  // Debug logging
+  console.log('WorkspaceTasksTab render - showModal:', showModal, 'editTask:', editTask, 'project:', project);
+
   const projectId = project ? (project._id || project.id) : null;
   const currentUserId = user?.id || user?._id;
 
@@ -521,7 +527,21 @@ function WorkspaceTasksTab({ project, isAdmin }) {
             </div>
           );
         })}
-        <button className="wt-add-task-btn" onClick={() => { setEditTask(null); setShowModal(true); }}>
+        <button 
+          className="wt-add-task-btn" 
+          onClick={() => { 
+            console.log('Create Task button clicked!');
+            console.log('Current showModal state:', showModal);
+            setEditTask(null); 
+            setShowModal(true); 
+            console.log('After setting showModal to true');
+          }}
+          style={{ 
+            zIndex: 10, 
+            pointerEvents: 'auto',
+            position: 'relative'
+          }}
+        >
           <Plus size={16} /> New Task
         </button>
       </div>
@@ -558,12 +578,19 @@ function WorkspaceTasksTab({ project, isAdmin }) {
       </div>
 
       {showModal && (
-        <TaskModal
-          task={editTask}
-          members={members}
-          onSave={handleSave}
-          onClose={() => { setShowModal(false); setEditTask(null); }}
-        />
+        <>
+          {console.log('Rendering TaskModal - showModal:', showModal, 'editTask:', editTask)}
+          <TaskModal
+            task={editTask}
+            members={members}
+            onSave={handleSave}
+            onClose={() => { 
+              console.log('TaskModal onClose called');
+              setShowModal(false); 
+              setEditTask(null); 
+            }}
+          />
+        </>
       )}
     </div>
   );
